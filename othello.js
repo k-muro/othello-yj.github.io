@@ -181,16 +181,16 @@ function drawBoard() {
       if (board[y][x] !== 0) {
         const stone = document.createElement("div");
         stone.className = "stone " + (board[y][x] === 1 ? "black" : "white");
+        cell.appendChild(stone);
         if (showMoveNumbers) {
           const entry = moveNumMap.get(`${x},${y}`);
           if (entry !== undefined) {
             const numEl = document.createElement("span");
             numEl.className = "stone-num " + (entry.player === 1 ? "stone-num-by-black" : "stone-num-by-white");
             numEl.textContent = entry.num;
-            stone.appendChild(numEl);
+            cell.appendChild(numEl);
           }
         }
-        cell.appendChild(stone);
       } else if (validSet.has(`${x},${y}`)) {
         const hint = document.createElement("div");
         const isNextRef = `${x},${y}` === nextRefKey;
