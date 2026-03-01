@@ -250,7 +250,7 @@ h1 {
 #endgame:empty { display: none; }
 
 /* ===== Buttons ===== */
-.btn { border-radius: 8px; font-weight: 500; letter-spacing: 0.03em; }
+.btn { border-radius: 8px; font-weight: 500; letter-spacing: 0.03em; touch-action: manipulation; }
 .btn-primary {
   background: #1a7f37;
   border-color: #1a7f37;
@@ -344,20 +344,19 @@ hr { opacity: 1; border-color: #d0d7de; }
   }
 }
 /* ===== タブレット中間サイズ (561px〜767px) ===== */
-/* Bootstrapのsmブレークポイント(container=540px)でボードがはみ出るのを防ぐ */
+/* Bootstrapのsmブレークポイント(container固定540px)を解除してapp-cardを広げる */
 @media (min-width: 561px) and (max-width: 767px) {
-  #board {
-    grid-template-columns: 13px repeat(8, 50px) 13px;
-    grid-template-rows: 13px repeat(8, 50px) 13px;
-    gap: 1px;
-    margin: 8px auto;
-    padding: 3px;
+  .container {
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
   }
-  .board-label { font-size: 10px; }
-  .cell { width: 50px; height: 50px; }
-  .stone { width: 38px; height: 38px; }
-  .hint { width: 12px; height: 12px; }
-  .stone-num { font-size: 12px; }
+  .app-card {
+    padding: 16px 8px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
 }
 
 /* ===== さらに小さい端末 (横幅360px以下) ===== */
@@ -370,6 +369,24 @@ hr { opacity: 1; border-color: #d0d7de; }
   .stone { width: 24px; height: 24px; }
   .hint { width: 8px; height: 8px; }
 }
+/* ===== 最善手の青点 ===== */
+.best-move-dot {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #6b21a8;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: 0 0 2px rgba(107, 33, 168, 0.8);
+}
+@media (max-width: 560px) {
+  .best-move-dot { width: 2px; height: 2px; }
+}
+
 /* ===== 手番号表示 ===== */
 .stone-num {
   position: absolute;

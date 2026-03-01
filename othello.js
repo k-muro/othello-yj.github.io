@@ -176,6 +176,7 @@ function drawBoard() {
     for (let x = 0; x < 8; x++) {
       const cell = document.createElement("div");
       cell.className = "cell";
+      cell.dataset.pos = `${x},${y}`;
       cell.onclick = () => playMove(x, y);
       if (lastMove && lastMove.x === x && lastMove.y === y) cell.classList.add("last-move");
       if (board[y][x] !== 0) {
@@ -238,6 +239,14 @@ function drawBoard() {
     else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
     else                result = `引き分け`;
     endgameEl.textContent = `最善手を読み切り: ${result}　(${lineStr})`;
+    if (line.length > 0) {
+      const bestCell = boardElement.querySelector(`[data-pos="${line[0].x},${line[0].y}"]`);
+      if (bestCell) {
+        const dot = document.createElement("div");
+        dot.className = "best-move-dot";
+        bestCell.appendChild(dot);
+      }
+    }
   } else {
     endgameEl.textContent = "";
   }
