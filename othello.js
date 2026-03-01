@@ -570,6 +570,15 @@ function updateNames() {
   drawBoard();
 }
 
+function swapNames() {
+  const bInput = document.getElementById("black-name-input");
+  const wInput = document.getElementById("white-name-input");
+  const tmp = bInput.value;
+  bInput.value = wInput.value;
+  wInput.value = tmp;
+  updateNames();
+}
+
 function loadFromURL() {
   const params = new URLSearchParams(window.location.search);
   blackName = params.get("black") || "黒";

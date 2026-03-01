@@ -602,6 +602,7 @@ hr { opacity: 1; border-color: #d0d7de; }
 
         <span id="name-inputs" class="d-none d-flex align-items-center gap-2">
           ⚫<input type="text" id="black-name-input" class="form-control form-control-sm" style="width:90px" placeholder="黒" oninput="updateNames()" onclick="this.select()">
+          <button class="btn btn-outline-secondary btn-sm px-1" onclick="swapNames()" title="名前を入れ替え">⇄</button>
           ⚪<input type="text" id="white-name-input" class="form-control form-control-sm" style="width:90px" placeholder="白" oninput="updateNames()" onclick="this.select()">
         </span><button id="stone-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleStones()">野獣先輩モード</button>
         <button id="num-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleMoveNumbers()">着手順を表示</button>
