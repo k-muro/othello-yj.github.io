@@ -353,6 +353,14 @@ hr { opacity: 1; border-color: #d0d7de; }
     gap: 4px;
   }
 }
+@media (max-width: 560px) {
+
+  /* ナビボタンのダブルタップズーム無効 */
+  .btn {
+    touch-action: manipulation;
+  }
+
+}
 </style>
 </head>
 <body class="text-center py-4">
