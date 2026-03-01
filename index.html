@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Simple Othello</title>
+<style>
+body {
+  font-family: sans-serif;
+  text-align: center;
+}
+#board {
+  display: grid;
+  grid-template-columns: repeat(8, 60px);
+  grid-template-rows: repeat(8, 60px);
+  gap: 2px;
+  justify-content: center;
+  margin: 20px auto;
+}
+.cell {
+  width: 60px;
+  height: 60px;
+  background: green;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.stone {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+}
+.black { background: black; }
+.white { background: white; }
+.controls {
+  margin-top: 15px;
+}
+</style>
+</head>
+<body>
+
+<h1>Othello Sample</h1>
+<div id="board"></div>
+
+<div class="controls">
+  <button onclick="undo()">◀ 戻る</button>
+  <button onclick="redo()">▶ 進む</button>
+  <button onclick="updateURL()">URL更新</button>
+</div>
+
+<p id="info"></p>
+
+<script>
+const boardElement = document.getElementById("board");
+const info = document.getElementById("info");
+
+let history = [];
+let currentMove = 0;
+let board = [];
+let currentPlayer = 1; // 1=黒, -1=白
+
+function initBoard() {
+  board = Array(8).fill().map(() => Array(8).fill(0));
+  board[3][3] = -1;
+  board[4][4] = -1;
+  board[3][4] = 1;
+  board[4][3] = 1;
+  history = [];
+  currentMove = 0;
+  currentPlayer = 1;
+}
+
+function drawBoard() {
+  boardElement.innerHTML = "";
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.onclick = () => playMove(x, y);
+      if (board[y][x] !== 0) {
+        const stone = document.createElement("div");
+        stone.className = "stone " + (board[y][x] === 1 ? "black" : "white");
+        cell.appendChild(stone);
+      }
+      boardElement.appendChild(cell);
+    }
+  }
+  info.textContent = currentPlayer === 1 ? "黒の番" : "白の番";
+}
+
+function inBounds(x, y) {
+  return x >= 0 && x < 8 && y >= 0 && y < 8;
+}
+
+function getFlips(x, y, player) {
+  if (board[y][x] !== 0) return [];
+  const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+  let flips = [];
+  for (let [dx, dy] of dirs) {
+    let nx = x + dx;
+    let ny = y + dy;
+    let temp = [];
+    while (inBounds(nx, ny) && board[ny][nx] === -player) {
+      temp.push([nx, ny]);
+      nx += dx;
+      ny += dy;
+    }
+    if (inBounds(nx, ny) && board[ny][nx] === player && temp.length > 0) {
+      flips = flips.concat(temp);
+    }
+  }
+  return flips;
+}
+
+function playMove(x, y) {
+  const flips = getFlips(x, y, currentPlayer);
+  if (flips.length === 0) return;
+
+  history = history.slice(0, currentMove);
+  history.push({x, y, player: currentPlayer});
+  currentMove++;
+
+  board[y][x] = currentPlayer;
+  flips.forEach(([fx, fy]) => board[fy][fx] = currentPlayer);
+  currentPlayer *= -1;
+
+  drawBoard();
+}
+
+function rebuildBoard() {
+  initBoard();
+  for (let i = 0; i < currentMove; i++) {
+    const m = history[i];
+    const flips = getFlips(m.x, m.y, m.player);
+    board[m.y][m.x] = m.player;
+    flips.forEach(([fx, fy]) => board[fy][fx] = m.player);
+    currentPlayer = -m.player;
+  }
+  drawBoard();
+}
+
+function undo() {
+  if (currentMove > 0) {
+    currentMove--;
+    rebuildBoard();
+  }
+}
+
+function redo() {
+  if (currentMove < history.length) {
+    currentMove++;
+    rebuildBoard();
+  }
+}
+
+function coordToXY(coord) {
+  const x = coord.charCodeAt(0) - 97;
+  const y = parseInt(coord[1]) - 1;
+  return {x, y};
+}
+
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const kifu = params.get("kifu");
+  if (!kifu) return;
+
+  initBoard();
+  for (let i = 0; i < kifu.length; i += 2) {
+    const move = kifu.substring(i, i+2);
+    const {x, y} = coordToXY(move);
+    const flips = getFlips(x, y, currentPlayer);
+    if (flips.length === 0) break;
+    history.push({x, y, player: currentPlayer});
+    board[y][x] = currentPlayer;
+    flips.forEach(([fx, fy]) => board[fy][fx] = currentPlayer);
+    currentPlayer *= -1;
+    currentMove++;
+  }
+}
+
+function updateURL() {
+  let kifu = history.slice(0, currentMove)
+    .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
+    .join("");
+  const url = window.location.origin + window.location.pathname + "?kifu=" + kifu;
+  history.replaceState(null, "", url);
+  alert("URLを更新しました");
+}
+
+initBoard();
+loadFromURL();
+drawBoard();
+</script>
+
+</body>
+</html>
