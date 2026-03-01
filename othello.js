@@ -235,6 +235,19 @@ if (blackMoves.length === 0 && whiteMoves.length === 0) {
   info.textContent = currentPlayer === 1
     ? `${blackName}（⚫）の番`
     : `${whiteName}（⚪）の番`;
+
+  const branchBtn = document.getElementById('branch-btn');
+  if (branchBtn) {
+    const len = Math.min(currentMove, referenceKifu.length);
+    let hasBranch = false;
+    for (let i = 0; i < len; i++) {
+      if (moveHistory[i].x !== referenceKifu[i].x || moveHistory[i].y !== referenceKifu[i].y) {
+        hasBranch = true;
+        break;
+      }
+    }
+    branchBtn.disabled = !hasBranch;
+  }
 }
 }
 
