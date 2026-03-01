@@ -1,1 +1,2 @@
-# othello-yj.github.io
+# othello-yj.gaithub.io
+
