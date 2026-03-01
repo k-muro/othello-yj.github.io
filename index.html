@@ -17,6 +17,7 @@ body {
   margin: 20px auto;
 }
 .cell {
+  position: relative;
   width: 60px;
   height: 60px;
   background: green;
@@ -25,6 +26,11 @@ body {
   justify-content: center;
   cursor: pointer;
 }
+.last-move {
+  box-shadow: inset 0 0 0 2px #ff4444;
+}
+.hint-ref-black { background: rgba(200, 30, 30, 0.75); }
+.hint-ref-white { background: rgba(255, 80, 80, 0.75); }
 .stone {
   width: 45px;
   height: 45px;
@@ -32,8 +38,22 @@ body {
 }
 .black { background: black; }
 .white { background: white; }
+.hint {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+.hint-black { background: rgba(0, 0, 0, 0.35); }
+.hint-white { background: rgba(255, 255, 255, 0.45); }
 .controls {
   margin-top: 15px;
+}
+#stone-count {
+  font-size: 1.1em;
+  margin: 8px 0;
+}
+#kifu-area {
+  margin-top: 12px;
 }
 </style>
 </head>
@@ -42,54 +62,179 @@ body {
 <h1>Othello Sample</h1>
 <div id="board"></div>
 
+<div id="stone-count"></div>
+
 <div class="controls">
   <button onclick="undo()">◀ 戻る</button>
   <button onclick="redo()">▶ 進む</button>
+  <button onclick="goToBranchPoint()">分岐点へ</button>
   <button onclick="updateURL()">URL更新</button>
 </div>
 
+<div id="kifu-area">
+  <input type="text" id="kifu-input" placeholder="棋譜を入力 (例: d3c4...)" size="40">
+  <button onclick="applyKifu()">棋譜を反映</button>
+</div>
+
 <p id="info"></p>
+<p id="endgame"></p>
 
 <script>
 const boardElement = document.getElementById("board");
 const info = document.getElementById("info");
+const stoneCount = document.getElementById("stone-count");
+const endgameEl = document.getElementById("endgame");
 
-let history = [];
+let moveHistory = [];
 let currentMove = 0;
 let board = [];
 let currentPlayer = 1; // 1=黒, -1=白
+let referenceKifu = []; // 最後に「反映」した棋譜
 
-function initBoard() {
+function resetBoardState() {
   board = Array(8).fill().map(() => Array(8).fill(0));
   board[3][3] = -1;
   board[4][4] = -1;
   board[3][4] = 1;
   board[4][3] = 1;
-  history = [];
-  currentMove = 0;
   currentPlayer = 1;
+}
+
+function initBoard() {
+  resetBoardState();
+  moveHistory = [];
+  currentMove = 0;
+}
+
+function getValidMoves(player) {
+  const moves = [];
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      if (getFlips(x, y, player).length > 0) moves.push([x, y]);
+    }
+  }
+  return moves;
 }
 
 function drawBoard() {
   boardElement.innerHTML = "";
+  const validMoves = getValidMoves(currentPlayer);
+  const validSet = new Set(validMoves.map(([x, y]) => `${x},${y}`));
+  const lastMove = currentMove > 0 ? moveHistory[currentMove - 1] : null;
+  const nextRef = currentMatchesReference() && currentMove < referenceKifu.length
+    ? referenceKifu[currentMove] : null;
+  const nextRefKey = nextRef ? `${nextRef.x},${nextRef.y}` : null;
+
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 8; x++) {
       const cell = document.createElement("div");
       cell.className = "cell";
       cell.onclick = () => playMove(x, y);
+      if (lastMove && lastMove.x === x && lastMove.y === y) cell.classList.add("last-move");
       if (board[y][x] !== 0) {
         const stone = document.createElement("div");
         stone.className = "stone " + (board[y][x] === 1 ? "black" : "white");
         cell.appendChild(stone);
+      } else if (validSet.has(`${x},${y}`)) {
+        const hint = document.createElement("div");
+        const isNextRef = `${x},${y}` === nextRefKey;
+        hint.className = "hint " + (isNextRef
+          ? (currentPlayer === 1 ? "hint-ref-black" : "hint-ref-white")
+          : (currentPlayer === 1 ? "hint-black" : "hint-white"));
+        cell.appendChild(hint);
       }
       boardElement.appendChild(cell);
     }
   }
+
+  let black = 0, white = 0;
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++) {
+      if (board[y][x] === 1) black++;
+      else if (board[y][x] === -1) white++;
+    }
+  const empty = 64 - black - white;
+  stoneCount.textContent = `⚫ 黒: ${black}　⚪ 白: ${white}　残: ${empty}`;
+
+  if (empty <= 10) {
+    const {score, line} = solveEndgame(board.map(r => [...r]), currentPlayer, -65, 65);
+    const lineStr = line.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join(" ");
+    let result;
+    if (score > 0)      result = `黒が +${score} で勝ち`;
+    else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
+    else                result = `引き分け`;
+    endgameEl.textContent = `最善手を読み切り: ${result}　(${lineStr})`;
+  } else {
+    endgameEl.textContent = "";
+  }
+
+  const kifu = moveHistory.slice(0, currentMove)
+    .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
+    .join("");
+  document.getElementById("kifu-input").value = kifu;
+
   info.textContent = currentPlayer === 1 ? "黒の番" : "白の番";
 }
 
 function inBounds(x, y) {
   return x >= 0 && x < 8 && y >= 0 && y < 8;
+}
+
+// 盤面コピーを使った独立版getFlips（探索用）
+function getFlipsOnBoard(b, x, y, player) {
+  if (b[y][x] !== 0) return [];
+  const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+  let flips = [];
+  for (let [dx, dy] of dirs) {
+    let nx = x + dx, ny = y + dy, temp = [];
+    while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[ny][nx] === -player) {
+      temp.push([nx, ny]); nx += dx; ny += dy;
+    }
+    if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[ny][nx] === player && temp.length > 0)
+      flips = flips.concat(temp);
+  }
+  return flips;
+}
+
+// アルファベータ探索（返り値: {score: 黒-白, line: [{x,y}, ...]}）
+function solveEndgame(b, player, alpha, beta) {
+  let hasMoves = false;
+  let best = player === 1 ? -65 : 65;
+  let bestLine = [];
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      const flips = getFlipsOnBoard(b, x, y, player);
+      if (flips.length === 0) continue;
+      hasMoves = true;
+      const nb = b.map(row => [...row]);
+      nb[y][x] = player;
+      flips.forEach(([fx, fy]) => nb[fy][fx] = player);
+      const {score, line} = solveEndgame(nb, -player, alpha, beta);
+      if (player === 1) {
+        if (score > best) { best = score; bestLine = [{x, y}, ...line]; }
+        if (best > alpha) alpha = best;
+      } else {
+        if (score < best) { best = score; bestLine = [{x, y}, ...line]; }
+        if (best < beta)  beta  = best;
+      }
+      if (alpha >= beta) return {score: best, line: bestLine};
+    }
+  }
+  if (!hasMoves) {
+    // パスできるか確認
+    let opponentHasMoves = false;
+    outer: for (let y = 0; y < 8; y++)
+      for (let x = 0; x < 8; x++)
+        if (getFlipsOnBoard(b, x, y, -player).length > 0) { opponentHasMoves = true; break outer; }
+    if (opponentHasMoves) return solveEndgame(b, -player, alpha, beta);
+    // 終局: 石数を数える
+    let count = 0;
+    for (let y = 0; y < 8; y++)
+      for (let x = 0; x < 8; x++)
+        count += b[y][x];
+    return {score: count, line: []};
+  }
+  return {score: best, line: bestLine};
 }
 
 function getFlips(x, y, player) {
@@ -116,8 +261,8 @@ function playMove(x, y) {
   const flips = getFlips(x, y, currentPlayer);
   if (flips.length === 0) return;
 
-  history = history.slice(0, currentMove);
-  history.push({x, y, player: currentPlayer});
+  moveHistory = moveHistory.slice(0, currentMove);
+  moveHistory.push({x, y, player: currentPlayer});
   currentMove++;
 
   board[y][x] = currentPlayer;
@@ -128,9 +273,9 @@ function playMove(x, y) {
 }
 
 function rebuildBoard() {
-  initBoard();
+  resetBoardState();
   for (let i = 0; i < currentMove; i++) {
-    const m = history[i];
+    const m = moveHistory[i];
     const flips = getFlips(m.x, m.y, m.player);
     board[m.y][m.x] = m.player;
     flips.forEach(([fx, fy]) => board[fy][fx] = m.player);
@@ -140,17 +285,32 @@ function rebuildBoard() {
 }
 
 function undo() {
-  if (currentMove > 0) {
-    currentMove--;
-    rebuildBoard();
+  if (currentMove > 0) { currentMove--; rebuildBoard(); }
+}
+
+function currentMatchesReference() {
+  if (currentMove > referenceKifu.length) return false;
+  for (let i = 0; i < currentMove; i++) {
+    if (moveHistory[i].x !== referenceKifu[i].x || moveHistory[i].y !== referenceKifu[i].y) return false;
   }
+  return true;
 }
 
 function redo() {
-  if (currentMove < history.length) {
-    currentMove++;
-    rebuildBoard();
+  if (currentMatchesReference() && currentMove < referenceKifu.length) {
+    const ref = referenceKifu[currentMove];
+    if (currentMove < moveHistory.length &&
+        moveHistory[currentMove].x === ref.x && moveHistory[currentMove].y === ref.y) {
+      // moveHistoryの次の手が棋譜と同じ → 通常のredo
+      currentMove++;
+      rebuildBoard();
+    } else {
+      // moveHistoryが尽きているか次の手が棋譜と異なる → 棋譜の手を打つ
+      playMove(ref.x, ref.y);
+    }
+    return;
   }
+  if (currentMove < moveHistory.length) { currentMove++; rebuildBoard(); }
 }
 
 function coordToXY(coord) {
@@ -159,18 +319,13 @@ function coordToXY(coord) {
   return {x, y};
 }
 
-function loadFromURL() {
-  const params = new URLSearchParams(window.location.search);
-  const kifu = params.get("kifu");
-  if (!kifu) return;
-
+function kifuToMoves(kifu) {
   initBoard();
-  for (let i = 0; i < kifu.length; i += 2) {
-    const move = kifu.substring(i, i+2);
-    const {x, y} = coordToXY(move);
+  for (let i = 0; i + 1 < kifu.length; i += 2) {
+    const {x, y} = coordToXY(kifu.substring(i, i + 2));
     const flips = getFlips(x, y, currentPlayer);
     if (flips.length === 0) break;
-    history.push({x, y, player: currentPlayer});
+    moveHistory.push({x, y, player: currentPlayer});
     board[y][x] = currentPlayer;
     flips.forEach(([fx, fy]) => board[fy][fx] = currentPlayer);
     currentPlayer *= -1;
@@ -178,12 +333,41 @@ function loadFromURL() {
   }
 }
 
+function applyKifu() {
+  const kifu = document.getElementById("kifu-input").value.trim().toLowerCase();
+  referenceKifu = [];
+  for (let i = 0; i + 1 < kifu.length; i += 2)
+    referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
+  kifuToMoves(kifu);
+  drawBoard();
+}
+
+function goToBranchPoint() {
+  const len = Math.min(currentMove, referenceKifu.length);
+  let i = 0;
+  while (i < len && moveHistory[i].x === referenceKifu[i].x && moveHistory[i].y === referenceKifu[i].y) i++;
+  currentMove = i;
+  rebuildBoard();
+}
+
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const kifu = params.get("kifu");
+  if (!kifu) return;
+  document.getElementById("kifu-input").value = kifu;
+  referenceKifu = [];
+  for (let i = 0; i + 1 < kifu.length; i += 2)
+    referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
+  kifuToMoves(kifu);
+}
+
 function updateURL() {
-  let kifu = history.slice(0, currentMove)
+  const kifu = moveHistory.slice(0, currentMove)
     .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
     .join("");
   const url = window.location.origin + window.location.pathname + "?kifu=" + kifu;
-  history.replaceState(null, "", url);
+  window.history.replaceState(null, "", url);
+  document.getElementById("kifu-input").value = kifu;
   alert("URLを更新しました");
 }
 
