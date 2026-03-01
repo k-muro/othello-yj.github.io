@@ -517,7 +517,7 @@ window.addEventListener('resize', () => {
 function toggleStones() {
   const isCustom = document.body.classList.toggle('custom-stones');
   localStorage.setItem('othello-stones', isCustom ? 'custom' : 'default');
-  document.getElementById('stone-toggle').textContent = isCustom ? '標準の石' : 'YJの石';
+  document.getElementById('stone-toggle').textContent = isCustom ? '標準の石' : '野獣先輩モード';
 }
 if (localStorage.getItem('othello-stones') === 'custom') {
   document.body.classList.add('custom-stones');
