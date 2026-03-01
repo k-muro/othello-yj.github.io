@@ -343,6 +343,23 @@ hr { opacity: 1; border-color: #d0d7de; }
     flex: 0 0 auto;
   }
 }
+/* ===== タブレット中間サイズ (561px〜767px) ===== */
+/* Bootstrapのsmブレークポイント(container=540px)でボードがはみ出るのを防ぐ */
+@media (min-width: 561px) and (max-width: 767px) {
+  #board {
+    grid-template-columns: 13px repeat(8, 50px) 13px;
+    grid-template-rows: 13px repeat(8, 50px) 13px;
+    gap: 1px;
+    margin: 8px auto;
+    padding: 3px;
+  }
+  .board-label { font-size: 10px; }
+  .cell { width: 50px; height: 50px; }
+  .stone { width: 38px; height: 38px; }
+  .hint { width: 12px; height: 12px; }
+  .stone-num { font-size: 12px; }
+}
+
 /* ===== さらに小さい端末 (横幅360px以下) ===== */
 @media (max-width: 360px) {
   #board {
