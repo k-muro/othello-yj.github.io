@@ -91,10 +91,34 @@ h1 {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden; /* ← 側面をはみ出さないように */
+  box-shadow: 
+    inset 0 -4px 6px rgba(0,0,0,0.25),
+    0 2px 4px rgba(0,0,0,0.3);
 }
-.black { background: radial-gradient(circle at 35% 35%, #666, #111); }
-.white { background: radial-gradient(circle at 35% 35%, #fff, #ccc); }
+
+/* 黒石（よりフラット寄り） */
+.black {
+  background: radial-gradient(circle at 50% 40%, #2a2a2a 0%, #000 75%);
+}
+
+/* 白石（よりはっきり） */
+.white {
+  background: radial-gradient(circle at 50% 40%, #ffffff 0%, #e5e5e5 80%);
+  border: 1px solid rgba(0,0,0,0.15);
+}
+.stone::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -6px;            /* ← 少し下にずらす */
+  height: 16px;            /* ← 厚み */
+  border-radius: 50%;
+  z-index: 0;
+}
+
 .hint {
   width: 14px;
   height: 14px;
