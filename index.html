@@ -494,6 +494,14 @@ hr { opacity: 1; border-color: #d0d7de; }
         </div>
       </div>
 
+      <div class="mt-2 d-flex justify-content-center align-items-center gap-2">
+        <span class="text-secondary small text-nowrap">全読み開始:</span>
+        <input type="number" id="solver-depth" class="form-control form-control-sm text-center"
+               min="6" max="20" value="11" style="width:70px;"
+               onchange="setSolverDepth(this.value)">
+        <span class="text-secondary small text-nowrap">手前</span>
+      </div>
+
       <div id="name-area" class="mt-2 mb-1 d-flex justify-content-center align-items-center gap-2">
         <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('name-inputs').classList.toggle('d-none')">プレイヤー名設定</button>
 

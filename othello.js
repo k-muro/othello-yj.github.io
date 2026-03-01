@@ -8,6 +8,7 @@ const scWhiteName = document.getElementById("sc-white-name");
 const balanceBar = document.getElementById("balance-bar");
 const endgameEl = document.getElementById("endgame");
 
+let solverDepth = parseInt(localStorage.getItem('othello-solver-depth') || '11');
 let moveHistory = [];
 let currentMove = 0;
 let board = [];
@@ -206,7 +207,7 @@ function drawBoard() {
   const total = black + white;
   balanceBar.style.width = (total > 0 ? (black / total * 100) : 50).toFixed(1) + '%';
 
-  if (empty <= 11) {
+  if (empty <= solverDepth) {
     let blackBB = 0n, whiteBB = 0n;
     for (let y = 0; y < 8; y++)
       for (let x = 0; x < 8; x++) {
@@ -328,10 +329,15 @@ function bbPopcount(b) { let n=0; while(b){b&=b-1n;n++;} return n; }
 const BB_POS = new Map();
 for (let i = 0; i < 64; i++) BB_POS.set(1n << BigInt(i), i);
 
-function bbBitPos(lsb) {
-  // lsb は必ず 1bit だけ立ってる想定
-  return BB_POS.get(lsb);
-}
+// 着手順の重みテーブル: コーナー優先、X/Cマス後回し
+const BB_MOVE_WEIGHT = (() => {
+  const w = new Array(64).fill(2);
+  [0, 7, 56, 63].forEach(i => w[i] = 10);          // コーナー
+  [9, 14, 49, 54].forEach(i => w[i] = -2);          // Xマス
+  [1,6,8,15,48,55,57,62].forEach(i => w[i] = -1);   // Cマス
+  return w;
+})();
+
 // アルファベータ探索（返り値: {score: 黒-白, line: [{x,y},...]}}
 function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
   const player   = blackToMove ? blackBB : whiteBB;
@@ -342,27 +348,29 @@ function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
       return { score: bbPopcount(blackBB) - bbPopcount(whiteBB), line: [] };
     return bbSolve(blackBB, whiteBB, !blackToMove, alpha, beta); // パス
   }
+
+  // 合法手を重みでソート（降順）
+  const moveList = [];
+  let m = moves;
+  while (m) {
+    const lsb = m & -m;
+    m ^= lsb;
+    const pos = BB_POS.get(lsb);
+    moveList.push({ pos, lsb, w: BB_MOVE_WEIGHT[pos] });
+  }
+  moveList.sort((a, b) => b.w - a.w);
+
   let best = blackToMove ? -65 : 65, bestLine = [];
-while (moves) {
-  const lsb = moves & -moves;
-  moves ^= lsb;
-
-  const pos = bbBitPos(lsb);          // ★ここだけ置換
-  const flips = bbFlips(pos, player, opponent);
-
-  const np = player | lsb | flips;
-  const no = opponent ^ flips;
-
-  const {score, line} = bbSolve(
-    blackToMove ? np : no,
-    blackToMove ? no : np,
-    !blackToMove,
-    alpha,
-    beta
-  );
-
-  const x = pos & 7;
-  const y = pos >> 3;
+  for (const { pos, lsb } of moveList) {
+    const flips = bbFlips(pos, player, opponent);
+    const np = player | lsb | flips;
+    const no = opponent ^ flips;
+    const {score, line} = bbSolve(
+      blackToMove ? np : no,
+      blackToMove ? no : np,
+      !blackToMove, alpha, beta
+    );
+    const x = pos & 7, y = pos >> 3;
     if (blackToMove) {
       if (score > best) { best = score; bestLine = [{x,y}, ...line]; }
       if (best > alpha) alpha = best;
@@ -561,6 +569,23 @@ function updateURL() {
   alert("URLを更新しました");
 }
 
+function setSolverDepth(val) {
+  const n = Math.min(20, Math.max(6, parseInt(val) || 11));
+  document.getElementById('solver-depth').value = n;
+  if (n !== solverDepth) {
+    if (n >= 15) {
+      alert(`⚠️ 残り ${n} 手からの全読みは現実的な時間では終わらない可能性があります。\nブラウザがフリーズしても一切の責任を負いかねます。それでも続ける場合は自己責任でお願いします。`);
+    } else if (n > 13) {
+      alert(`残り ${n} 手からの全読みは計算量が非常に多くなる場合があります。\n処理中はブラウザが一時的に固まる可能性があります。`);
+    }
+  }
+  solverDepth = n;
+  localStorage.setItem('othello-solver-depth', n);
+  drawBoard();
+}
+
 initBoard();
 loadFromURL();
+// 保存済みの設定をUIに反映
+document.getElementById('solver-depth').value = solverDepth;
 drawBoard();
