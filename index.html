@@ -350,6 +350,26 @@ hr { opacity: 1; border-color: #d0d7de; }
   .stone { width: 24px; height: 24px; }
   .hint { width: 8px; height: 8px; }
 }
+/* ===== YJ石モード ===== */
+.custom-stones .stone.black {
+  background: url('YJB.png') center/cover no-repeat !important;
+  border: none;
+}
+.custom-stones .stone.white {
+  background: url('YJW.png') center/cover no-repeat !important;
+  border: none;
+}
+.custom-stones .stone::before { display: none; }
+.custom-stones .stone { box-shadow: none; }
+.custom-stones .stat-card-black .stat-mini-stone {
+  background: url('YJB.png') center/cover no-repeat !important;
+  box-shadow: none;
+}
+.custom-stones .stat-card-white .stat-mini-stone {
+  background: url('YJW.png') center/cover no-repeat !important;
+  box-shadow: none;
+}
+
 /* ===== スマホ最終上書き（ファイルの一番下に置く） ===== */
 @media (max-width: 560px) {
   #stone-count .stat-card {
@@ -454,9 +474,10 @@ hr { opacity: 1; border-color: #d0d7de; }
 
     <div id="name-area" class="mt-2 d-flex justify-content-center align-items-center gap-2">
       <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('name-inputs').hidden^=1">選手名</button>
+      
       <span id="name-inputs" hidden class="d-flex align-items-center gap-2">
         ⚫<input type="text" id="black-name-input" class="form-control form-control-sm" style="width:90px" placeholder="黒" oninput="updateNames()">
-        ⚪<input type="text" id="white-name-input" class="form-control form-control-sm" style="width:90px" placeholder="白" oninput="updateNames()">
+        ⚪<input type="text" id="white-name-input" class="form-control form-control-sm" style="width:90px" placeholder="白" oninput="updateNames()"><button id="stone-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleStones()">野獣先輩モード</button>
       </span>
     </div>
 
@@ -492,6 +513,16 @@ updateToggleBtn(document.documentElement.getAttribute('data-bs-theme'));
 window.addEventListener('resize', () => {
   updateToggleBtn(document.documentElement.getAttribute('data-bs-theme'));
 });
+
+function toggleStones() {
+  const isCustom = document.body.classList.toggle('custom-stones');
+  localStorage.setItem('othello-stones', isCustom ? 'custom' : 'default');
+  document.getElementById('stone-toggle').textContent = isCustom ? '標準の石' : 'YJの石';
+}
+if (localStorage.getItem('othello-stones') === 'custom') {
+  document.body.classList.add('custom-stones');
+  document.getElementById('stone-toggle').textContent = '標準の石';
+}
 </script>
 <script src="othello.js"></script>
 
