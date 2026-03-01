@@ -3,612 +3,465 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Simple Othello</title>
+<title>Yajuオセロ盤面検討ツール</title>
+<script>
+// CSSロード前にテーマを適用してフラッシュ防止
+(function() {
+  const t = localStorage.getItem('othello-theme') || 'light';
+  document.documentElement.setAttribute('data-bs-theme', t);
+})();
+</script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 body {
-  font-family: sans-serif;
-  text-align: center;
+  font-family: 'M PLUS 1', sans-serif;
+  font-weight: 400;
+  min-height: 100vh;
+  background: #f6f8fa;
 }
+[data-bs-theme="dark"] body {
+  background: #0d1117;
+}
+
+h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.app-card {
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+[data-bs-theme="dark"] .app-card {
+  background: #161b22;
+  border-color: #30363d;
+}
+
+/* ===== Board ===== */
 #board {
   display: grid;
   grid-template-columns: 18px repeat(8, 60px) 18px;
   grid-template-rows: 18px repeat(8, 60px) 18px;
   gap: 2px;
   justify-content: center;
-  margin: 20px auto;
+  margin: 16px auto;
+  background: #1b3a2d;
+  border-radius: 10px;
+  padding: 4px;
+  width: fit-content;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 .board-label {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
-  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+  color: #57606a;
+}
+[data-bs-theme="dark"] .board-label {
+  color: #8b949e;
 }
 .cell {
   position: relative;
   width: 60px;
   height: 60px;
-  background: green;
+  background: #2d6a4f;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background 0.12s;
+}
+.cell:hover {
+  background: #3a7d5e;
 }
 .last-move {
-  box-shadow: inset 0 0 0 2px #ff4444;
+  box-shadow: inset 0 0 0 3px #f97316;
 }
-.hint-ref-black { background: rgba(200, 30, 30, 0.75); }
-.hint-ref-white { background: rgba(255, 80, 80, 0.75); }
+.hint-ref-black { background: rgba(239, 68, 68, 0.75); }
+.hint-ref-white { background: rgba(248, 113, 113, 0.75); }
 .stone {
-  width: 45px;
-  height: 45px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
-.black { background: black; }
-.white { background: white; }
+.black { background: radial-gradient(circle at 35% 35%, #666, #111); }
+.white { background: radial-gradient(circle at 35% 35%, #fff, #ccc); }
 .hint {
   width: 14px;
   height: 14px;
   border-radius: 50%;
 }
-.hint-black { background: rgba(0, 0, 0, 0.35); }
-.hint-white { background: rgba(255, 255, 255, 0.45); }
-.controls {
-  margin-top: 15px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px;
-}
+.hint-black { background: rgba(0, 0, 0, 0.3); }
+.hint-white { background: rgba(255, 255, 255, 0.5); }
+
+/* ===== Stone count ===== */
 #stone-count {
-  font-size: 1.1em;
-  margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
-#kifu-area {
-  margin-top: 12px;
+.stat-cards {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 8px;
 }
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* ← 追加 */
+  align-items: center;
+  padding: 10px 20px;
+  border-radius: 12px;
+  min-width: 76px;
+  gap: 2px;
+  height: 90px;              /* ← 高さを固定 */
+}
+.stat-card-black {
+  background: #1c1c1e;
+  color: #fff;
+}
+[data-bs-theme="dark"] .stat-card-black {
+  background: #2c2c2e;
+}
+.stat-card-white {
+  background: #f0f0f0;
+  color: #111;
+  border: 1px solid #d8d8d8;
+}
+[data-bs-theme="dark"] .stat-card-white {
+  background: #e8e8ea;
+}
+.stat-card-remaining {
+  background: #eaf4ec;
+  color: #1a7f37;
+  border: 1px solid rgba(26, 127, 55, 0.2);
+}
+[data-bs-theme="dark"] .stat-card-remaining {
+  background: rgba(63, 185, 80, 0.1);
+  color: #3fb950;
+  border-color: rgba(63, 185, 80, 0.25);
+}
+.stat-mini-stone {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+.stat-card-black .stat-mini-stone {
+  background: radial-gradient(circle at 35% 35%, #666, #111);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+.stat-card-white .stat-mini-stone {
+  background: radial-gradient(circle at 35% 35%, #fff, #ccc);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.stat-num {
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1;   /* ← これが超重要 */
+}
+.stat-label {
+  font-size: 0.72rem;
+  opacity: 0.75;
+  letter-spacing: 0.04em;
+
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.balance-bar-wrap {
+  width: 240px;
+  height: 5px;
+  background: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+[data-bs-theme="dark"] .balance-bar-wrap {
+  background: #30363d;
+}
+.balance-bar {
+  height: 100%;
+  background: #1c1c1e;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+[data-bs-theme="dark"] .balance-bar {
+  background: #8b949e;
+}
+
+/* ===== Info / Endgame ===== */
+#info {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0969da;
+}
+[data-bs-theme="dark"] #info {
+  color: #58a6ff;
+}
+#endgame {
+  font-size: 0.85rem;
+  color: #1a7f37;
+  background: rgba(26, 127, 55, 0.08);
+  border: 1px solid rgba(26, 127, 55, 0.3);
+  border-radius: 8px;
+  padding: 6px 14px;
+  display: inline-block;
+}
+[data-bs-theme="dark"] #endgame {
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.08);
+  border-color: rgba(63, 185, 80, 0.25);
+}
+#endgame:empty { display: none; }
+
+/* ===== Buttons ===== */
+.btn { border-radius: 8px; font-weight: 500; letter-spacing: 0.03em; }
+.btn-primary {
+  background: #1a7f37;
+  border-color: #1a7f37;
+}
+.btn-primary:hover {
+  background: #2ea043;
+  border-color: #2ea043;
+}
+
+hr { opacity: 1; border-color: #d0d7de; }
+[data-bs-theme="dark"] hr { border-color: #21262d; }
 
 /* ===== スマホ用 (横幅560px以下) ===== */
 @media (max-width: 560px) {
-  h1 {
-    font-size: 1.1em;
-    margin: 8px 0 0;
+
+  .stat-card {
+    padding: 6px 14px;     /* ← 10px 20px → 圧縮 */
+    gap: 1px;              /* ← 2px → 圧縮 */
+    min-width: 64px;       /* 少し細く */
+  }
+
+  .stat-num {
+    font-size: 1.3rem;     /* 1.7rem → 少し縮小 */
+  }
+
+  .stat-mini-stone {
+    width: 18px;
+    height: 18px;
+  }
+
+  .balance-bar-wrap {
+    height: 3px;           /* 5px → 薄く */
+  }
+
+  #stone-count {
+    gap: 4px;              /* 上下の間隔を詰める */
+  }
+
+}
+@media (max-width: 560px) {
+  h1 { font-size: 1.1em; }
+  .app-card {
+    padding: 12px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
   }
   #board {
     grid-template-columns: 13px repeat(8, 38px) 13px;
     grid-template-rows: 13px repeat(8, 38px) 13px;
     gap: 1px;
     margin: 6px auto;
+    padding: 2px;
   }
-  .board-label {
-    font-size: 11px;
+  .board-label { font-size: 10px; }
+  .cell { width: 38px; height: 38px; }
+  .stone { width: 28px; height: 28px; }
+  .hint { width: 9px; height: 9px; }
+}
+@media (max-width: 560px) {
+  /* ヘッダーを絶対1行に */
+  .app-card > .d-flex.justify-content-between {
+    flex-wrap: nowrap;
+    gap: 6px;
   }
-  .cell {
-    width: 38px;
-    height: 38px;
+
+  /* 左のダミー幅を消して横幅を確保 */
+  #header-spacer {
+    display: none;
   }
-  .stone {
-    width: 28px;
-    height: 28px;
+
+  /* タイトルを1行省略表示にする */
+  h1 {
+    flex: 1;
+    min-width: 0;              /* ← text-overflowに必須 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.04em;    /* 少し詰める（任意） */
   }
-  .hint {
-    width: 9px;
-    height: 9px;
-  }
-  .controls button {
-    font-size: 13px;
-    padding: 8px 10px;
-    min-height: 40px;
-  }
-  #stone-count {
-    font-size: 0.95em;
-  }
-  #kifu-area input,
-  #current-kifu-area input {
-    width: 60%;
-    max-width: 220px;
-    box-sizing: border-box;
-  }
-  #kifu-area, #current-kifu-area, #name-area {
-    font-size: 0.9em;
+
+  /* ボタンを固定幅やめて小さく */
+  #theme-toggle {
+    width: auto !important;
+    padding: 4px 8px;
+    white-space: nowrap;
+    flex: 0 0 auto;
   }
 }
-
 /* ===== さらに小さい端末 (横幅360px以下) ===== */
 @media (max-width: 360px) {
   #board {
     grid-template-columns: 11px repeat(8, 33px) 11px;
     grid-template-rows: 11px repeat(8, 33px) 11px;
   }
-  .cell {
-    width: 33px;
-    height: 33px;
+  .cell { width: 33px; height: 33px; }
+  .stone { width: 24px; height: 24px; }
+  .hint { width: 8px; height: 8px; }
+}
+/* ===== スマホ最終上書き（ファイルの一番下に置く） ===== */
+@media (max-width: 560px) {
+  #stone-count .stat-card {
+    height: 70px !important;
+    padding: 6px 14px !important;
+    gap: 1px !important;
+    min-width: 64px !important;
   }
-  .stone {
-    width: 24px;
-    height: 24px;
+
+  #stone-count .stat-mini-stone {
+    width: 18px;
+    height: 18px;
   }
-  .hint {
-    width: 8px;
-    height: 8px;
+
+  #stone-count .stat-num {
+    font-size: 1.3rem;
+    line-height: 1; /* これは重要 */
+  }
+
+  #stone-count .balance-bar-wrap {
+    height: 3px;
+  }
+
+  #stone-count {
+    gap: 4px;
   }
 }
 </style>
 </head>
-<body>
+<body class="text-center py-4">
 
-<h1>Yajuオセロ盤面検討ツール</h1>
-<div id="board"></div>
+<div class="container">
+  <div class="app-card">
 
-<div id="stone-count"></div>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div id="header-spacer"  style="width:88px"></div>
+      <h1 class="mb-0">Yajuオセロ盤面検討ツール</h1>
+      <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" style="width:88px" onclick="toggleTheme()"></button>
+    </div>
 
-<div class="controls">
-  <button onclick="goToFirst()">⏮ 最初</button>
-  <button onclick="undo10()">◀◀ 10手戻</button>
-  <button onclick="undo()">◀ 戻る</button>
-  <button onclick="redo()">▶ 進む</button>
-  <button onclick="redo10()">10手進 ▶▶</button>
-  <button onclick="goToLast()">最後 ⏭</button>
-  <button onclick="goToBranchPoint()">分岐点へ</button>
+    <div id="board"></div>
+
+    <div id="stone-count" class="my-3">
+      <div class="stat-cards">
+        <div class="stat-card stat-card-black">
+          <div class="stat-mini-stone"></div>
+          <div class="stat-num" id="sc-black">2</div>
+          <div class="stat-label" id="sc-black-name">黒</div>
+        </div>
+        <div class="stat-card stat-card-remaining">
+  <div style="height:24px;"></div>  <!-- ダミーで高さ揃え -->
+          <div class="stat-num" id="sc-empty">60</div>
+          <div class="stat-label">残</div>
+        </div>
+        <div class="stat-card stat-card-white">
+          <div class="stat-mini-stone"></div>
+          <div class="stat-num" id="sc-white">2</div>
+          <div class="stat-label" id="sc-white-name">白</div>
+        </div>
+      </div>
+      <div class="balance-bar-wrap">
+        <div class="balance-bar" id="balance-bar" style="width:50%"></div>
+      </div>
+    </div>
+
+    <p id="info" class="mb-2"></p>
+
+    <div class="d-flex flex-wrap justify-content-center gap-1 mb-2">
+      <button class="btn btn-outline-secondary btn-sm" onclick="goToFirst()">⏮ 最初</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="undo10()">◀◀ 10手戻</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="undo()">◀ 戻る</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="redo()">▶ 進む</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="redo10()">10手進 ▶▶</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="goToLast()">最後 ⏭</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="goToBranchPoint()">分岐点へ</button>
+    </div>
+
+    <hr>
+
+    <div id="kifu-area" class="mt-3 mx-auto" style="max-width:480px;">
+      <div class="d-flex gap-2">
+        <input type="text" id="kifu-input" class="form-control form-control-sm" style="min-width:0; flex:1;" placeholder="棋譜を入力 (例: d3c4...)">
+        <button class="btn btn-primary btn-sm text-nowrap" onclick="applyKifu()">棋譜を反映</button>
+      </div>
+    </div>
+
+    <div id="current-kifu-area" class="mt-2 mx-auto" style="max-width:480px;">
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-secondary small text-nowrap">現在の棋譜:</span>
+        <input type="text" id="current-kifu" class="form-control form-control-sm" readonly style="min-width:0; flex:1;">
+        <button class="btn btn-outline-secondary btn-sm text-nowrap" onclick="copyCurrentKifu()">コピー</button>
+      </div>
+    </div>
+
+    <div id="name-area" class="mt-2 d-flex justify-content-center align-items-center gap-2">
+      <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('name-inputs').hidden^=1">選手名</button>
+      <span id="name-inputs" hidden class="d-flex align-items-center gap-2">
+        ⚫<input type="text" id="black-name-input" class="form-control form-control-sm" style="width:90px" placeholder="黒" oninput="updateNames()">
+        ⚪<input type="text" id="white-name-input" class="form-control form-control-sm" style="width:90px" placeholder="白" oninput="updateNames()">
+      </span>
+    </div>
+
+    <p id="endgame" class="mt-3 mb-0"></p>
+
+  </div>
 </div>
-
-<div id="kifu-area">
-  <input type="text" id="kifu-input" placeholder="棋譜を入力 (例: d3c4...)" size="40">
-  <button onclick="applyKifu()">棋譜を反映</button>
-</div>
-
-<div id="current-kifu-area" style="margin-top:8px;">
-  現在の棋譜:
-  <input type="text" id="current-kifu" readonly size="40" style="background:#f5f5f5; color:#333;">
-  <button onclick="copyCurrentKifu()">コピー</button>
-</div>
-
-<div id="name-area" style="margin-top:10px;">
-  <button onclick="document.getElementById('name-inputs').hidden^=1">選手名</button>
-  <span id="name-inputs" hidden>
-    ⚫<input type="text" id="black-name-input" size="10" placeholder="黒" oninput="updateNames()">
-    ⚪<input type="text" id="white-name-input" size="10" placeholder="白" oninput="updateNames()">
-  </span>
-</div>
-
-<p id="info"></p>
-<p id="endgame"></p>
 
 <script>
-const boardElement = document.getElementById("board");
-const info = document.getElementById("info");
-const stoneCount = document.getElementById("stone-count");
-const endgameEl = document.getElementById("endgame");
-
-let moveHistory = [];
-let currentMove = 0;
-let board = [];
-let currentPlayer = 1; // 1=黒, -1=白
-let referenceKifu = []; // 最後に「反映」した棋譜
-let blackName = "黒";
-let whiteName = "白";
-let _skipDraw = false;
-
-function resetBoardState() {
-  board = Array(8).fill().map(() => Array(8).fill(0));
-  board[3][3] = -1;
-  board[4][4] = -1;
-  board[3][4] = 1;
-  board[4][3] = 1;
-  currentPlayer = 1;
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-bs-theme', next);
+  localStorage.setItem('othello-theme', next);
+  updateToggleBtn(next);
 }
+function updateToggleBtn(theme) {
+  const btn = document.getElementById('theme-toggle');
 
-function initBoard() {
-  resetBoardState();
-  moveHistory = [];
-  currentMove = 0;
-}
-
-function getValidMoves(player) {
-  const moves = [];
-  for (let y = 0; y < 8; y++) {
-    for (let x = 0; x < 8; x++) {
-      if (getFlips(x, y, player).length > 0) moves.push([x, y]);
-    }
-  }
-  return moves;
-}
-
-function drawBoard() {
-  if (_skipDraw) return;
-  boardElement.innerHTML = "";
-  const validMoves = getValidMoves(currentPlayer);
-  const validSet = new Set(validMoves.map(([x, y]) => `${x},${y}`));
-  const lastMove = currentMove > 0 ? moveHistory[currentMove - 1] : null;
-  const nextRef = currentMatchesReference() && currentMove < referenceKifu.length
-    ? referenceKifu[currentMove] : null;
-  const nextRefKey = nextRef ? `${nextRef.x},${nextRef.y}` : null;
-
-  const makeLabel = (text) => {
-    const lbl = document.createElement("div");
-    lbl.className = "board-label";
-    lbl.textContent = text;
-    return lbl;
-  };
-
-  // 上段: コーナー + a-h + コーナー
-  boardElement.appendChild(document.createElement("div"));
-  for (let x = 0; x < 8; x++) boardElement.appendChild(makeLabel(String.fromCharCode(97 + x)));
-  boardElement.appendChild(document.createElement("div"));
-
-  for (let y = 0; y < 8; y++) {
-    boardElement.appendChild(makeLabel(y + 1)); // 左ラベル
-
-    for (let x = 0; x < 8; x++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      cell.onclick = () => playMove(x, y);
-      if (lastMove && lastMove.x === x && lastMove.y === y) cell.classList.add("last-move");
-      if (board[y][x] !== 0) {
-        const stone = document.createElement("div");
-        stone.className = "stone " + (board[y][x] === 1 ? "black" : "white");
-        cell.appendChild(stone);
-      } else if (validSet.has(`${x},${y}`)) {
-        const hint = document.createElement("div");
-        const isNextRef = `${x},${y}` === nextRefKey;
-        hint.className = "hint " + (isNextRef
-          ? (currentPlayer === 1 ? "hint-ref-black" : "hint-ref-white")
-          : (currentPlayer === 1 ? "hint-black" : "hint-white"));
-        cell.appendChild(hint);
-      }
-      boardElement.appendChild(cell);
-    }
-    boardElement.appendChild(makeLabel(y + 1)); // 右ラベル
-  }
-
-  // 下段: コーナー + a-h + コーナー
-  boardElement.appendChild(document.createElement("div"));
-  for (let x = 0; x < 8; x++) boardElement.appendChild(makeLabel(String.fromCharCode(97 + x)));
-  boardElement.appendChild(document.createElement("div"));
-
-  let black = 0, white = 0;
-  for (let y = 0; y < 8; y++)
-    for (let x = 0; x < 8; x++) {
-      if (board[y][x] === 1) black++;
-      else if (board[y][x] === -1) white++;
-    }
-  const empty = 64 - black - white;
-  stoneCount.textContent = `⚫ ${blackName}: ${black}　⚪ ${whiteName}: ${white}　残: ${empty}`;
-
-  if (empty <= 11) {
-    let blackBB = 0n, whiteBB = 0n;
-    for (let y = 0; y < 8; y++)
-      for (let x = 0; x < 8; x++) {
-        if (board[y][x] === 1)  blackBB |= 1n << BigInt(y * 8 + x);
-        else if (board[y][x] === -1) whiteBB |= 1n << BigInt(y * 8 + x);
-      }
-    const {score, line} = bbSolve(blackBB, whiteBB, currentPlayer === 1, -65, 65);
-    const lineStr = line.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join(" ");
-    let result;
-    if (score > 0)      result = `黒が +${score} で勝ち`;
-    else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
-    else                result = `引き分け`;
-    endgameEl.textContent = `最善手を読み切り: ${result}　(${lineStr})`;
+  const isMobile = window.matchMedia("(max-width: 560px)").matches;
+  if (isMobile) {
+    // スマホはアイコンだけ（省スペース）
+    btn.textContent = theme === 'dark' ? '☀' : '🌙';
   } else {
-    endgameEl.textContent = "";
+    // PCは文字付き
+    btn.textContent = theme === 'dark' ? '☀ ライト' : '🌙 ダーク';
   }
 
-  const kifu = moveHistory.slice(0, currentMove)
-    .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
-    .join("");
-  document.getElementById("current-kifu").value = kifu;
-
-  info.textContent = currentPlayer === 1 ? `${blackName}（⚫）の番` : `${whiteName}（⚪）の番`;
+  // ついでにツールチップで意味を残す
+  btn.title = theme === 'dark' ? 'ライトに切替' : 'ダークに切替';
 }
-
-function inBounds(x, y) {
-  return x >= 0 && x < 8 && y >= 0 && y < 8;
-}
-
-// ===== ビットボード終盤ソルバー =====
-// ビット配置: bit(y*8+x) → 座標(x,y)  a1=bit0, h1=bit7, a8=bit56, h8=bit63
-const BB_ALL   = 0xFFFFFFFFFFFFFFFFn;
-const BB_NOT_A = 0xFEFEFEFEFEFEFEFEn; // 列aを除く（左シフト後のh→aラップ防止）
-const BB_NOT_H = 0x7F7F7F7F7F7F7F7Fn; // 列hを除く（右シフト後のa→hラップ防止）
-
-// player が置ける合法手のビットボードを返す
-function bbMoves(player, opponent) {
-  const empty = ~(player | opponent) & BB_ALL;
-  let moves = 0n;
-
-  // 8方向のシフトとマスク
-  const dirs = [
-    {shift: 1n,  mask: BB_NOT_A}, // E (<<1)
-    {shift:-1n,  mask: BB_NOT_H}, // W (>>1)
-    {shift: 8n,  mask: BB_ALL},   // S (<<8)
-    {shift:-8n,  mask: BB_ALL},   // N (>>8)
-    {shift: 9n,  mask: BB_NOT_A}, // SE (<<9)
-    {shift:-9n,  mask: BB_NOT_H}, // NW (>>9)
-    {shift: 7n,  mask: BB_NOT_H}, // SW (<<7)
-    {shift:-7n,  mask: BB_NOT_A}, // NE (>>7)
-  ];
-
-  for (const {shift, mask} of dirs) {
-    let t;
-    if (shift > 0n) {
-      t = ((player << shift) & mask) & opponent;
-      // 最大6枚まで挟みうるので6回伸ばす
-      t |= ((t << shift) & mask) & opponent;
-      t |= ((t << shift) & mask) & opponent;
-      t |= ((t << shift) & mask) & opponent;
-      t |= ((t << shift) & mask) & opponent;
-      t |= ((t << shift) & mask) & opponent;
-      moves |= ((t << shift) & mask) & empty;
-    } else {
-      const r = -shift;
-      t = ((player >> r) & mask) & opponent;
-      t |= ((t >> r) & mask) & opponent;
-      t |= ((t >> r) & mask) & opponent;
-      t |= ((t >> r) & mask) & opponent;
-      t |= ((t >> r) & mask) & opponent;
-      t |= ((t >> r) & mask) & opponent;
-      moves |= ((t >> r) & mask) & empty;
-    }
-  }
-  return moves;
-}
-// pos に player が置いたときにひっくり返る相手石のビットボードを返す
-function bbFlips(pos, player, opponent) {
-  const sq = 1n << BigInt(pos);
-  let f = 0n;
-  { let g=(sq<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; if((g<<1n)&BB_NOT_A&player) f|=g; }
-  { let g=(sq>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; if((g>>1n)&BB_NOT_H&player) f|=g; }
-  { let g=(sq<<8n)&opponent; g|=(g<<8n)&opponent; g|=(g<<8n)&opponent; g|=(g<<8n)&opponent; g|=(g<<8n)&opponent; g|=(g<<8n)&opponent; if((g<<8n)&player) f|=g; }
-  { let g=(sq>>8n)&opponent; g|=(g>>8n)&opponent; g|=(g>>8n)&opponent; g|=(g>>8n)&opponent; g|=(g>>8n)&opponent; g|=(g>>8n)&opponent; if((g>>8n)&player) f|=g; }
-  { let g=(sq>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; if((g>>7n)&BB_NOT_A&player) f|=g; }
-  { let g=(sq<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; if((g<<7n)&BB_NOT_H&player) f|=g; }
-  { let g=(sq<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; if((g<<9n)&BB_NOT_A&player) f|=g; }
-  { let g=(sq>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; if((g>>9n)&BB_NOT_H&player) f|=g; }
-  return f;
-}
-
-function bbPopcount(b) { let n=0; while(b){b&=b-1n;n++;} return n; }
-// 1bit(1n<<i) -> i の逆引きテーブル
-const BB_POS = new Map();
-for (let i = 0; i < 64; i++) BB_POS.set(1n << BigInt(i), i);
-
-function bbBitPos(lsb) {
-  // lsb は必ず 1bit だけ立ってる想定
-  return BB_POS.get(lsb);
-}
-// アルファベータ探索（返り値: {score: 黒-白, line: [{x,y},...]}}
-function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
-  const player   = blackToMove ? blackBB : whiteBB;
-  const opponent = blackToMove ? whiteBB : blackBB;
-  let moves = bbMoves(player, opponent);
-  if (!moves) {
-    if (!bbMoves(opponent, player))
-      return { score: bbPopcount(blackBB) - bbPopcount(whiteBB), line: [] };
-    return bbSolve(blackBB, whiteBB, !blackToMove, alpha, beta); // パス
-  }
-  let best = blackToMove ? -65 : 65, bestLine = [];
-while (moves) {
-  const lsb = moves & -moves;
-  moves ^= lsb;
-
-  const pos = bbBitPos(lsb);          // ★ここだけ置換
-  const flips = bbFlips(pos, player, opponent);
-
-  const np = player | lsb | flips;
-  const no = opponent ^ flips;
-
-  const {score, line} = bbSolve(
-    blackToMove ? np : no,
-    blackToMove ? no : np,
-    !blackToMove,
-    alpha,
-    beta
-  );
-
-  const x = pos & 7;
-  const y = pos >> 3;
-    if (blackToMove) {
-      if (score > best) { best = score; bestLine = [{x,y}, ...line]; }
-      if (best > alpha) alpha = best;
-    } else {
-      if (score < best) { best = score; bestLine = [{x,y}, ...line]; }
-      if (best < beta)  beta  = best;
-    }
-    if (alpha >= beta) break;
-  }
-  return { score: best, line: bestLine };
-}
-
-function getFlips(x, y, player) {
-  if (board[y][x] !== 0) return [];
-  const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
-  let flips = [];
-  for (let [dx, dy] of dirs) {
-    let nx = x + dx;
-    let ny = y + dy;
-    let temp = [];
-    while (inBounds(nx, ny) && board[ny][nx] === -player) {
-      temp.push([nx, ny]);
-      nx += dx;
-      ny += dy;
-    }
-    if (inBounds(nx, ny) && board[ny][nx] === player && temp.length > 0) {
-      flips = flips.concat(temp);
-    }
-  }
-  return flips;
-}
-
-// 相手が置けない場合は手番をそのままにする（パス）
-function applyPassIfNeeded() {
-  if (getValidMoves(currentPlayer).length === 0 && getValidMoves(-currentPlayer).length > 0)
-    currentPlayer *= -1;
-}
-
-function playMove(x, y) {
-  const flips = getFlips(x, y, currentPlayer);
-  if (flips.length === 0) return;
-
-  moveHistory = moveHistory.slice(0, currentMove);
-  moveHistory.push({x, y, player: currentPlayer});
-  currentMove++;
-
-  board[y][x] = currentPlayer;
-  flips.forEach(([fx, fy]) => board[fy][fx] = currentPlayer);
-  currentPlayer *= -1;
-  applyPassIfNeeded();
-
-  drawBoard();
-}
-
-function rebuildBoard() {
-  resetBoardState();
-  for (let i = 0; i < currentMove; i++) {
-    const m = moveHistory[i];
-    const flips = getFlips(m.x, m.y, m.player);
-    board[m.y][m.x] = m.player;
-    flips.forEach(([fx, fy]) => board[fy][fx] = m.player);
-    currentPlayer = -m.player;
-  }
-  applyPassIfNeeded();
-  drawBoard();
-}
-
-function undo() {
-  if (currentMove > 0) { currentMove--; rebuildBoard(); }
-}
-
-function undo10() {
-  currentMove = Math.max(0, currentMove - 10);
-  rebuildBoard();
-}
-
-function goToFirst() {
-  currentMove = 0;
-  rebuildBoard();
-}
-
-function redo10() {
-  _skipDraw = true;
-  for (let i = 0; i < 10; i++) redo();
-  _skipDraw = false;
-  drawBoard();
-}
-
-function goToLast() {
-  _skipDraw = true;
-  let prev;
-  do {
-    prev = currentMove;
-    redo();
-  } while (currentMove !== prev);
-  _skipDraw = false;
-  drawBoard();
-}
-
-function currentMatchesReference() {
-  if (currentMove > referenceKifu.length) return false;
-  for (let i = 0; i < currentMove; i++) {
-    if (moveHistory[i].x !== referenceKifu[i].x || moveHistory[i].y !== referenceKifu[i].y) return false;
-  }
-  return true;
-}
-
-function redo() {
-  if (currentMatchesReference() && currentMove < referenceKifu.length) {
-    const ref = referenceKifu[currentMove];
-    if (currentMove < moveHistory.length &&
-        moveHistory[currentMove].x === ref.x && moveHistory[currentMove].y === ref.y) {
-      // moveHistoryの次の手が棋譜と同じ → 通常のredo
-      currentMove++;
-      rebuildBoard();
-    } else {
-      // moveHistoryが尽きているか次の手が棋譜と異なる → 棋譜の手を打つ
-      playMove(ref.x, ref.y);
-    }
-    return;
-  }
-  if (currentMove < moveHistory.length) { currentMove++; rebuildBoard(); }
-}
-
-function coordToXY(coord) {
-  const x = coord.charCodeAt(0) - 97;
-  const y = parseInt(coord[1]) - 1;
-  return {x, y};
-}
-
-function kifuToMoves(kifu) {
-  initBoard();
-  for (let i = 0; i + 1 < kifu.length; i += 2) {
-    const {x, y} = coordToXY(kifu.substring(i, i + 2));
-    const flips = getFlips(x, y, currentPlayer);
-    if (flips.length === 0) break;
-    moveHistory.push({x, y, player: currentPlayer});
-    board[y][x] = currentPlayer;
-    flips.forEach(([fx, fy]) => board[fy][fx] = currentPlayer);
-    currentPlayer *= -1;
-    applyPassIfNeeded();
-    currentMove++;
-  }
-}
-
-function applyKifu() {
-  const kifu = document.getElementById("kifu-input").value.trim().toLowerCase();
-  referenceKifu = [];
-  for (let i = 0; i + 1 < kifu.length; i += 2)
-    referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
-  kifuToMoves(kifu);
-  drawBoard();
-}
-
-function goToBranchPoint() {
-  const len = Math.min(currentMove, referenceKifu.length);
-  let i = 0;
-  while (i < len && moveHistory[i].x === referenceKifu[i].x && moveHistory[i].y === referenceKifu[i].y) i++;
-  currentMove = i;
-  rebuildBoard();
-}
-
-function copyCurrentKifu() {
-  const val = document.getElementById("current-kifu").value;
-  navigator.clipboard.writeText(val);
-}
-
-function updateNames() {
-  blackName = document.getElementById("black-name-input").value || "黒";
-  whiteName = document.getElementById("white-name-input").value || "白";
-  drawBoard();
-}
-
-function loadFromURL() {
-  const params = new URLSearchParams(window.location.search);
-  blackName = params.get("black") || "黒";
-  whiteName = params.get("white") || "白";
-  if (params.get("black")) document.getElementById("black-name-input").value = params.get("black");
-  if (params.get("white")) document.getElementById("white-name-input").value = params.get("white");
-  const kifu = params.get("kifu");
-  if (!kifu) return;
-  document.getElementById("kifu-input").value = kifu;
-  referenceKifu = [];
-  for (let i = 0; i + 1 < kifu.length; i += 2)
-    referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
-  kifuToMoves(kifu);
-}
-
-function updateURL() {
-  const kifu = moveHistory.slice(0, currentMove)
-    .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
-    .join("");
-  const url = window.location.origin + window.location.pathname + "?kifu=" + kifu;
-  window.history.replaceState(null, "", url);
-  document.getElementById("kifu-input").value = kifu;
-  alert("URLを更新しました");
-}
-
-initBoard();
-loadFromURL();
-drawBoard();
+updateToggleBtn(document.documentElement.getAttribute('data-bs-theme'));
+window.addEventListener('resize', () => {
+  updateToggleBtn(document.documentElement.getAttribute('data-bs-theme'));
+});
 </script>
+<script src="othello.js"></script>
 
 </body>
 </html>

@@ -1,0 +1,549 @@
+const boardElement = document.getElementById("board");
+const info = document.getElementById("info");
+const scBlack    = document.getElementById("sc-black");
+const scWhite    = document.getElementById("sc-white");
+const scEmpty    = document.getElementById("sc-empty");
+const scBlackName = document.getElementById("sc-black-name");
+const scWhiteName = document.getElementById("sc-white-name");
+const balanceBar = document.getElementById("balance-bar");
+const endgameEl = document.getElementById("endgame");
+
+let moveHistory = [];
+let currentMove = 0;
+let board = [];
+let currentPlayer = 1; // 1=黒, -1=白
+let referenceKifu = []; // 最後に「反映」した棋譜
+let blackName = "黒";
+let whiteName = "白";
+let _skipDraw = false;
+function showGameResult() {
+  let black = 0;
+  let white = 0;
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      if (board[r][c] === 1) black++;
+      else if (board[r][c] === -1) white++;
+    }
+  }
+
+  const bName = document.getElementById("sc-black-name").textContent;
+  const wName = document.getElementById("sc-white-name").textContent;
+
+  const info = document.getElementById("info");
+  const endgame = document.getElementById("endgame");
+
+  if (black > white) {
+    info.textContent = `⚫ ${bName} の勝ち！`;
+  } else if (white > black) {
+    info.textContent = `⚪ ${wName} の勝ち！`;
+  } else {
+    info.textContent = `⚫⚪ 引き分け！`;
+  }
+
+  endgame.textContent = `最終結果：⚫ ${black} - ⚪ ${white}`;
+}
+function checkGameEnd() {
+  const blackMoves = getValidMoves(1);   // 黒
+  const whiteMoves = getValidMoves(-1);  // 白
+
+  if (blackMoves.length === 0 && whiteMoves.length === 0) {
+    // 終局
+    showGameResult();
+    return true;
+  }
+
+  return false;
+}
+function shortenName(name, maxLength = 10) {
+  if (!name) return "";
+
+  // 全角半角をざっくり均等扱いで安全にカット
+  const chars = Array.from(name);
+
+  if (chars.length <= maxLength) return name;
+
+  return chars.slice(0, maxLength).join("") + "…";
+}
+function updateNames() {
+  const bInput = document.getElementById("black-name-input");
+  const wInput = document.getElementById("white-name-input");
+
+  const bRaw = bInput.value.trim();
+  const wRaw = wInput.value.trim();
+
+  const bShort = shortenName(bRaw, 8);  // ←ここで最大文字数調整
+  const wShort = shortenName(wRaw, 8);
+
+  document.getElementById("sc-black-name").textContent = bShort || "黒";
+  document.getElementById("sc-white-name").textContent = wShort || "白";
+
+  localStorage.setItem("othello-black-name", bRaw);
+  localStorage.setItem("othello-white-name", wRaw);
+}
+function updateStoneCount() {
+  // board はあなたの盤面配列（グローバル or state）に合わせて参照してください
+  let black = 0, white = 0;
+
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const v = board[r][c];
+      if (v === 1) black++;
+      else if (v === -1) white++;
+    }
+  }
+
+  const empty = 64 - black - white;
+
+  const elB = document.getElementById("sc-black");
+  const elW = document.getElementById("sc-white");
+  const elE = document.getElementById("sc-empty");
+  if (elB) elB.textContent = String(black);
+  if (elW) elW.textContent = String(white);
+  if (elE) elE.textContent = String(empty);
+
+  // バランスバー（黒の比率）
+  const bar = document.getElementById("balance-bar");
+  if (bar) {
+    const total = black + white;
+    const pct = total === 0 ? 50 : (black / total) * 100;
+    bar.style.width = `${pct}%`;
+  }
+}
+function resetBoardState() {
+  board = Array(8).fill().map(() => Array(8).fill(0));
+  board[3][3] = -1;
+  board[4][4] = -1;
+  board[3][4] = 1;
+  board[4][3] = 1;
+  currentPlayer = 1;
+}
+
+function initBoard() {
+  resetBoardState();
+  moveHistory = [];
+  currentMove = 0;
+}
+
+function getValidMoves(player) {
+  const moves = [];
+  for (let y = 0; y < 8; y++) {
+    for (let x = 0; x < 8; x++) {
+      if (getFlips(x, y, player).length > 0) moves.push([x, y]);
+    }
+  }
+  return moves;
+}
+
+function drawBoard() {
+  if (_skipDraw) return;
+  boardElement.innerHTML = "";
+  const validMoves = getValidMoves(currentPlayer);
+  const validSet = new Set(validMoves.map(([x, y]) => `${x},${y}`));
+  const lastMove = currentMove > 0 ? moveHistory[currentMove - 1] : null;
+  const nextRef = currentMatchesReference() && currentMove < referenceKifu.length
+    ? referenceKifu[currentMove] : null;
+  const nextRefKey = nextRef ? `${nextRef.x},${nextRef.y}` : null;
+
+  const makeLabel = (text) => {
+    const lbl = document.createElement("div");
+    lbl.className = "board-label";
+    lbl.textContent = text;
+    return lbl;
+  };
+
+  // 上段: コーナー + a-h + コーナー
+  boardElement.appendChild(document.createElement("div"));
+  for (let x = 0; x < 8; x++) boardElement.appendChild(makeLabel(String.fromCharCode(97 + x)));
+  boardElement.appendChild(document.createElement("div"));
+
+  for (let y = 0; y < 8; y++) {
+    boardElement.appendChild(makeLabel(y + 1)); // 左ラベル
+
+    for (let x = 0; x < 8; x++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.onclick = () => playMove(x, y);
+      if (lastMove && lastMove.x === x && lastMove.y === y) cell.classList.add("last-move");
+      if (board[y][x] !== 0) {
+        const stone = document.createElement("div");
+        stone.className = "stone " + (board[y][x] === 1 ? "black" : "white");
+        cell.appendChild(stone);
+      } else if (validSet.has(`${x},${y}`)) {
+        const hint = document.createElement("div");
+        const isNextRef = `${x},${y}` === nextRefKey;
+        hint.className = "hint " + (isNextRef
+          ? (currentPlayer === 1 ? "hint-ref-black" : "hint-ref-white")
+          : (currentPlayer === 1 ? "hint-black" : "hint-white"));
+        cell.appendChild(hint);
+      }
+      boardElement.appendChild(cell);
+    }
+    boardElement.appendChild(makeLabel(y + 1)); // 右ラベル
+  }
+
+  // 下段: コーナー + a-h + コーナー
+  boardElement.appendChild(document.createElement("div"));
+  for (let x = 0; x < 8; x++) boardElement.appendChild(makeLabel(String.fromCharCode(97 + x)));
+  boardElement.appendChild(document.createElement("div"));
+
+  let black = 0, white = 0;
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++) {
+      if (board[y][x] === 1) black++;
+      else if (board[y][x] === -1) white++;
+    }
+  const empty = 64 - black - white;
+  scBlack.textContent = black;
+  scWhite.textContent = white;
+  scEmpty.textContent = empty;
+  scBlackName.textContent = blackName;
+  scWhiteName.textContent = whiteName;
+  const total = black + white;
+  balanceBar.style.width = (total > 0 ? (black / total * 100) : 50).toFixed(1) + '%';
+
+  if (empty <= 11) {
+    let blackBB = 0n, whiteBB = 0n;
+    for (let y = 0; y < 8; y++)
+      for (let x = 0; x < 8; x++) {
+        if (board[y][x] === 1)  blackBB |= 1n << BigInt(y * 8 + x);
+        else if (board[y][x] === -1) whiteBB |= 1n << BigInt(y * 8 + x);
+      }
+    const {score, line} = bbSolve(blackBB, whiteBB, currentPlayer === 1, -65, 65);
+    const lineStr = line.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join(" ");
+    let result;
+    if (score > 0)      result = `黒が +${score} で勝ち`;
+    else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
+    else                result = `引き分け`;
+    endgameEl.textContent = `最善手を読み切り: ${result}　(${lineStr})`;
+  } else {
+    endgameEl.textContent = "";
+  }
+
+  const kifu = moveHistory.slice(0, currentMove)
+    .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
+    .join("");
+  document.getElementById("current-kifu").value = kifu;
+
+  // ===== 終局チェック =====
+const blackMoves = getValidMoves(1);
+const whiteMoves = getValidMoves(-1);
+
+if (blackMoves.length === 0 && whiteMoves.length === 0) {
+  showGameResult();
+} else {
+  info.textContent = currentPlayer === 1
+    ? `${blackName}（⚫）の番`
+    : `${whiteName}（⚪）の番`;
+}
+}
+
+function inBounds(x, y) {
+  return x >= 0 && x < 8 && y >= 0 && y < 8;
+}
+
+// ===== ビットボード終盤ソルバー =====
+// ビット配置: bit(y*8+x) → 座標(x,y)  a1=bit0, h1=bit7, a8=bit56, h8=bit63
+const BB_ALL   = 0xFFFFFFFFFFFFFFFFn;
+const BB_NOT_A = 0xFEFEFEFEFEFEFEFEn; // 列aを除く（左シフト後のh→aラップ防止）
+const BB_NOT_H = 0x7F7F7F7F7F7F7F7Fn; // 列hを除く（右シフト後のa→hラップ防止）
+
+// player が置ける合法手のビットボードを返す
+function bbMoves(player, opponent) {
+  const empty = ~(player | opponent) & BB_ALL;
+  let moves = 0n;
+
+  // 8方向のシフトとマスク
+  const dirs = [
+    {shift: 1n,  mask: BB_NOT_A}, // E (<<1)
+    {shift:-1n,  mask: BB_NOT_H}, // W (>>1)
+    {shift: 8n,  mask: BB_ALL},   // S (<<8)
+    {shift:-8n,  mask: BB_ALL},   // N (>>8)
+    {shift: 9n,  mask: BB_NOT_A}, // SE (<<9)
+    {shift:-9n,  mask: BB_NOT_H}, // NW (>>9)
+    {shift: 7n,  mask: BB_NOT_H}, // SW (<<7)
+    {shift:-7n,  mask: BB_NOT_A}, // NE (>>7)
+  ];
+
+  for (const {shift, mask} of dirs) {
+    let t;
+    if (shift > 0n) {
+      t = ((player << shift) & mask) & opponent;
+      // 最大6枚まで挟みうるので6回伸ばす
+      t |= ((t << shift) & mask) & opponent;
+      t |= ((t << shift) & mask) & opponent;
+      t |= ((t << shift) & mask) & opponent;
+      t |= ((t << shift) & mask) & opponent;
+      t |= ((t << shift) & mask) & opponent;
+      moves |= ((t << shift) & mask) & empty;
+    } else {
+      const r = -shift;
+      t = ((player >> r) & mask) & opponent;
+      t |= ((t >> r) & mask) & opponent;
+      t |= ((t >> r) & mask) & opponent;
+      t |= ((t >> r) & mask) & opponent;
+      t |= ((t >> r) & mask) & opponent;
+      t |= ((t >> r) & mask) & opponent;
+      moves |= ((t >> r) & mask) & empty;
+    }
+  }
+  
+  return moves;
+
+}
+// pos に player が置いたときにひっくり返る相手石のビットボードを返す
+function bbFlips(pos, player, opponent) {
+  const sq = 1n << BigInt(pos);
+  let f = 0n;
+  { let g=(sq<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; g|=(g<<1n)&BB_NOT_A&opponent; if((g<<1n)&BB_NOT_A&player) f|=g; }
+  { let g=(sq>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; g|=(g>>1n)&BB_NOT_H&opponent; if((g>>1n)&BB_NOT_H&player) f|=g; }
+  { let g=(sq<<8n)&opponent; g|=(g<<8n)&opponent; g|=(g<<8n)&opponent; g|=(g<<8n)&opponent; g|=(g<<8n)&opponent; g|=(g<<8n)&opponent; if((g<<8n)&player) f|=g; }
+  { let g=(sq>>8n)&opponent; g|=(g>>8n)&opponent; g|=(g>>8n)&opponent; g|=(g>>8n)&opponent; g|=(g>>8n)&opponent; g|=(g>>8n)&opponent; if((g>>8n)&player) f|=g; }
+  { let g=(sq>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; g|=(g>>7n)&BB_NOT_A&opponent; if((g>>7n)&BB_NOT_A&player) f|=g; }
+  { let g=(sq<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; g|=(g<<7n)&BB_NOT_H&opponent; if((g<<7n)&BB_NOT_H&player) f|=g; }
+  { let g=(sq<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; g|=(g<<9n)&BB_NOT_A&opponent; if((g<<9n)&BB_NOT_A&player) f|=g; }
+  { let g=(sq>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; g|=(g>>9n)&BB_NOT_H&opponent; if((g>>9n)&BB_NOT_H&player) f|=g; }
+  return f;
+}
+
+function bbPopcount(b) { let n=0; while(b){b&=b-1n;n++;} return n; }
+// 1bit(1n<<i) -> i の逆引きテーブル
+const BB_POS = new Map();
+for (let i = 0; i < 64; i++) BB_POS.set(1n << BigInt(i), i);
+
+function bbBitPos(lsb) {
+  // lsb は必ず 1bit だけ立ってる想定
+  return BB_POS.get(lsb);
+}
+// アルファベータ探索（返り値: {score: 黒-白, line: [{x,y},...]}}
+function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
+  const player   = blackToMove ? blackBB : whiteBB;
+  const opponent = blackToMove ? whiteBB : blackBB;
+  let moves = bbMoves(player, opponent);
+  if (!moves) {
+    if (!bbMoves(opponent, player))
+      return { score: bbPopcount(blackBB) - bbPopcount(whiteBB), line: [] };
+    return bbSolve(blackBB, whiteBB, !blackToMove, alpha, beta); // パス
+  }
+  let best = blackToMove ? -65 : 65, bestLine = [];
+while (moves) {
+  const lsb = moves & -moves;
+  moves ^= lsb;
+
+  const pos = bbBitPos(lsb);          // ★ここだけ置換
+  const flips = bbFlips(pos, player, opponent);
+
+  const np = player | lsb | flips;
+  const no = opponent ^ flips;
+
+  const {score, line} = bbSolve(
+    blackToMove ? np : no,
+    blackToMove ? no : np,
+    !blackToMove,
+    alpha,
+    beta
+  );
+
+  const x = pos & 7;
+  const y = pos >> 3;
+    if (blackToMove) {
+      if (score > best) { best = score; bestLine = [{x,y}, ...line]; }
+      if (best > alpha) alpha = best;
+    } else {
+      if (score < best) { best = score; bestLine = [{x,y}, ...line]; }
+      if (best < beta)  beta  = best;
+    }
+    if (alpha >= beta) break;
+  }
+  return { score: best, line: bestLine };
+}
+
+function getFlips(x, y, player) {
+  if (board[y][x] !== 0) return [];
+  const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+  let flips = [];
+  for (let [dx, dy] of dirs) {
+    let nx = x + dx;
+    let ny = y + dy;
+    let temp = [];
+    while (inBounds(nx, ny) && board[ny][nx] === -player) {
+      temp.push([nx, ny]);
+      nx += dx;
+      ny += dy;
+    }
+    if (inBounds(nx, ny) && board[ny][nx] === player && temp.length > 0) {
+      flips = flips.concat(temp);
+    }
+  }
+  return flips;
+}
+
+// 相手が置けない場合は手番をそのままにする（パス）
+function applyPassIfNeeded() {
+  if (getValidMoves(currentPlayer).length === 0 && getValidMoves(-currentPlayer).length > 0)
+    currentPlayer *= -1;
+}
+
+function playMove(x, y) {
+  const flips = getFlips(x, y, currentPlayer);
+  if (flips.length === 0) return;
+
+  moveHistory = moveHistory.slice(0, currentMove);
+  moveHistory.push({x, y, player: currentPlayer});
+  currentMove++;
+
+  board[y][x] = currentPlayer;
+  flips.forEach(([fx, fy]) => board[fy][fx] = currentPlayer);
+  currentPlayer *= -1;
+  applyPassIfNeeded();
+
+  drawBoard();
+}
+
+function rebuildBoard() {
+  resetBoardState();
+  for (let i = 0; i < currentMove; i++) {
+    const m = moveHistory[i];
+    const flips = getFlips(m.x, m.y, m.player);
+    board[m.y][m.x] = m.player;
+    flips.forEach(([fx, fy]) => board[fy][fx] = m.player);
+    currentPlayer = -m.player;
+  }
+  applyPassIfNeeded();
+  drawBoard();
+}
+
+function undo() {
+  if (currentMove > 0) { currentMove--; rebuildBoard(); }
+}
+
+function undo10() {
+  currentMove = Math.max(0, currentMove - 10);
+  rebuildBoard();
+}
+
+function goToFirst() {
+  currentMove = 0;
+  rebuildBoard();
+}
+
+function redo10() {
+  _skipDraw = true;
+  for (let i = 0; i < 10; i++) redo();
+  _skipDraw = false;
+  drawBoard();
+}
+
+function goToLast() {
+  _skipDraw = true;
+  let prev;
+  do {
+    prev = currentMove;
+    redo();
+  } while (currentMove !== prev);
+  _skipDraw = false;
+  drawBoard();
+}
+
+function currentMatchesReference() {
+  if (currentMove > referenceKifu.length) return false;
+  for (let i = 0; i < currentMove; i++) {
+    if (moveHistory[i].x !== referenceKifu[i].x || moveHistory[i].y !== referenceKifu[i].y) return false;
+  }
+  return true;
+}
+
+function redo() {
+  if (currentMatchesReference() && currentMove < referenceKifu.length) {
+    const ref = referenceKifu[currentMove];
+    if (currentMove < moveHistory.length &&
+        moveHistory[currentMove].x === ref.x && moveHistory[currentMove].y === ref.y) {
+      // moveHistoryの次の手が棋譜と同じ → 通常のredo
+      currentMove++;
+      rebuildBoard();
+    } else {
+      // moveHistoryが尽きているか次の手が棋譜と異なる → 棋譜の手を打つ
+      playMove(ref.x, ref.y);
+    }
+    return;
+  }
+  if (currentMove < moveHistory.length) { currentMove++; rebuildBoard(); }
+}
+
+function coordToXY(coord) {
+  const x = coord.charCodeAt(0) - 97;
+  const y = parseInt(coord[1]) - 1;
+  return {x, y};
+}
+
+function kifuToMoves(kifu) {
+  initBoard();
+  for (let i = 0; i + 1 < kifu.length; i += 2) {
+    const {x, y} = coordToXY(kifu.substring(i, i + 2));
+    const flips = getFlips(x, y, currentPlayer);
+    if (flips.length === 0) break;
+    moveHistory.push({x, y, player: currentPlayer});
+    board[y][x] = currentPlayer;
+    flips.forEach(([fx, fy]) => board[fy][fx] = currentPlayer);
+    currentPlayer *= -1;
+    applyPassIfNeeded();
+    currentMove++;
+  }
+}
+
+function applyKifu() {
+  const kifu = document.getElementById("kifu-input").value.trim().toLowerCase();
+  referenceKifu = [];
+  for (let i = 0; i + 1 < kifu.length; i += 2)
+    referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
+  kifuToMoves(kifu);
+  drawBoard();
+}
+
+function goToBranchPoint() {
+  const len = Math.min(currentMove, referenceKifu.length);
+  let i = 0;
+  while (i < len && moveHistory[i].x === referenceKifu[i].x && moveHistory[i].y === referenceKifu[i].y) i++;
+  currentMove = i;
+  rebuildBoard();
+}
+
+function copyCurrentKifu() {
+  const val = document.getElementById("current-kifu").value;
+  navigator.clipboard.writeText(val);
+}
+
+function updateNames() {
+  blackName = document.getElementById("black-name-input").value || "黒";
+  whiteName = document.getElementById("white-name-input").value || "白";
+  drawBoard();
+}
+
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  blackName = params.get("black") || "黒";
+  whiteName = params.get("white") || "白";
+  if (params.get("black")) document.getElementById("black-name-input").value = params.get("black");
+  if (params.get("white")) document.getElementById("white-name-input").value = params.get("white");
+  const kifu = params.get("kifu");
+  if (!kifu) return;
+  document.getElementById("kifu-input").value = kifu;
+  referenceKifu = [];
+  for (let i = 0; i + 1 < kifu.length; i += 2)
+    referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
+  kifuToMoves(kifu);
+}
+
+function updateURL() {
+  const kifu = moveHistory.slice(0, currentMove)
+    .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
+    .join("");
+  const url = window.location.origin + window.location.pathname + "?kifu=" + kifu;
+  window.history.replaceState(null, "", url);
+  document.getElementById("kifu-input").value = kifu;
+  alert("URLを更新しました");
+}
+
+initBoard();
+loadFromURL();
+drawBoard();
