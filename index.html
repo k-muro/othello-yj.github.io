@@ -10,11 +10,18 @@ body {
 }
 #board {
   display: grid;
-  grid-template-columns: repeat(8, 60px);
-  grid-template-rows: repeat(8, 60px);
+  grid-template-columns: 18px repeat(8, 60px) 18px;
+  grid-template-rows: 18px repeat(8, 60px) 18px;
   gap: 2px;
   justify-content: center;
   margin: 20px auto;
+}
+.board-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: #555;
 }
 .cell {
   position: relative;
@@ -59,7 +66,7 @@ body {
 </head>
 <body>
 
-<h1>Othello Sample</h1>
+<h1>Yajuオセロ盤面検討ツール</h1>
 <div id="board"></div>
 
 <div id="stone-count"></div>
@@ -76,6 +83,14 @@ body {
   <button onclick="applyKifu()">棋譜を反映</button>
 </div>
 
+<div id="name-area" style="margin-top:10px;">
+  <button onclick="document.getElementById('name-inputs').hidden^=1">選手名</button>
+  <span id="name-inputs" hidden>
+    ⚫<input type="text" id="black-name-input" size="10" placeholder="黒" oninput="updateNames()">
+    ⚪<input type="text" id="white-name-input" size="10" placeholder="白" oninput="updateNames()">
+  </span>
+</div>
+
 <p id="info"></p>
 <p id="endgame"></p>
 
@@ -90,6 +105,8 @@ let currentMove = 0;
 let board = [];
 let currentPlayer = 1; // 1=黒, -1=白
 let referenceKifu = []; // 最後に「反映」した棋譜
+let blackName = "黒";
+let whiteName = "白";
 
 function resetBoardState() {
   board = Array(8).fill().map(() => Array(8).fill(0));
@@ -125,7 +142,21 @@ function drawBoard() {
     ? referenceKifu[currentMove] : null;
   const nextRefKey = nextRef ? `${nextRef.x},${nextRef.y}` : null;
 
+  const makeLabel = (text) => {
+    const lbl = document.createElement("div");
+    lbl.className = "board-label";
+    lbl.textContent = text;
+    return lbl;
+  };
+
+  // 上段: コーナー + a-h + コーナー
+  boardElement.appendChild(document.createElement("div"));
+  for (let x = 0; x < 8; x++) boardElement.appendChild(makeLabel(String.fromCharCode(97 + x)));
+  boardElement.appendChild(document.createElement("div"));
+
   for (let y = 0; y < 8; y++) {
+    boardElement.appendChild(makeLabel(y + 1)); // 左ラベル
+
     for (let x = 0; x < 8; x++) {
       const cell = document.createElement("div");
       cell.className = "cell";
@@ -145,7 +176,13 @@ function drawBoard() {
       }
       boardElement.appendChild(cell);
     }
+    boardElement.appendChild(makeLabel(y + 1)); // 右ラベル
   }
+
+  // 下段: コーナー + a-h + コーナー
+  boardElement.appendChild(document.createElement("div"));
+  for (let x = 0; x < 8; x++) boardElement.appendChild(makeLabel(String.fromCharCode(97 + x)));
+  boardElement.appendChild(document.createElement("div"));
 
   let black = 0, white = 0;
   for (let y = 0; y < 8; y++)
@@ -154,7 +191,7 @@ function drawBoard() {
       else if (board[y][x] === -1) white++;
     }
   const empty = 64 - black - white;
-  stoneCount.textContent = `⚫ 黒: ${black}　⚪ 白: ${white}　残: ${empty}`;
+  stoneCount.textContent = `⚫ ${blackName}: ${black}　⚪ ${whiteName}: ${white}　残: ${empty}`;
 
   if (empty <= 10) {
     const {score, line} = solveEndgame(board.map(r => [...r]), currentPlayer, -65, 65);
@@ -173,7 +210,7 @@ function drawBoard() {
     .join("");
   document.getElementById("kifu-input").value = kifu;
 
-  info.textContent = currentPlayer === 1 ? "黒の番" : "白の番";
+  info.textContent = currentPlayer === 1 ? `${blackName}（⚫）の番` : `${whiteName}（⚪）の番`;
 }
 
 function inBounds(x, y) {
@@ -350,8 +387,18 @@ function goToBranchPoint() {
   rebuildBoard();
 }
 
+function updateNames() {
+  blackName = document.getElementById("black-name-input").value || "黒";
+  whiteName = document.getElementById("white-name-input").value || "白";
+  drawBoard();
+}
+
 function loadFromURL() {
   const params = new URLSearchParams(window.location.search);
+  blackName = params.get("black") || "黒";
+  whiteName = params.get("white") || "白";
+  if (params.get("black")) document.getElementById("black-name-input").value = params.get("black");
+  if (params.get("white")) document.getElementById("white-name-input").value = params.get("white");
   const kifu = params.get("kifu");
   if (!kifu) return;
   document.getElementById("kifu-input").value = kifu;
