@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Simple Othello</title>
 <style>
 body {
@@ -54,6 +55,10 @@ body {
 .hint-white { background: rgba(255, 255, 255, 0.45); }
 .controls {
   margin-top: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
 }
 #stone-count {
   font-size: 1.1em;
@@ -61,6 +66,72 @@ body {
 }
 #kifu-area {
   margin-top: 12px;
+}
+
+/* ===== スマホ用 (横幅560px以下) ===== */
+@media (max-width: 560px) {
+  h1 {
+    font-size: 1.1em;
+    margin: 8px 0 0;
+  }
+  #board {
+    grid-template-columns: 13px repeat(8, 38px) 13px;
+    grid-template-rows: 13px repeat(8, 38px) 13px;
+    gap: 1px;
+    margin: 6px auto;
+  }
+  .board-label {
+    font-size: 11px;
+  }
+  .cell {
+    width: 38px;
+    height: 38px;
+  }
+  .stone {
+    width: 28px;
+    height: 28px;
+  }
+  .hint {
+    width: 9px;
+    height: 9px;
+  }
+  .controls button {
+    font-size: 13px;
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+  #stone-count {
+    font-size: 0.95em;
+  }
+  #kifu-area input,
+  #current-kifu-area input {
+    width: 60%;
+    max-width: 220px;
+    box-sizing: border-box;
+  }
+  #kifu-area, #current-kifu-area, #name-area {
+    font-size: 0.9em;
+  }
+}
+
+/* ===== さらに小さい端末 (横幅360px以下) ===== */
+@media (max-width: 360px) {
+  #board {
+    grid-template-columns: 11px repeat(8, 33px) 11px;
+    grid-template-rows: 11px repeat(8, 33px) 11px;
+  }
+  .cell {
+    width: 33px;
+    height: 33px;
+  }
+  .stone {
+    width: 24px;
+    height: 24px;
+  }
+  .hint {
+    width: 8px;
+    height: 8px;
+  }
 }
 </style>
 </head>
