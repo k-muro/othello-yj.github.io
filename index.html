@@ -353,6 +353,28 @@ hr { opacity: 1; border-color: #d0d7de; }
   .stone { width: 24px; height: 24px; }
   .hint { width: 8px; height: 8px; }
 }
+/* ===== 手番号表示 ===== */
+.stone-num {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+  font-family: 'M PLUS 1', sans-serif;
+}
+.stone.black .stone-num { color: rgba(255, 255, 255, 0.88); }
+.stone.white .stone-num { color: rgba(0, 0, 0, 0.65); }
+@media (max-width: 560px) {
+  .stone-num { font-size: 11px; }
+}
+@media (max-width: 360px) {
+  .stone-num { font-size: 9px; }
+}
+
 /* ===== YJ石モード ===== */
 .custom-stones .stone.black {
   background: url('YJB.png') center/cover no-repeat !important;
@@ -508,7 +530,7 @@ hr { opacity: 1; border-color: #d0d7de; }
     <div class="collapse" id="settings-panel">
       <div id="kifu-area" class="mt-1 mx-auto" style="max-width:480px;">
         <div class="d-flex gap-2">
-          <input type="text" id="kifu-input" class="form-control form-control-sm" style="min-width:0; flex:1;" placeholder="棋譜を入力 (例: d3c4...)">
+          <input type="text" id="kifu-input" class="form-control form-control-sm" style="min-width:0; flex:1;" placeholder="棋譜を入力 (例: d3c4...)" onclick="this.select()">
           <button class="btn btn-primary btn-sm text-nowrap" onclick="applyKifu()">棋譜を反映</button>
         </div>
       </div>
@@ -519,6 +541,11 @@ hr { opacity: 1; border-color: #d0d7de; }
           <input type="text" id="current-kifu" class="form-control form-control-sm" readonly style="min-width:0; flex:1;">
           <button class="btn btn-outline-secondary btn-sm text-nowrap" onclick="copyCurrentKifu()">コピー</button>
         </div>
+      </div>
+
+      <div class="mt-2 d-flex justify-content-center align-items-center gap-2">
+        <button class="btn btn-outline-secondary btn-sm" id="copy-url-btn" onclick="copyShareURL()">URLをコピー</button>
+        <span id="url-copy-msg" class="small text-success" style="display:none;">コピーしました</span>
       </div>
 
       <div class="mt-2 d-flex justify-content-center align-items-center gap-2">
@@ -534,9 +561,10 @@ hr { opacity: 1; border-color: #d0d7de; }
         <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('name-inputs').classList.toggle('d-none')">プレイヤー名設定</button>
 
         <span id="name-inputs" class="d-none d-flex align-items-center gap-2">
-          ⚫<input type="text" id="black-name-input" class="form-control form-control-sm" style="width:90px" placeholder="黒" oninput="updateNames()">
-          ⚪<input type="text" id="white-name-input" class="form-control form-control-sm" style="width:90px" placeholder="白" oninput="updateNames()">
+          ⚫<input type="text" id="black-name-input" class="form-control form-control-sm" style="width:90px" placeholder="黒" oninput="updateNames()" onclick="this.select()">
+          ⚪<input type="text" id="white-name-input" class="form-control form-control-sm" style="width:90px" placeholder="白" oninput="updateNames()" onclick="this.select()">
         </span><button id="stone-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleStones()">野獣先輩モード</button>
+        <button id="num-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleMoveNumbers()">着手順を表示</button>
       </div>
     </div>
 

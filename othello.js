@@ -9,6 +9,7 @@ const balanceBar = document.getElementById("balance-bar");
 const endgameEl = document.getElementById("endgame");
 
 let solverDepth = parseInt(localStorage.getItem('othello-solver-depth') || '11');
+let showMoveNumbers = localStorage.getItem('othello-show-numbers') === 'true';
 let moveHistory = [];
 let currentMove = 0;
 let board = [];
@@ -150,6 +151,13 @@ function drawBoard() {
     ? referenceKifu[currentMove] : null;
   const nextRefKey = nextRef ? `${nextRef.x},${nextRef.y}` : null;
 
+  const moveNumMap = new Map();
+  if (showMoveNumbers) {
+    moveHistory.slice(0, currentMove).forEach((m, i) => {
+      moveNumMap.set(`${m.x},${m.y}`, i + 1);
+    });
+  }
+
   const makeLabel = (text) => {
     const lbl = document.createElement("div");
     lbl.className = "board-label";
@@ -173,6 +181,15 @@ function drawBoard() {
       if (board[y][x] !== 0) {
         const stone = document.createElement("div");
         stone.className = "stone " + (board[y][x] === 1 ? "black" : "white");
+        if (showMoveNumbers) {
+          const moveNum = moveNumMap.get(`${x},${y}`);
+          if (moveNum !== undefined) {
+            const numEl = document.createElement("span");
+            numEl.className = "stone-num";
+            numEl.textContent = moveNum;
+            stone.appendChild(numEl);
+          }
+        }
         cell.appendChild(stone);
       } else if (validSet.has(`${x},${y}`)) {
         const hint = document.createElement("div");
@@ -559,14 +576,24 @@ function loadFromURL() {
   kifuToMoves(kifu);
 }
 
-function updateURL() {
+function copyShareURL() {
   const kifu = moveHistory.slice(0, currentMove)
     .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
     .join("");
-  const url = window.location.origin + window.location.pathname + "?kifu=" + kifu;
-  window.history.replaceState(null, "", url);
-  document.getElementById("kifu-input").value = kifu;
-  alert("URLを更新しました");
+  const black = document.getElementById("black-name-input").value.trim();
+  const white = document.getElementById("white-name-input").value.trim();
+  const params = new URLSearchParams();
+  if (kifu) params.set("kifu", kifu);
+  if (black) params.set("black", black);
+  if (white) params.set("white", white);
+  const url = window.location.origin + window.location.pathname +
+    (params.toString() ? "?" + params.toString() : "");
+  navigator.clipboard.writeText(url).then(() => {
+    const msg = document.getElementById("url-copy-msg");
+    msg.style.display = "";
+    clearTimeout(msg._hideTimer);
+    msg._hideTimer = setTimeout(() => { msg.style.display = "none"; }, 2000);
+  });
 }
 
 function setSolverDepth(val) {
@@ -593,10 +620,18 @@ function setSolverDepth(val) {
   drawBoard();
 }
 
+function toggleMoveNumbers() {
+  showMoveNumbers = !showMoveNumbers;
+  localStorage.setItem('othello-show-numbers', showMoveNumbers);
+  document.getElementById('num-toggle').textContent = showMoveNumbers ? '着手順を隠す' : '着手順を表示';
+  drawBoard();
+}
+
 initBoard();
 loadFromURL();
 // 保存済みの設定をUIに反映
 document.getElementById('solver-depth').value = solverDepth;
+if (showMoveNumbers) document.getElementById('num-toggle').textContent = '着手順を隠す';
 // 確定ボタン: iPhoneではonclickより先にblurを呼んでからvalueを読む
 document.getElementById('confirm-depth-btn').addEventListener('click', function() {
   const input = document.getElementById('solver-depth');
