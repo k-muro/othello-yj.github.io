@@ -154,7 +154,7 @@ function drawBoard() {
   const moveNumMap = new Map();
   if (showMoveNumbers) {
     moveHistory.slice(0, currentMove).forEach((m, i) => {
-      moveNumMap.set(`${m.x},${m.y}`, i + 1);
+      moveNumMap.set(`${m.x},${m.y}`, { num: i + 1, player: m.player });
     });
   }
 
@@ -182,11 +182,11 @@ function drawBoard() {
         const stone = document.createElement("div");
         stone.className = "stone " + (board[y][x] === 1 ? "black" : "white");
         if (showMoveNumbers) {
-          const moveNum = moveNumMap.get(`${x},${y}`);
-          if (moveNum !== undefined) {
+          const entry = moveNumMap.get(`${x},${y}`);
+          if (entry !== undefined) {
             const numEl = document.createElement("span");
-            numEl.className = "stone-num";
-            numEl.textContent = moveNum;
+            numEl.className = "stone-num " + (entry.player === 1 ? "stone-num-by-black" : "stone-num-by-white");
+            numEl.textContent = entry.num;
             stone.appendChild(numEl);
           }
         }

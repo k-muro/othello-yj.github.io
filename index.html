@@ -366,8 +366,14 @@ hr { opacity: 1; border-color: #d0d7de; }
   z-index: 1;
   font-family: 'M PLUS 1', sans-serif;
 }
-.stone.black .stone-num { color: rgba(255, 255, 255, 0.88); }
-.stone.white .stone-num { color: rgba(0, 0, 0, 0.65); }
+.stone-num-by-black {
+  color: #000;
+  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+}
+.stone-num-by-white {
+  color: #fff;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
 @media (max-width: 560px) {
   .stone-num { font-size: 11px; }
 }
