@@ -572,12 +572,21 @@ function updateURL() {
 function setSolverDepth(val) {
   const n = Math.min(20, Math.max(6, parseInt(val) || 11));
   document.getElementById('solver-depth').value = n;
+  const warningEl = document.getElementById('depth-warning');
   if (n !== solverDepth) {
     if (n >= 15) {
-      alert(`⚠️ 残り ${n} 手からの全読みは現実的な時間では終わらない可能性があります。\nブラウザがフリーズしても一切の責任を負いかねます。それでも続ける場合は自己責任でお願いします。`);
+      warningEl.textContent = `⚠️ 残り ${n} 手からの全読みは現実的な時間では終わらない可能性があります。ブラウザがフリーズしても責任を負いかねます。自己責任でご利用ください。`;
+      warningEl.className = 'text-center small mt-1 text-danger';
+      warningEl.style.display = '';
     } else if (n > 13) {
-      alert(`残り ${n} 手からの全読みは計算量が非常に多くなる場合があります。\n処理中はブラウザが一時的に固まる可能性があります。`);
+      warningEl.textContent = `残り ${n} 手からの全読みは計算量が非常に多くなる場合があります。処理中はブラウザが一時的に固まる可能性があります。`;
+      warningEl.className = 'text-center small mt-1 text-warning';
+      warningEl.style.display = '';
+    } else {
+      warningEl.style.display = 'none';
     }
+  } else {
+    warningEl.style.display = 'none';
   }
   solverDepth = n;
   localStorage.setItem('othello-solver-depth', n);
@@ -588,4 +597,10 @@ initBoard();
 loadFromURL();
 // 保存済みの設定をUIに反映
 document.getElementById('solver-depth').value = solverDepth;
+// 確定ボタン: iPhoneではonclickより先にblurを呼んでからvalueを読む
+document.getElementById('confirm-depth-btn').addEventListener('click', function() {
+  const input = document.getElementById('solver-depth');
+  input.blur(); // iOSキーボードの入力を確定させる
+  setSolverDepth(input.value);
+});
 drawBoard();
