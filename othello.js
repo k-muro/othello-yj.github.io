@@ -41,7 +41,11 @@ function showGameResult() {
     info.textContent = `⚫⚪ 引き分け！`;
   }
 
-  endgame.textContent = `最終結果：⚫ ${black} - ⚪ ${white}`;
+  let stoneResult;
+  if (black > white)      stoneResult = `黒の ${black - white} 石勝ち`;
+  else if (white > black) stoneResult = `白の ${white - black} 石勝ち`;
+  else                    stoneResult = `引き分け`;
+  endgame.textContent = `最終結果：⚫ ${black} - ⚪ ${white}（${stoneResult}）`;
 }
 function checkGameEnd() {
   const blackMoves = getValidMoves(1);   // 黒
