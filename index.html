@@ -416,23 +416,39 @@ hr { opacity: 1; border-color: #d0d7de; }
 }
 
 /* ===== YJ石モード ===== */
-.custom-stones .stone.black {
-  background: url('YJB.png') center/cover no-repeat !important;
-  border: none;
-}
-.custom-stones .stone.white {
-  background: url('YJW.png') center/cover no-repeat !important;
-  border: none;
-}
+.custom-stones .stone.black { border: none; }
+.custom-stones .stone.white { border: none; }
 .custom-stones .stone::before { display: none; }
 .custom-stones .stone { box-shadow: none; }
-.custom-stones .stat-card-black .stat-mini-stone {
-  background: url('YJB.png') center/cover no-repeat !important;
-  box-shadow: none;
+.custom-stones .stone.black::after,
+.custom-stones .stone.white::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  z-index: 0;
 }
-.custom-stones .stat-card-white .stat-mini-stone {
-  background: url('YJW.png') center/cover no-repeat !important;
-  box-shadow: none;
+.custom-stones .stone.black::after {
+  background: url('YJB.png') center/cover no-repeat;
+}
+.custom-stones .stone.white::after {
+  background: url('YJW.png') center/cover no-repeat;
+}
+.stat-mini-stone { position: relative; }
+.custom-stones .stat-card-black .stat-mini-stone { box-shadow: none; }
+.custom-stones .stat-card-white .stat-mini-stone { box-shadow: none; }
+.custom-stones .stat-card-black .stat-mini-stone::after,
+.custom-stones .stat-card-white .stat-mini-stone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+.custom-stones .stat-card-black .stat-mini-stone::after {
+  background: url('YJB.png') center/cover no-repeat;
+}
+.custom-stones .stat-card-white .stat-mini-stone::after {
+  background: url('YJW.png') center/cover no-repeat;
 }
 
 /* ===== スマホ最終上書き（ファイルの一番下に置く） ===== */
