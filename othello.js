@@ -21,6 +21,7 @@ let _skipDraw = false;
 let scoreChart = null;
 let egaroucidReady = false;
 let showAnalysis = localStorage.getItem('othello-show-analysis') === 'true';
+let graphMode = localStorage.getItem('othello-graph-mode') || 'ai'; // 'ai' | 'stone'
 let evalCache = [];
 let evalKifu = '';
 let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '7');
@@ -757,6 +758,12 @@ function applyAnalysisVisibility() {
   if (btn) btn.textContent = showAnalysis ? '解析を隠す' : '解析を表示';
 }
 
+function toggleGraphMode() {
+  graphMode = graphMode === 'ai' ? 'stone' : 'ai';
+  localStorage.setItem('othello-graph-mode', graphMode);
+  updateScoreGraph();
+}
+
 function toggleAnalysis() {
   showAnalysis = !showAnalysis;
   localStorage.setItem('othello-show-analysis', showAnalysis);
@@ -1039,14 +1046,21 @@ function updateScoreGraph() {
   const lineCol = isDark ? '#9a9a9a' : '#444';
 
   let labels, diffs;
-  const useAI = egaroucidReady && evalCache.length > 0;
+  const useAI = graphMode === 'ai' && egaroucidReady && evalCache.length > 0;
+
+  // グラフモード切替ボタン更新
+  const modeBtn = document.getElementById('graph-mode-btn');
+  if (modeBtn) {
+    modeBtn.textContent = useAI ? '石差の推移' : '予測石差';
+    modeBtn.disabled = graphMode === 'ai' && !egaroucidReady;
+  }
 
   if (useAI) {
     // AI 評価値（黒視点の予測石差）を使用
     labels = evalCache.map((_, i) => i === 0 ? '開始' : String(i));
     diffs = evalCache;
   } else {
-    // AI 未準備: 実石数差でフォールバック
+    // 石差モード or AI 未準備: 実石数差
     const b = Array(8).fill().map(() => Array(8).fill(0));
     b[3][3] = -1; b[4][4] = -1; b[3][4] = 1; b[4][3] = 1;
     labels = ['開始'];

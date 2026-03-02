@@ -592,7 +592,11 @@ hr { opacity: 1; border-color: #d0d7de; }
     <div id="graph-area" class="mt-2">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
         <div class="text-secondary graph-caption" id="graph-caption-text">⚫石差の推移（+で黒有利 / −で白有利）</div>
-        <span id="ai-status" class="graph-caption" style="color:#f97316; flex-shrink:0;">AI読み込み中…</span>
+        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+          <button id="graph-mode-btn" class="btn btn-outline-secondary btn-sm py-0 px-2"
+                  onclick="toggleGraphMode()" style="font-size:0.75rem;">予測石差</button>
+          <span id="ai-status" class="graph-caption" style="color:#f97316;">AI読み込み中…</span>
+        </div>
       </div>
       <div style="position:relative; height:90px;">
         <canvas id="score-graph"></canvas>
