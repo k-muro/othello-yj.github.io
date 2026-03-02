@@ -20,8 +20,7 @@ let whiteName = "白";
 let _skipDraw = false;
 let scoreChart = null;
 let egaroucidReady = false;
-let showEndgame = localStorage.getItem('othello-show-endgame') !== 'false';
-let showGraph   = localStorage.getItem('othello-show-graph')   !== 'false';
+let showAnalysis = localStorage.getItem('othello-show-analysis') === 'true';
 let evalCache = [];
 let evalKifu = '';
 let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '7');
@@ -749,30 +748,19 @@ function setEvalLevel(val) {
   }
 }
 
-function applyEndgameVisibility() {
-  const el = document.getElementById('endgame');
-  if (el) el.style.display = showEndgame ? '' : 'none';
-  const btn = document.getElementById('endgame-toggle');
-  if (btn) btn.textContent = showEndgame ? '読み切りを隠す' : '読み切りを表示';
+function applyAnalysisVisibility() {
+  const endgameEl2 = document.getElementById('endgame');
+  if (endgameEl2) endgameEl2.style.display = showAnalysis ? '' : 'none';
+  const graphEl = document.getElementById('graph-area');
+  if (graphEl) graphEl.style.display = showAnalysis ? '' : 'none';
+  const btn = document.getElementById('analysis-toggle');
+  if (btn) btn.textContent = showAnalysis ? '解析を隠す' : '解析を表示';
 }
 
-function applyGraphVisibility() {
-  const el = document.getElementById('graph-area');
-  if (el) el.style.display = showGraph ? '' : 'none';
-  const btn = document.getElementById('graph-toggle');
-  if (btn) btn.textContent = showGraph ? 'グラフを隠す' : 'グラフを表示';
-}
-
-function toggleEndgameDisplay() {
-  showEndgame = !showEndgame;
-  localStorage.setItem('othello-show-endgame', showEndgame);
-  applyEndgameVisibility();
-}
-
-function toggleGraphDisplay() {
-  showGraph = !showGraph;
-  localStorage.setItem('othello-show-graph', showGraph);
-  applyGraphVisibility();
+function toggleAnalysis() {
+  showAnalysis = !showAnalysis;
+  localStorage.setItem('othello-show-analysis', showAnalysis);
+  applyAnalysisVisibility();
 }
 
 function setAiStatus(text, color) {
@@ -1118,5 +1106,4 @@ document.getElementById('confirm-depth-btn').addEventListener('click', function(
 drawBoard();
 initScoreGraph();
 updateScoreGraph();
-applyEndgameVisibility();
-applyGraphVisibility();
+applyAnalysisVisibility();
