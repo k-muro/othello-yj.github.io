@@ -8,7 +8,7 @@ const scWhiteName = document.getElementById("sc-white-name");
 const balanceBar = document.getElementById("balance-bar");
 const endgameEl = document.getElementById("endgame");
 
-let solverDepth = parseInt(localStorage.getItem('othello-solver-depth') || '11');
+let solverDepth = parseInt(localStorage.getItem('othello-solver-depth') || '20');
 let showMoveNumbers = localStorage.getItem('othello-show-numbers') === 'true';
 let moveHistory = [];
 let currentMove = 0;
@@ -18,6 +18,13 @@ let referenceKifu = []; // 最後に「反映」した棋譜
 let blackName = "黒";
 let whiteName = "白";
 let _skipDraw = false;
+let scoreChart = null;
+let egaroucidReady = false;
+let showEndgame = localStorage.getItem('othello-show-endgame') !== 'false';
+let showGraph   = localStorage.getItem('othello-show-graph')   !== 'false';
+let evalCache = [];
+let evalKifu = '';
+let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '7');
 function showGameResult() {
   let black = 0;
   let white = 0;
@@ -226,21 +233,27 @@ function drawBoard() {
   balanceBar.style.width = (total > 0 ? (black / total * 100) : 50).toFixed(1) + '%';
 
   if (empty <= solverDepth) {
-    let blackBB = 0n, whiteBB = 0n;
-    for (let y = 0; y < 8; y++)
-      for (let x = 0; x < 8; x++) {
-        if (board[y][x] === 1)  blackBB |= 1n << BigInt(y * 8 + x);
-        else if (board[y][x] === -1) whiteBB |= 1n << BigInt(y * 8 + x);
-      }
-    const {score, line} = bbSolve(blackBB, whiteBB, currentPlayer === 1, -65, 65);
+    let score, bestPos, line;
+    if (egaroucidReady) {
+      ({ score, bestPos, line } = egaroucidSolveTop(board, currentPlayer));
+    } else {
+      let blackBB = 0n, whiteBB = 0n;
+      for (let y = 0; y < 8; y++)
+        for (let x = 0; x < 8; x++) {
+          if (board[y][x] === 1)  blackBB |= 1n << BigInt(y * 8 + x);
+          else if (board[y][x] === -1) whiteBB |= 1n << BigInt(y * 8 + x);
+        }
+      ({ score, bestPos, line } = bbSolveTop(blackBB, whiteBB, currentPlayer === 1));
+    }
     const lineStr = line.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join(" ");
     let result;
     if (score > 0)      result = `黒が +${score} で勝ち`;
     else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
     else                result = `引き分け`;
     endgameEl.textContent = `最善手を読み切り: ${result}　(${lineStr})`;
-    if (line.length > 0) {
-      const bestCell = boardElement.querySelector(`[data-pos="${line[0].x},${line[0].y}"]`);
+    if (bestPos >= 0) {
+      const bx = bestPos & 7, by = bestPos >> 3;
+      const bestCell = boardElement.querySelector(`[data-pos="${bx},${by}"]`);
       if (bestCell) {
         const dot = document.createElement("div");
         dot.className = "best-move-dot";
@@ -280,6 +293,8 @@ if (blackMoves.length === 0 && whiteMoves.length === 0) {
     branchBtn.disabled = !hasBranch;
   }
 }
+computeAllEvals();
+updateScoreGraph();
 }
 
 function inBounds(x, y) {
@@ -364,14 +379,14 @@ const BB_MOVE_WEIGHT = (() => {
   return w;
 })();
 
-// アルファベータ探索（返り値: {score: 黒-白, line: [{x,y},...]}}
+// アルファベータ探索（内部再帰用・score のみ返す）
 function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
   const player   = blackToMove ? blackBB : whiteBB;
   const opponent = blackToMove ? whiteBB : blackBB;
   let moves = bbMoves(player, opponent);
   if (!moves) {
     if (!bbMoves(opponent, player))
-      return { score: bbPopcount(blackBB) - bbPopcount(whiteBB), line: [] };
+      return bbPopcount(blackBB) - bbPopcount(whiteBB);
     return bbSolve(blackBB, whiteBB, !blackToMove, alpha, beta); // パス
   }
 
@@ -386,27 +401,108 @@ function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
   }
   moveList.sort((a, b) => b.w - a.w);
 
-  let best = blackToMove ? -65 : 65, bestLine = [];
+  let best = blackToMove ? -65 : 65;
   for (const { pos, lsb } of moveList) {
     const flips = bbFlips(pos, player, opponent);
     const np = player | lsb | flips;
     const no = opponent ^ flips;
-    const {score, line} = bbSolve(
+    const score = bbSolve(
       blackToMove ? np : no,
       blackToMove ? no : np,
       !blackToMove, alpha, beta
     );
-    const x = pos & 7, y = pos >> 3;
     if (blackToMove) {
-      if (score > best) { best = score; bestLine = [{x,y}, ...line]; }
+      if (score > best) best = score;
       if (best > alpha) alpha = best;
     } else {
-      if (score < best) { best = score; bestLine = [{x,y}, ...line]; }
+      if (score < best) best = score;
       if (best < beta)  beta  = best;
     }
     if (alpha >= beta) break;
   }
-  return { score: best, line: bestLine };
+  return best;
+}
+
+// トップレベルラッパー: 最善手の位置も返す
+function bbSolveTop(blackBB, whiteBB, blackToMove) {
+  const player   = blackToMove ? blackBB : whiteBB;
+  const opponent = blackToMove ? whiteBB : blackBB;
+  const moves = bbMoves(player, opponent);
+  if (!moves) {
+    return { score: bbPopcount(blackBB) - bbPopcount(whiteBB), bestPos: -1, line: [] };
+  }
+
+  const moveList = [];
+  let m = moves;
+  while (m) {
+    const lsb = m & -m;
+    m ^= lsb;
+    const pos = BB_POS.get(lsb);
+    moveList.push({ pos, lsb, w: BB_MOVE_WEIGHT[pos] });
+  }
+  moveList.sort((a, b) => b.w - a.w);
+
+  let best = blackToMove ? -65 : 65, bestPos = moveList[0].pos;
+  let alpha = -65, beta = 65;
+  for (const { pos, lsb } of moveList) {
+    const flips = bbFlips(pos, player, opponent);
+    const np = player | lsb | flips;
+    const no = opponent ^ flips;
+    const score = bbSolve(
+      blackToMove ? np : no,
+      blackToMove ? no : np,
+      !blackToMove, alpha, beta
+    );
+    if (blackToMove) {
+      if (score > best) { best = score; bestPos = pos; }
+      if (best > alpha) alpha = best;
+    } else {
+      if (score < best) { best = score; bestPos = pos; }
+      if (best < beta)  beta  = best;
+    }
+    if (alpha >= beta) break;
+  }
+
+  // 最善スコアを辿って手順列を再構成（狭いウィンドウで軽量）
+  const line = bbExtractLine(blackBB, whiteBB, blackToMove, best);
+  return { score: best, bestPos, line };
+}
+
+// 最善スコアを維持する手を辿り手順列を返す
+function bbExtractLine(blackBB, whiteBB, blackToMove, targetScore) {
+  const line = [];
+  let bBB = blackBB, wBB = whiteBB, btm = blackToMove;
+  for (;;) {
+    const pl = btm ? bBB : wBB;
+    const op = btm ? wBB : bBB;
+    const mvs = bbMoves(pl, op);
+    if (!mvs) {
+      if (!bbMoves(op, pl)) break; // 終局
+      btm = !btm; // パス
+      continue;
+    }
+    let found = false;
+    let mm = mvs;
+    while (mm) {
+      const lsb = mm & -mm;
+      mm ^= lsb;
+      const pos = BB_POS.get(lsb);
+      const flips = bbFlips(pos, pl, op);
+      const np = pl | lsb | flips;
+      const no = op ^ flips;
+      const nbBB = btm ? np : no, nwBB = btm ? no : np;
+      // 狭いウィンドウで確認（高速）
+      const s = bbSolve(nbBB, nwBB, !btm, targetScore - 1, targetScore + 1);
+      if (s === targetScore) {
+        line.push({ x: pos & 7, y: pos >> 3 });
+        bBB = nbBB; wBB = nwBB; btm = !btm;
+        found = true;
+        break;
+      }
+    }
+    if (!found) break;
+  }
+  return line;
 }
 
 function getFlips(x, y, player) {
@@ -615,16 +711,12 @@ function copyShareURL() {
 }
 
 function setSolverDepth(val) {
-  const n = Math.min(20, Math.max(6, parseInt(val) || 11));
+  const n = Math.min(24, Math.max(6, parseInt(val) || 20));
   document.getElementById('solver-depth').value = n;
   const warningEl = document.getElementById('depth-warning');
   if (n !== solverDepth) {
-    if (n >= 15) {
-      warningEl.textContent = `⚠️ 残り ${n} 手からの全読みは現実的な時間では終わらない可能性があります。ブラウザがフリーズしても責任を負いかねます。自己責任でご利用ください。`;
-      warningEl.className = 'text-center small mt-1 text-danger';
-      warningEl.style.display = '';
-    } else if (n > 13) {
-      warningEl.textContent = `残り ${n} 手からの全読みは計算量が非常に多くなる場合があります。処理中はブラウザが一時的に固まる可能性があります。`;
+    if (n > 20) {
+      warningEl.textContent = `残り ${n} 手からの全読みは計算に時間がかかる場合があります。`;
       warningEl.className = 'text-center small mt-1 text-warning';
       warningEl.style.display = '';
     } else {
@@ -645,6 +737,373 @@ function toggleMoveNumbers() {
   drawBoard();
 }
 
+// ===== Egaroucid AI 評価 =====
+function setEvalLevel(val) {
+  const n = Math.min(15, Math.max(1, parseInt(val) || 5));
+  evalLevel = n;
+  localStorage.setItem('othello-eval-level', n);
+  if (egaroucidReady) {
+    evalKifu = ''; // キャッシュ無効化して再計算
+    setAiStatus('計算中…', '#f97316');
+    computeAllEvals();
+  }
+}
+
+function applyEndgameVisibility() {
+  const el = document.getElementById('endgame');
+  if (el) el.style.display = showEndgame ? '' : 'none';
+  const btn = document.getElementById('endgame-toggle');
+  if (btn) btn.textContent = showEndgame ? '読み切りを隠す' : '読み切りを表示';
+}
+
+function applyGraphVisibility() {
+  const el = document.getElementById('graph-area');
+  if (el) el.style.display = showGraph ? '' : 'none';
+  const btn = document.getElementById('graph-toggle');
+  if (btn) btn.textContent = showGraph ? 'グラフを隠す' : 'グラフを表示';
+}
+
+function toggleEndgameDisplay() {
+  showEndgame = !showEndgame;
+  localStorage.setItem('othello-show-endgame', showEndgame);
+  applyEndgameVisibility();
+}
+
+function toggleGraphDisplay() {
+  showGraph = !showGraph;
+  localStorage.setItem('othello-show-graph', showGraph);
+  applyGraphVisibility();
+}
+
+function setAiStatus(text, color) {
+  const el = document.getElementById('ai-status');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = color || '';
+}
+
+function onEgaroucidReady() {
+  try {
+    setAiStatus('AI初期化中…', '#f97316');
+    const ptr = _malloc(4);
+    const result = _init_ai(ptr);
+    _free(ptr);
+    if (result !== 0) {
+      setAiStatus('AI初期化失敗', '#dc3545');
+      console.warn('Egaroucid _init_ai returned', result);
+      return;
+    }
+    egaroucidReady = true;
+    setAiStatus('AI準備完了', '#1a7f37');
+    computeAllEvals();
+  } catch(e) {
+    setAiStatus('AI読み込み失敗', '#dc3545');
+    console.error('Egaroucid init failed:', e);
+  }
+}
+
+// 盤面を WASM に渡して評価値（黒視点の予測石差）を返す
+function evaluatePosition(b, player) {
+  // player: 1=黒, -1=白
+  // ゲーム終了（空マスなし）はそのまま石差を返す
+  let black = 0, white = 0, empty = 0;
+  for (let r = 0; r < 8; r++)
+    for (let c = 0; c < 8; c++) {
+      if (b[r][c] === 1) black++;
+      else if (b[r][c] === -1) white++;
+      else empty++;
+    }
+  if (empty === 0) return black - white;
+
+  // WASM 形式に変換: 0=黒, 1=白, -1=空
+  const res = new Int32Array(64);
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++) {
+      const v = b[y][x];
+      res[y * 8 + x] = v === 1 ? 0 : v === -1 ? 1 : -1;
+    }
+  const wasmPlayer = player === 1 ? 0 : 1;
+  const ptr = _malloc(64 * 4);
+  HEAP32.set(res, ptr >> 2);
+  const val = _ai_js(ptr, evalLevel, wasmPlayer);
+  _free(ptr);
+
+  // 戻り値デコード: y*8000 + x*1000 + (dif_stones+100)
+  const vy = Math.floor(val / 8000);
+  const vx = Math.floor((val - vy * 8000) / 1000);
+  const dif = val - vy * 8000 - vx * 1000 - 100;
+
+  // 黒視点に正規化（白番なら符号反転）
+  return wasmPlayer === 0 ? dif : -dif;
+}
+
+// moveHistory を先頭から再生しながら各局面を評価
+function computeAllEvals() {
+  if (!egaroucidReady) return;
+  const kifuKey = moveHistory.map(m => `${m.x},${m.y}`).join('|');
+  if (kifuKey === evalKifu && evalCache.length > 0) return;
+  evalKifu = kifuKey;
+  evalCache = [];
+
+  const b = Array(8).fill().map(() => Array(8).fill(0));
+  b[3][3] = -1; b[4][4] = -1; b[3][4] = 1; b[4][3] = 1;
+  const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+
+  let cp = 1; // 手番 (1=黒, -1=白)
+  evalCache.push(evaluatePosition(b, cp));
+
+  for (const m of moveHistory) {
+    b[m.y][m.x] = m.player;
+    for (const [dx, dy] of DIRS) {
+      let nx = m.x + dx, ny = m.y + dy, tmp = [];
+      while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[ny][nx] === -m.player) {
+        tmp.push([nx, ny]); nx += dx; ny += dy;
+      }
+      if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[ny][nx] === m.player)
+        tmp.forEach(([fx, fy]) => { b[fy][fx] = m.player; });
+    }
+    cp = -m.player;
+    evalCache.push(evaluatePosition(b, cp));
+  }
+
+  updateScoreGraph();
+}
+
+// WASM に盤面を渡して最善手と評価値を取得（黒視点スコア）
+const ENDGAME_SOLVE_LEVEL = 10; // Level 10 = 20手完全読み
+function wasmBestMove(b, pl) {
+  const res = new Int32Array(64);
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++) {
+      const v = b[y][x];
+      res[y*8+x] = v === 1 ? 0 : v === -1 ? 1 : -1;
+    }
+  const wp = pl === 1 ? 0 : 1;
+  const ptr = _malloc(64 * 4);
+  HEAP32.set(res, ptr >> 2);
+  const val = _ai_js(ptr, ENDGAME_SOLVE_LEVEL, wp);
+  _free(ptr);
+  const vy = Math.floor(val / 8000);
+  const vx = Math.floor((val - vy * 8000) / 1000);
+  const dif = val - vy * 8000 - vx * 1000 - 100;
+  return { mx: vx, my: vy, score: wp === 0 ? dif : -dif };
+}
+
+// WASM で終盤全読みし { score, bestPos, line } を返す
+function egaroucidSolveTop(boardIn, player) {
+  const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+
+  function hasMove(b, pl) {
+    for (let y = 0; y < 8; y++)
+      for (let x = 0; x < 8; x++) {
+        if (b[y][x] !== 0) continue;
+        for (const [dx, dy] of DIRS) {
+          let nx = x+dx, ny = y+dy;
+          if (nx < 0||nx >= 8||ny < 0||ny >= 8||b[ny][nx] !== -pl) continue;
+          nx += dx; ny += dy;
+          while (nx >= 0&&nx < 8&&ny >= 0&&ny < 8&&b[ny][nx] === -pl) { nx += dx; ny += dy; }
+          if (nx >= 0&&nx < 8&&ny >= 0&&ny < 8&&b[ny][nx] === pl) return true;
+        }
+      }
+    return false;
+  }
+
+  function applyMove(b, x, y, pl) {
+    const nb = b.map(r => [...r]);
+    nb[y][x] = pl;
+    for (const [dx, dy] of DIRS) {
+      let nx = x+dx, ny = y+dy, tmp = [];
+      while (nx >= 0&&nx < 8&&ny >= 0&&ny < 8&&nb[ny][nx] === -pl) {
+        tmp.push([nx, ny]); nx += dx; ny += dy;
+      }
+      if (nx >= 0&&nx < 8&&ny >= 0&&ny < 8&&nb[ny][nx] === pl)
+        tmp.forEach(([fx, fy]) => { nb[fy][fx] = pl; });
+    }
+    return nb;
+  }
+
+  // 最善手とスコアを取得
+  const { mx, my, score } = wasmBestMove(boardIn, player);
+  const bestPos = my * 8 + mx;
+
+  // 両者最善手を辿って手順列を構築
+  const line = [];
+  let b = boardIn.map(r => [...r]);
+  let cp = player, passes = 0;
+  for (;;) {
+    if (!hasMove(b, cp)) {
+      if (!hasMove(b, -cp)) break;
+      cp = -cp;
+      if (++passes > 1) break;
+      continue;
+    }
+    passes = 0;
+    const { mx: lx, my: ly } = wasmBestMove(b, cp);
+    line.push({ x: lx, y: ly });
+    b = applyMove(b, lx, ly, cp);
+    cp = -cp;
+  }
+
+  return { score, bestPos, line };
+}
+
+// ===== 石差グラフ =====
+const yAxisMarkerPlugin = {
+  id: 'yAxisMarker',
+  afterDraw(chart) {
+    const { ctx, chartArea: { top, bottom, left } } = chart;
+    ctx.save();
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('⚫', left + 3, top + 1);
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('⚪', left + 3, bottom - 1);
+    ctx.restore();
+  }
+};
+
+function initScoreGraph() {
+  const canvas = document.getElementById('score-graph');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const isDark = () => document.documentElement.getAttribute('data-bs-theme') === 'dark';
+  scoreChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        {
+          // メインデータ (index 0)
+          data: [],
+          borderWidth: 1.5,
+          fill: false,
+          tension: 0.15,
+          pointRadius: [],
+          pointBackgroundColor: [],
+          pointHoverRadius: 5,
+          pointHitRadius: 10,
+        },
+        {
+          // ±0 参照線 (index 1)
+          data: [],
+          borderColor: 'rgba(128,128,128,0.45)',
+          borderWidth: 1,
+          borderDash: [5, 3],
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          fill: false,
+          tension: 0,
+          tooltip: { enabled: false },
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      onClick: (event, elements) => {
+        const el = elements.find(e => e.datasetIndex === 0);
+        if (el === undefined) return;
+        currentMove = el.index;
+        rebuildBoard();
+      },
+      onHover: (event, elements) => {
+        const el = elements.find(e => e.datasetIndex === 0);
+        event.native.target.style.cursor = el !== undefined ? 'pointer' : 'default';
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          filter: (item) => item.datasetIndex === 0, // ゼロ線は除外
+          callbacks: {
+            title: (items) => items[0].label === '開始' ? '開始' : `${items[0].label}手目`,
+            label: (item) => {
+              const v = item.raw;
+              return v > 0 ? `⚫ +${v}` : v < 0 ? `⚪ +${-v}` : '同数';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { maxTicksLimit: 10, font: { size: 9 }, color: () => isDark() ? '#8b949e' : '#888' },
+          grid: { display: false }
+        },
+        y: {
+          suggestedMin: -10,
+          suggestedMax: 10,
+          ticks: { stepSize: 10, font: { size: 9 }, color: () => isDark() ? '#8b949e' : '#888' },
+          grid: {
+            color: (ctx) => ctx.tick.value === 0
+              ? (isDark() ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)')
+              : (isDark() ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)')
+          }
+        }
+      }
+    },
+    plugins: [yAxisMarkerPlugin]
+  });
+}
+
+function updateScoreGraph() {
+  if (!scoreChart) return;
+  const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+  const lineCol = isDark ? '#9a9a9a' : '#444';
+
+  let labels, diffs;
+  const useAI = egaroucidReady && evalCache.length > 0;
+
+  if (useAI) {
+    // AI 評価値（黒視点の予測石差）を使用
+    labels = evalCache.map((_, i) => i === 0 ? '開始' : String(i));
+    diffs = evalCache;
+  } else {
+    // AI 未準備: 実石数差でフォールバック
+    const b = Array(8).fill().map(() => Array(8).fill(0));
+    b[3][3] = -1; b[4][4] = -1; b[3][4] = 1; b[4][3] = 1;
+    labels = ['開始'];
+    diffs = [0];
+    const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+    for (const m of moveHistory) {
+      b[m.y][m.x] = m.player;
+      for (const [dx, dy] of DIRS) {
+        let nx = m.x + dx, ny = m.y + dy, tmp = [];
+        while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[ny][nx] === -m.player) {
+          tmp.push([nx, ny]); nx += dx; ny += dy;
+        }
+        if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[ny][nx] === m.player)
+          tmp.forEach(([fx, fy]) => { b[fy][fx] = m.player; });
+      }
+      let black = 0, white = 0;
+      for (let r = 0; r < 8; r++)
+        for (let c = 0; c < 8; c++) {
+          if (b[r][c] === 1) black++;
+          else if (b[r][c] === -1) white++;
+        }
+      labels.push(String(diffs.length));
+      diffs.push(black - white);
+    }
+  }
+
+  // キャプション更新
+  const caption = document.querySelector('.graph-caption');
+  if (caption) caption.innerHTML = useAI
+    ? '<a href="https://www.egaroucid.nyanyan.dev/ja/web/" target="_blank" rel="noopener" class="text-secondary">Egaroucid</a> 予測石差（⚫+ / ⚪−）'
+    : '石差の推移（⚫+ / ⚪−）';
+
+  const ds = scoreChart.data.datasets[0];
+  const zeroDs = scoreChart.data.datasets[1];
+  scoreChart.data.labels = labels;
+  ds.data = diffs;
+  ds.borderColor = lineCol;
+  ds.pointRadius = diffs.map((_, i) => i === currentMove ? 5 : 0);
+  ds.pointBackgroundColor = diffs.map((_, i) => i === currentMove ? '#f97316' : lineCol);
+  // ±0 参照線: ラベル数分の 0 を設定
+  zeroDs.data = new Array(labels.length).fill(0);
+  zeroDs.borderColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
+  scoreChart.update();
+}
+
 initBoard();
 loadFromURL();
 // 保存済みの設定をUIに反映
@@ -657,3 +1116,7 @@ document.getElementById('confirm-depth-btn').addEventListener('click', function(
   setSolverDepth(input.value);
 });
 drawBoard();
+initScoreGraph();
+updateScoreGraph();
+applyEndgameVisibility();
+applyGraphVisibility();
