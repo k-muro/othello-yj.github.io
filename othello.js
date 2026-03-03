@@ -24,7 +24,7 @@ let showAnalysis = localStorage.getItem('othello-show-analysis') === 'true';
 let graphMode = localStorage.getItem('othello-graph-mode') || 'ai'; // 'ai' | 'stone'
 let evalCache = [];
 let evalKifu = '';
-let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '7');
+let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '10');
 function showGameResult() {
   let black = 0;
   let white = 0;
