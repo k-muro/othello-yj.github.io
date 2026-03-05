@@ -221,9 +221,7 @@ function drawBoard() {
           const evalEl = document.createElement("div");
           evalEl.className = "move-eval";
           evalEl.textContent = (score > 0 ? "+" : "") + score;
-          const { color, shadow } = evalScoreColor(score);
-          evalEl.style.color = color;
-          evalEl.style.textShadow = shadow;
+          evalEl.style.color = evalScoreColor(score);
           cell.appendChild(evalEl);
         }
       }
@@ -757,13 +755,13 @@ function toggleMoveNumbers() {
   drawBoard();
 }
 
-// スコアを色と縁取りに変換: +20=黒 / 0=明灰 / -20=白、縁は逆色
+// スコアを色に変換: +20=黒 / 0=明灰 / -20=白
 function evalScoreColor(score) {
   const t = Math.max(-1, Math.min(1, score / 20));
   const v = t >= 0
     ? Math.round(210 - t * 195)  // 210→15 (明灰→黒)
     : Math.round(210 + (-t) * 45); // 210→255 (明灰→白)
-  return { color: `rgb(${v},${v},${v})`, shadow: 'none' };
+  return `rgb(${v},${v},${v})`;
 }
 
 function toggleMoveEvals() {
