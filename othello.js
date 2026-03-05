@@ -763,14 +763,7 @@ function evalScoreColor(score) {
   const v = t >= 0
     ? Math.round(210 - t * 195)  // 210→15 (明灰→黒)
     : Math.round(210 + (-t) * 45); // 210→255 (明灰→白)
-  const sv = v > 128 ? 0 : 255; // 縁色: 文字が明るければ黒縁、暗ければ白縁
-  const shOpacity = score >= 15 ? 0 : score <= 10 ? 1 : (15 - score) / 5;
-  const sh = `rgba(${sv},${sv},${sv},${shOpacity.toFixed(2)})`;
-  return {
-    color: `rgb(${v},${v},${v})`,
-    shadow: shOpacity === 0 ? 'none'
-      : `-1px -1px 0 ${sh}, 1px -1px 0 ${sh}, -1px 1px 0 ${sh}, 1px 1px 0 ${sh}`
-  };
+  return { color: `rgb(${v},${v},${v})`, shadow: 'none' };
 }
 
 function toggleMoveEvals() {
