@@ -127,6 +127,25 @@ h1 {
 .hint-black { background: rgba(0, 0, 0, 0.3); }
 .hint-white { background: rgba(255, 255, 255, 0.173); }
 
+.move-eval {
+  position: absolute;
+  bottom: 3px;
+  right: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 2;
+  font-family: 'M PLUS 1', sans-serif;
+  text-shadow: none;
+}
+@media (max-width: 700px) {
+  .move-eval { font-size: 9px; }
+}
+@media (max-width: 560px) {
+  .move-eval { font-size: 8px; bottom: 2px; right: 2px; }
+}
+
 /* ===== Stone count ===== */
 #stone-count {
   display: flex;
@@ -582,7 +601,9 @@ hr { opacity: 1; border-color: #d0d7de; }
       <button class="btn btn-outline-secondary btn-sm" onclick="goToLast()">最後 ⏭</button>
     </div>
 
-    <div class="d-flex justify-content-end mt-2">
+    <div class="d-flex justify-content-end gap-2 mt-2">
+      <button id="move-eval-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2"
+              onclick="toggleMoveEvals()" style="font-size:0.75rem;">候補手の評価値</button>
       <button id="analysis-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2"
               onclick="toggleAnalysis()" style="font-size:0.75rem;">解析を表示</button>
     </div>

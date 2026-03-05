@@ -24,7 +24,8 @@ let showAnalysis = localStorage.getItem('othello-show-analysis') === 'true';
 let graphMode = localStorage.getItem('othello-graph-mode') || 'ai'; // 'ai' | 'stone'
 let evalCache = [];
 let evalKifu = '';
-let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '10');
+let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '12');
+let showMoveEvals = localStorage.getItem('othello-show-move-evals') === 'true';
 function showGameResult() {
   let black = 0;
   let white = 0;
@@ -165,6 +166,15 @@ function drawBoard() {
     });
   }
 
+  // 候補手評価値マップ（黒視点: +で黒有利）
+  let moveEvalMap = null;
+  if (showMoveEvals && egaroucidReady && validMoves.length > 0) {
+    moveEvalMap = new Map();
+    for (const [mx, my] of validMoves) {
+      moveEvalMap.set(`${mx},${my}`, evaluateMove(mx, my));
+    }
+  }
+
   const makeLabel = (text) => {
     const lbl = document.createElement("div");
     lbl.className = "board-label";
@@ -206,6 +216,16 @@ function drawBoard() {
           ? (currentPlayer === 1 ? "hint-ref-black" : "hint-ref-white")
           : (currentPlayer === 1 ? "hint-black" : "hint-white"));
         cell.appendChild(hint);
+        if (moveEvalMap) {
+          const score = moveEvalMap.get(`${x},${y}`);
+          const evalEl = document.createElement("div");
+          evalEl.className = "move-eval";
+          evalEl.textContent = (score > 0 ? "+" : "") + score;
+          const { color, shadow } = evalScoreColor(score);
+          evalEl.style.color = color;
+          evalEl.style.textShadow = shadow;
+          cell.appendChild(evalEl);
+        }
       }
       boardElement.appendChild(cell);
     }
@@ -737,6 +757,46 @@ function toggleMoveNumbers() {
   drawBoard();
 }
 
+// スコアを色と縁取りに変換: +20=黒 / 0=明灰 / -20=白、縁は逆色
+function evalScoreColor(score) {
+  const t = Math.max(-1, Math.min(1, score / 20));
+  const v = t >= 0
+    ? Math.round(210 - t * 195)  // 210→15 (明灰→黒)
+    : Math.round(210 + (-t) * 45); // 210→255 (明灰→白)
+  const sv = v > 128 ? 0 : 255; // 縁色: 文字が明るければ黒縁、暗ければ白縁
+  const shOpacity = score >= 15 ? 0 : score <= 10 ? 1 : (15 - score) / 5;
+  const sh = `rgba(${sv},${sv},${sv},${shOpacity.toFixed(2)})`;
+  return {
+    color: `rgb(${v},${v},${v})`,
+    shadow: shOpacity === 0 ? 'none'
+      : `-1px -1px 0 ${sh}, 1px -1px 0 ${sh}, -1px 1px 0 ${sh}, 1px 1px 0 ${sh}`
+  };
+}
+
+function toggleMoveEvals() {
+  showMoveEvals = !showMoveEvals;
+  localStorage.setItem('othello-show-move-evals', showMoveEvals);
+  const btn = document.getElementById('move-eval-toggle');
+  if (btn) btn.textContent = showMoveEvals ? '評価値を隠す' : '候補手の評価値';
+  drawBoard();
+}
+
+// 指定マスに打った後の局面をEgaroucidで評価（黒視点の予測石差: +で黒有利 / −で白有利）
+function evaluateMove(x, y) {
+  const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+  const b = board.map(row => [...row]);
+  b[y][x] = currentPlayer;
+  for (const [dx, dy] of DIRS) {
+    let nx = x + dx, ny = y + dy, tmp = [];
+    while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[ny][nx] === -currentPlayer) {
+      tmp.push([nx, ny]); nx += dx; ny += dy;
+    }
+    if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[ny][nx] === currentPlayer)
+      tmp.forEach(([fx, fy]) => { b[fy][fx] = currentPlayer; });
+  }
+  return evaluatePosition(b, -currentPlayer); // 黒視点スコア
+}
+
 // ===== Egaroucid AI 評価 =====
 function setEvalLevel(val) {
   const n = Math.min(15, Math.max(1, parseInt(val) || 5));
@@ -1111,6 +1171,7 @@ loadFromURL();
 // 保存済みの設定をUIに反映
 document.getElementById('solver-depth').value = solverDepth;
 if (showMoveNumbers) document.getElementById('num-toggle').textContent = '着手順を隠す';
+if (showMoveEvals) document.getElementById('move-eval-toggle').textContent = '評価値を隠す';
 // 確定ボタン: iPhoneではonclickより先にblurを呼んでからvalueを読む
 document.getElementById('confirm-depth-btn').addEventListener('click', function() {
   const input = document.getElementById('solver-depth');
