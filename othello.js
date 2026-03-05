@@ -755,13 +755,14 @@ function toggleMoveNumbers() {
   drawBoard();
 }
 
-// スコアを色に変換: +20=黒 / 0=明灰 / -20=白
+// スコアを7段階の色に変換（黒視点: +で黒寄り / −で白寄り）
+// 0 / ±1~5 / ±6~10 / ±11~
 function evalScoreColor(score) {
-  const t = Math.max(-1, Math.min(1, score / 20));
-  const v = t >= 0
-    ? Math.round(210 - t * 195)  // 210→15 (明灰→黒)
-    : Math.round(210 + (-t) * 45); // 210→255 (明灰→白)
-  return `rgb(${v},${v},${v})`;
+  const a = Math.abs(score);
+  const tier = a === 0 ? 0 : a <= 5 ? 1 : a <= 10 ? 2 : 3;
+  const blackPalette = ['#c0c0c0', '#909090', '#505050', '#101010'];
+  const whitePalette = ['#c0c0c0', '#dedede', '#f0f0f0', '#ffffff'];
+  return score >= 0 ? blackPalette[tier] : whitePalette[tier];
 }
 
 function toggleMoveEvals() {
