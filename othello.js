@@ -397,12 +397,22 @@ function saveReferenceKifu() {
   if (currentMove === 0) return;
   const moves = moveHistory.slice(0, currentMove);
   const key = moves.map(m => `${m.x},${m.y}`).join('|');
-  if (savedBranches.some(b => b.moves.map(m => `${m.x},${m.y}`).join('|') === key)) return;
+  // 既存エントリがあれば isRef を確実に付与して先頭へ移動
+  const existIdx = savedBranches.findIndex(b => b.moves.map(m => `${m.x},${m.y}`).join('|') === key);
+  if (existIdx >= 0) {
+    savedBranches[existIdx].isRef = true;
+    if (existIdx !== 0) {
+      const [entry] = savedBranches.splice(existIdx, 1);
+      savedBranches.unshift(entry);
+    }
+    return;
+  }
   if (savedBranches.length >= 5) return;
   savedBranches.unshift({ moves, isRef: true });
 }
 
 function deleteBranch(idx) {
+  if (savedBranches[idx]?.isRef) return;
   savedBranches.splice(idx, 1);
   renderBranchTree();
 }
@@ -1097,6 +1107,7 @@ function evalScoreColor(score) {
 // 各局面で全合法手を評価し、実際に打たれた手が平均より何石分悪かったかを計算
 let mistakeCache = []; // [{moveIdx, dev}]  dev < 0 = 平均より悪い手
 let mistakeCacheKifu = '';
+let mistakeCacheMap = new Map(); // kifuKey -> mistakeCache（分岐ごとに保存）
 let mistakeGeneration = 0;
 let showMistakeList = false;
 
@@ -1111,6 +1122,14 @@ function computeMistakes() {
   if (!egaroucidReady) return;
   const kifuKey = moveHistory.map(m => `${m.x},${m.y}`).join('|');
   if (kifuKey === mistakeCacheKifu && mistakeCache.length > 0) return;
+  // 別の分岐で計算済みなら即座に適用
+  if (mistakeCacheMap.has(kifuKey)) {
+    mistakeCache = mistakeCacheMap.get(kifuKey);
+    mistakeCacheKifu = kifuKey;
+    renderMistakeList();
+    updateScoreGraph();
+    return;
+  }
   mistakeCacheKifu = kifuKey;
   mistakeCache = [];
   const gen = ++mistakeGeneration;
@@ -1159,6 +1178,7 @@ function computeMistakes() {
     // 新しい局面の初期化
     if (validMoves === null) {
       if (idx >= moveHistory.length) {
+        mistakeCacheMap.set(kifuKey, [...mistakeCache]);
         renderMistakeList();
         updateScoreGraph();
         return;
@@ -1691,7 +1711,7 @@ function updateScoreGraph() {
   scoreChart.data.labels = labels;
   ds.data = diffs;
   ds.borderColor = lineCol;
-  const useMistakes = useAI && evalCache.length > 1;
+  const useMistakes = useAI && evalCache.length > 1 && showMistakeList;
   const mistakeMap = useMistakes ? getShownMistakeSet() : new Map();
   ds.pointStyle = diffs.map((_, i) => {
     if (i > 0 && mistakeMap.has(i - 1)) return 'rect';

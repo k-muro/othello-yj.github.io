@@ -311,6 +311,18 @@ hr { opacity: 1; border-color: #d0d7de; }
 }
 .tree-del-btn { margin-left: auto; flex-shrink: 0; font-size: 0.72em; padding: 0 5px; line-height: 1.4; }
 
+.collapse-toggle {
+  font-size: 0.78rem;
+  padding: 1px 10px;
+  border-color: transparent;
+  color: var(--bs-secondary-color);
+  background: transparent;
+}
+.collapse-toggle:hover {
+  border-color: var(--bs-border-color);
+  color: var(--bs-body-color);
+  background: transparent;
+}
 .collapse-toggle::after { content: " ▴"; }
 .collapse-toggle.collapsed::after { content: " ▾"; }
 
@@ -652,7 +664,7 @@ hr { opacity: 1; border-color: #d0d7de; }
     </div>
 
     <div class="d-flex align-items-center gap-2 my-3">
-      <button class="btn btn-outline-secondary btn-sm px-3 collapse-toggle collapsed"
+      <button class="btn collapse-toggle collapsed"
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#analysis-panel"
@@ -686,7 +698,7 @@ hr { opacity: 1; border-color: #d0d7de; }
     </div>
 
     <div class="d-flex align-items-center gap-2 my-3">
-      <button class="btn btn-outline-secondary btn-sm px-3 collapse-toggle collapsed"
+      <button class="btn collapse-toggle collapsed"
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#branch-tree-panel"
@@ -704,7 +716,7 @@ hr { opacity: 1; border-color: #d0d7de; }
     </div>
 
     <div class="d-flex align-items-center gap-2 my-3">
-      <button class="btn btn-outline-secondary btn-sm px-3 collapse-toggle collapsed"
+      <button class="btn collapse-toggle collapsed"
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#settings-panel"
