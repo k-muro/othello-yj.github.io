@@ -16,7 +16,7 @@ function _evalLabel() {
   if (!egaroucidReady || currentMove >= evalCache.length) return '';
   const v = evalCache[currentMove];
   const a = Math.abs(v), s = v >= 0 ? '+' : '';
-  if (a < 6)  return '互角';
+  if (v === 0) return '互角';
   if (a < 15) return v > 0 ? `黒有利(${s}${v})` : `白有利(${v})`;
   return v > 0 ? `黒勝勢(${s}${v})` : `白勝勢(${v})`;
 }
