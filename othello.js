@@ -24,7 +24,7 @@ let showAnalysis = localStorage.getItem('othello-show-analysis') === 'true';
 let graphMode = localStorage.getItem('othello-graph-mode') || 'ai'; // 'ai' | 'stone'
 let evalCache = [];
 let evalKifu = '';
-let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '12');
+let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '8');
 let showMoveEvals = localStorage.getItem('othello-show-move-evals') === 'true';
 let moveEvalGeneration = 0; // drawBoard のたびに更新し、古い評価タスクを破棄
 function showGameResult() {
@@ -753,6 +753,7 @@ function evalScoreColor(score) {
 }
 
 // 候補手の評価値を1手ずつ非同期で計算してDOMに書き込む
+// rAF で1フレーム描画を確実に挟んでから計算開始（iOS対応）
 function scheduleMoveEvals(validMoves, gen) {
   if (!showMoveEvals || !egaroucidReady || validMoves.length === 0) return;
   let idx = 0;
@@ -771,7 +772,7 @@ function scheduleMoveEvals(validMoves, gen) {
     }
     setTimeout(next, 0);
   }
-  setTimeout(next, 0);
+  requestAnimationFrame(next);
 }
 
 function toggleMoveEvals() {
