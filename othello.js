@@ -458,62 +458,71 @@ function renderBranchTree() {
   function coord(m) { return String.fromCharCode(97 + m.x) + (m.y + 1); }
   function onPath(mi, m) { return mi < curPath.length && curPath[mi] === `${m.x},${m.y}`; }
 
-  // pairs: [{move, gameIdx}]  showFirst: 先頭何手表示するか
-  // 省略形式: f5→f4…(N手)…→c7
-  function appendMoves(line, pairs, showFirst) {
-    if (pairs.length === 0) return;
-    const needsTrunc = pairs.length > showFirst + 1;
-    const head = needsTrunc ? pairs.slice(0, showFirst) : pairs;
-
-    head.forEach(({ move, gameIdx }, i) => {
-      if (i > 0) {
-        const arr = document.createElement('span');
-        arr.className = 'tree-arrow';
-        arr.textContent = '→';
-        line.appendChild(arr);
-      }
-      const mv = document.createElement('span');
-      mv.className = 'tree-move' + (onPath(gameIdx, move) ? ' tree-move-active' : '');
-      mv.textContent = coord(move);
-      line.appendChild(mv);
-    });
-
-    if (needsTrunc) {
-      const ell = document.createElement('span');
-      ell.className = 'tree-arrow';
-      ell.textContent = `…(${pairs.length}手)…`;
-      line.appendChild(ell);
-
-      const arr = document.createElement('span');
-      arr.className = 'tree-arrow';
-      arr.textContent = '→';
-      line.appendChild(arr);
-
-      const { move, gameIdx } = pairs[pairs.length - 1];
-      const mv = document.createElement('span');
-      mv.className = 'tree-move' + (onPath(gameIdx, move) ? ' tree-move-active' : '');
-      mv.textContent = coord(move);
-      line.appendChild(mv);
-    }
+  function mkSpan(cls, text) {
+    const s = document.createElement('span');
+    s.className = cls;
+    s.textContent = text;
+    return s;
   }
 
-  // 終端共通パーツ（手数ラベル・現在バッジ・削除ボタン）
-  function appendLeafParts(line, bi) {
-    const { moves } = savedBranches[bi];
-    const len = moves.length;
-    const info = document.createElement('span');
-    info.className = 'tree-arrow ms-1';
-    info.textContent = `(${len}手 ${coord(moves[len - 1])})`;
-    line.appendChild(info);
+  function appendMove(line, move, gameIdx) {
+    const mv = mkSpan(
+      'tree-move' + (onPath(gameIdx, move) ? ' tree-move-active' : ''),
+      coord(move)
+    );
+    mv.dataset.gameidx = gameIdx;
+    line.appendChild(mv);
+  }
 
-    if (currentMove === len && moves.every((m, i) => curPath[i] === `${m.x},${m.y}`)) {
-      const badge = document.createElement('span');
-      badge.className = 'tree-badge-now ms-1';
-      badge.textContent = '現在';
-      line.appendChild(badge);
+  // ランドマークに基づいて手順を描画する。
+  // pairs: [{move, gameIdx}]
+  // pinIdxs: Set<number> — pairs内で必ず表示するインデックス（現在位置・分岐点等）
+  // baseHead: 先頭から必ず表示する手数（デフォルト2）
+  // baseTail: 末尾から必ず表示する手数（デフォルト1）
+  function renderSeq(line, pairs, pinIdxs, baseHead = 2, baseTail = 1) {
+    if (pairs.length === 0) return;
+    const len = pairs.length;
+
+    const lms = new Set(pinIdxs || []);
+    for (let i = 0; i < Math.min(baseHead, len); i++) lms.add(i);
+    for (let i = Math.max(0, len - baseTail); i < len; i++) lms.add(i);
+
+    // ギャップが1手だけの場合はその手も追加（…(1手)… を避ける）
+    const sorted = [...lms].sort((a, b) => a - b);
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (sorted[i + 1] - sorted[i] === 2) lms.add(sorted[i] + 1);
     }
 
-    if (!savedBranches[bi].isRef) {
+    const landmarks = [...lms].sort((a, b) => a - b);
+    let prev = -1;
+    landmarks.forEach(lmIdx => {
+      if (prev >= 0) {
+        const gap = lmIdx - prev - 1;
+        if (gap > 0) line.appendChild(mkSpan('tree-arrow', `…(${gap}手)…`));
+        line.appendChild(mkSpan('tree-arrow', '→'));
+      }
+      appendMove(line, pairs[lmIdx].move, pairs[lmIdx].gameIdx);
+      prev = lmIdx;
+    });
+  }
+
+  // branchMoves が refMoves と最初に異なるインデックスを返す
+  function findDivIdx(branchMoves, refMoves) {
+    const len = Math.min(branchMoves.length, refMoves.length);
+    for (let i = 0; i < len; i++) {
+      if (branchMoves[i].x !== refMoves[i].x || branchMoves[i].y !== refMoves[i].y) return i;
+    }
+    return len;
+  }
+
+  // 手数ラベル・現在バッジ・削除ボタン
+  function appendLeafSuffix(line, bi) {
+    const { moves, isRef } = savedBranches[bi];
+    line.appendChild(mkSpan('tree-arrow ms-1', `[${moves.length}手]`));
+    if (currentMove === moves.length && moves.every((m, i) => curPath[i] === `${m.x},${m.y}`)) {
+      line.appendChild(mkSpan('tree-badge-now ms-1', '現在'));
+    }
+    if (!isRef) {
       const del = document.createElement('button');
       del.className = 'btn btn-outline-danger btn-sm tree-del-btn';
       del.textContent = '×';
@@ -523,80 +532,90 @@ function renderBranchTree() {
     }
   }
 
-  // ── 参照棋譜：先頭フラット行 ──
   const refIdx = savedBranches.findIndex(b => b.isRef);
+  const refMoves = refIdx >= 0 ? savedBranches[refIdx].moves : null;
+
+  // 各非参照分岐の分岐インデックス（refMovesとの最初の相違点）
+  const divIdxMap = new Map();
+  savedBranches.forEach((b, i) => {
+    if (i !== refIdx && refMoves) divIdxMap.set(i, findDivIdx(b.moves, refMoves));
+  });
+
+  // ── 参照棋譜 ──
   if (refIdx >= 0) {
+    const refLen = refMoves.length;
+    const refPairs = refMoves.map((m, i) => ({ move: m, gameIdx: i }));
+
+    // ピン: 先頭2・末尾2・各分岐点前後・現在位置
+    const pinIdxs = new Set();
+    if (refLen >= 2) { pinIdxs.add(refLen - 2); pinIdxs.add(refLen - 1); }
+    divIdxMap.forEach(d => {
+      if (d > 0) pinIdxs.add(d - 1);
+      if (d < refLen) pinIdxs.add(d);
+    });
+    // 現在位置が参照棋譜上にあれば追加
+    if (currentMove > 0 && currentMove <= refLen &&
+        refMoves.slice(0, currentMove).every((m, i) => curPath[i] === `${m.x},${m.y}`)) {
+      pinIdxs.add(currentMove - 1);
+    }
+
     const line = document.createElement('div');
     line.className = 'tree-line ref-line clickable';
     line.title = 'クリックでこの手順を読み込む';
     line.onclick = () => loadBranch(refIdx);
+    line.appendChild(mkSpan('tree-ref-label', '参照'));
 
-    const lbl = document.createElement('span');
-    lbl.className = 'tree-ref-label';
-    lbl.textContent = '参照';
-    line.appendChild(lbl);
-
-    appendMoves(line, savedBranches[refIdx].moves.map((m, i) => ({ move: m, gameIdx: i })), 4);
-    appendLeafParts(line, refIdx);
+    renderSeq(line, refPairs, pinIdxs, 2, 2);
+    appendLeafSuffix(line, refIdx);
     container.appendChild(line);
   }
 
   // ── 分岐ツリー（参照以外） ──
-  const nonRefPairs = savedBranches
-    .map((b, i) => ({ moves: b.moves, origIdx: i }))
-    .filter((_, i) => i !== refIdx);
+  const nonRefIdxs = savedBranches.map((_, i) => i).filter(i => i !== refIdx);
+  if (nonRefIdxs.length === 0) return;
 
-  if (nonRefPairs.length === 0) return;
+  nonRefIdxs.forEach((bi, listIdx) => {
+    const isLast = listIdx === nonRefIdxs.length - 1;
+    const { moves } = savedBranches[bi];
+    const startIdx = divIdxMap.has(bi) ? divIdxMap.get(bi) : 0;
+    const branchPairs = moves.slice(startIdx).map((m, j) => ({ move: m, gameIdx: startIdx + j }));
 
-  const trie = buildBranchTrie(nonRefPairs);
-
-  function renderNode(node, isLast, prefix) {
-    const chain = [];
-    let cur = node;
-    while (cur.endBranchIdx === -1 && cur.children.length === 1) {
-      chain.push(cur); cur = cur.children[0];
+    // 現在位置がこの分岐上にあれば追加
+    const pinIdxs = new Set();
+    if (currentMove > startIdx && currentMove <= moves.length &&
+        moves.slice(0, currentMove).every((m, i) => curPath[i] === `${m.x},${m.y}`)) {
+      pinIdxs.add(currentMove - 1 - startIdx);
     }
-    chain.push(cur);
-    const lastNode = chain[chain.length - 1];
 
-    const frag = document.createDocumentFragment();
     const line = document.createElement('div');
-    line.className = 'tree-line';
-    if (lastNode.endBranchIdx >= 0) {
-      line.classList.add('clickable');
-      line.title = 'クリックでこの手順を読み込む';
-      line.onclick = () => loadBranch(lastNode.endBranchIdx);
-    }
+    line.className = 'tree-line clickable';
+    line.title = 'クリックでこの手順を読み込む';
+    line.dataset.branchidx = bi;
+    line.onclick = () => loadBranch(bi);
+    line.appendChild(mkSpan('tree-connector', isLast ? '└─' : '├─'));
 
-    prefix.forEach(cont => {
-      const sp = document.createElement('span');
-      sp.className = 'tree-connector';
-      sp.textContent = cont ? '│  ' : '   ';
-      line.appendChild(sp);
-    });
-
-    const conn = document.createElement('span');
-    conn.className = 'tree-connector';
-    conn.textContent = isLast ? '└─' : '├─';
-    line.appendChild(conn);
-
-    appendMoves(line, chain.map(n => ({ move: n.move, gameIdx: n.moveIdx })), 2);
-
-    if (lastNode.endBranchIdx >= 0) {
-      appendLeafParts(line, lastNode.endBranchIdx);
-    }
-
-    frag.appendChild(line);
-    const childPrefix = [...prefix, !isLast];
-    lastNode.children.forEach((child, i) => {
-      frag.appendChild(renderNode(child, i === lastNode.children.length - 1, childPrefix));
-    });
-    return frag;
-  }
-
-  trie.children.forEach((child, i) => {
-    container.appendChild(renderNode(child, i === trie.children.length - 1, []));
+    renderSeq(line, branchPairs, pinIdxs, 2, 1);
+    appendLeafSuffix(line, bi);
+    container.appendChild(line);
   });
+
+  // 参照行の分岐点に └─/├─ を揃える
+  if (refIdx >= 0) {
+    requestAnimationFrame(() => {
+      const refLine = container.querySelector('.ref-line');
+      if (!refLine) return;
+      const baseLeft = refLine.getBoundingClientRect().left;
+      nonRefIdxs.forEach(bi => {
+        const divIdx = divIdxMap.get(bi);
+        if (divIdx === undefined) return;
+        const marker = refLine.querySelector(`[data-gameidx="${divIdx}"]`);
+        if (!marker) return;
+        const indent = marker.getBoundingClientRect().left - baseLeft;
+        const branchLine = container.querySelector(`[data-branchidx="${bi}"]`);
+        if (branchLine) branchLine.style.paddingLeft = Math.max(0, indent) + 'px';
+      });
+    });
+  }
 }
 
 function inBounds(x, y) {
