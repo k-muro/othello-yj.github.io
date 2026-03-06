@@ -42,7 +42,6 @@ let whiteName = "白";
 let _skipDraw = false;
 let scoreChart = null;
 let egaroucidReady = false;
-let showAnalysis = localStorage.getItem('othello-show-analysis') === 'true';
 let graphMode = localStorage.getItem('othello-graph-mode') || 'ai'; // 'ai' | 'stone'
 let evalCache = [];
 let evalKifu = '';
@@ -296,6 +295,15 @@ updateScoreGraph();
 updateNavButtons();
 renderBranchTree();
 
+// 分岐の先端にいる間は悪手解析を自動実行
+if (egaroucidReady && currentMove > 0) {
+  const _atBranchEnd = savedBranches.some(b =>
+    b.moves.length === currentMove &&
+    b.moves.every((m, i) => m.x === moveHistory[i].x && m.y === moveHistory[i].y)
+  );
+  if (_atBranchEnd) computeMistakes();
+}
+
 // 評価値表示が終わったら全読みを起動
 const solverGen = currentEvalGen;
 const snapBoard = board.map(r => [...r]);
@@ -505,12 +513,14 @@ function renderBranchTree() {
       line.appendChild(badge);
     }
 
-    const del = document.createElement('button');
-    del.className = 'btn btn-outline-danger btn-sm tree-del-btn';
-    del.textContent = '×';
-    del.title = 'この手順を削除';
-    del.onclick = e => { e.stopPropagation(); deleteBranch(bi); };
-    line.appendChild(del);
+    if (!savedBranches[bi].isRef) {
+      const del = document.createElement('button');
+      del.className = 'btn btn-outline-danger btn-sm tree-del-btn';
+      del.textContent = '×';
+      del.title = 'この手順を削除';
+      del.onclick = e => { e.stopPropagation(); deleteBranch(bi); };
+      line.appendChild(del);
+    }
   }
 
   // ── 参照棋譜：先頭フラット行 ──
@@ -1069,15 +1079,13 @@ function evalScoreColor(score) {
 let mistakeCache = []; // [{moveIdx, dev}]  dev < 0 = 平均より悪い手
 let mistakeCacheKifu = '';
 let mistakeGeneration = 0;
+let showMistakeList = false;
 
-function startMistakeAnalysis() {
-  if (!egaroucidReady) return;
-  // キャッシュを強制クリアして再計算
-  mistakeCacheKifu = '';
-  mistakeCache = [];
+function toggleMistakeList() {
+  showMistakeList = !showMistakeList;
   const btn = document.getElementById('mistake-analyze-btn');
-  if (btn) btn.textContent = '解析中…';
-  computeMistakes();
+  if (btn) btn.textContent = showMistakeList ? '悪手を隠す' : '悪手を表示';
+  renderMistakeList();
 }
 
 function computeMistakes() {
@@ -1134,8 +1142,6 @@ function computeMistakes() {
       if (idx >= moveHistory.length) {
         renderMistakeList();
         updateScoreGraph();
-        const btn = document.getElementById('mistake-analyze-btn');
-        if (btn) btn.textContent = '悪手を解析';
         return;
       }
       validMoves = movesOn(boardState, cp);
@@ -1207,7 +1213,7 @@ function getMistakeInfo(moveIdx) {
 function renderMistakeList() {
   const el = document.getElementById('mistake-list');
   if (!el) return;
-  if (!egaroucidReady || mistakeCache.length === 0) { el.innerHTML = ''; return; }
+  if (!showMistakeList || !egaroucidReady || mistakeCache.length === 0) { el.innerHTML = ''; return; }
 
   const toShow = [...getShownMistakeSet().values()]
     .sort((a, b) => a.moveIdx - b.moveIdx); // 手番順
@@ -1316,26 +1322,12 @@ function setEvalLevel(val) {
   }
 }
 
-function applyAnalysisVisibility() {
-  const endgameEl2 = document.getElementById('endgame');
-  if (endgameEl2) endgameEl2.style.display = showAnalysis ? '' : 'none';
-  const graphEl = document.getElementById('graph-area');
-  if (graphEl) graphEl.style.display = showAnalysis ? '' : 'none';
-  const btn = document.getElementById('analysis-toggle');
-  if (btn) btn.textContent = showAnalysis ? '解析を隠す' : '解析を表示';
-}
-
 function toggleGraphMode() {
   graphMode = graphMode === 'ai' ? 'stone' : 'ai';
   localStorage.setItem('othello-graph-mode', graphMode);
   updateScoreGraph();
 }
 
-function toggleAnalysis() {
-  showAnalysis = !showAnalysis;
-  localStorage.setItem('othello-show-analysis', showAnalysis);
-  applyAnalysisVisibility();
-}
 
 function setAiStatus(text, color) {
   const el = document.getElementById('ai-status');
@@ -1358,9 +1350,15 @@ function onEgaroucidReady() {
     egaroucidReady = true;
     clearTimeout(window._aiLoadTimer);
     setAiStatus('AI準備完了', '#1a7f37');
-    const analyzeBtn = document.getElementById('mistake-analyze-btn');
-    if (analyzeBtn) analyzeBtn.disabled = false;
     computeAllEvals();
+    // 初期化完了時点で分岐先端にいれば悪手解析を起動
+    if (currentMove > 0) {
+      const _atEnd = savedBranches.some(b =>
+        b.moves.length === currentMove &&
+        b.moves.every((m, i) => m.x === moveHistory[i].x && m.y === moveHistory[i].y)
+      );
+      if (_atEnd) computeMistakes();
+    }
   } catch(e) {
     setAiStatus('AI読み込み失敗', '#dc3545');
     console.error('Egaroucid init failed:', e);
@@ -1725,4 +1723,3 @@ document.getElementById('confirm-depth-btn').addEventListener('click', function(
 drawBoard();
 initScoreGraph();
 updateScoreGraph();
-applyAnalysisVisibility();

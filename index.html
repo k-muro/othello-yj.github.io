@@ -651,15 +651,22 @@ hr { opacity: 1; border-color: #d0d7de; }
       <button id="btn-last" class="btn btn-outline-secondary btn-sm" onclick="goToLast()">最後 ⏭</button>
     </div>
 
-    <div class="d-flex justify-content-end gap-2 mt-2">
+    <div class="d-flex align-items-center gap-2 my-3">
+      <button class="btn btn-outline-secondary btn-sm px-3 collapse-toggle collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#analysis-panel"
+              aria-expanded="false">解析</button>
+      <div class="flex-grow-1" style="height:1px;background:var(--bs-border-color);"></div>
+    </div>
+
+    <div class="collapse" id="analysis-panel">
+    <div class="d-flex gap-2 mb-2">
       <button id="move-eval-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2"
               onclick="toggleMoveEvals()" style="font-size:0.75rem;">候補手の評価値</button>
       <button id="mistake-analyze-btn" class="btn btn-outline-secondary btn-sm py-0 px-2"
-              onclick="startMistakeAnalysis()" style="font-size:0.75rem;" disabled>悪手を解析</button>
-      <button id="analysis-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2"
-              onclick="toggleAnalysis()" style="font-size:0.75rem;">解析を表示</button>
+              onclick="toggleMistakeList()" style="font-size:0.75rem;">悪手を表示</button>
     </div>
-
     <p id="endgame" class="mt-2 mb-0"></p>
 
     <div id="graph-area" class="mt-2">
@@ -676,9 +683,9 @@ hr { opacity: 1; border-color: #d0d7de; }
       </div>
       <div id="mistake-list" class="mt-1"></div>
     </div>
+    </div>
 
     <div class="d-flex align-items-center gap-2 my-3">
-      <div class="flex-grow-1" style="height:1px;background:var(--bs-border-color);"></div>
       <button class="btn btn-outline-secondary btn-sm px-3 collapse-toggle collapsed"
               type="button"
               data-bs-toggle="collapse"
@@ -697,7 +704,6 @@ hr { opacity: 1; border-color: #d0d7de; }
     </div>
 
     <div class="d-flex align-items-center gap-2 my-3">
-      <div class="flex-grow-1" style="height:1px;background:var(--bs-border-color);"></div>
       <button class="btn btn-outline-secondary btn-sm px-3 collapse-toggle collapsed"
               type="button"
               data-bs-toggle="collapse"
