@@ -26,7 +26,10 @@ function _evalLabel() {
 
 function updateEndgameEl(solverText) {
   if (solverText !== undefined) _solverResult = solverText;
-  const label = _solverPending ? '' : _evalLabel();
+  // ソルバーの結果が出るまで更新しない（緑枠を透明テキストで維持）
+  if (_solverPending) return;
+  endgameEl.classList.remove('endgame-pending');
+  const label = _evalLabel();
   const solving = _solverResult === '読み中…';
   if (!solving && label && _solverResult) {
     endgameEl.innerHTML = `${label}<br><span style="font-size:0.82em">${_solverResult}</span>`;
@@ -262,7 +265,7 @@ function drawBoard() {
   balanceBar.style.width = (total > 0 ? (black / total * 100) : 50).toFixed(1) + '%';
 
   _solverResult = '';
-  endgameEl.textContent = "";
+  endgameEl.classList.add('endgame-pending');
 
   const kifu = moveHistory.slice(0, currentMove)
     .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
@@ -305,7 +308,7 @@ if (egaroucidReady && currentMove > 0) {
     b.moves.length === currentMove &&
     b.moves.every((m, i) => m.x === moveHistory[i].x && m.y === moveHistory[i].y)
   );
-  if (_atBranchEnd) computeMistakes();
+  if (_atBranchEnd) setTimeout(computeMistakes, 0);
 }
 
 // 評価値表示が終わったら全読みを起動
@@ -1161,8 +1164,7 @@ function computeMistakes() {
   if (mistakeCacheMap.has(kifuKey)) {
     mistakeCache = mistakeCacheMap.get(kifuKey);
     mistakeCacheKifu = kifuKey;
-    renderMistakeList();
-    updateScoreGraph();
+    setTimeout(() => { renderMistakeList(); updateScoreGraph(); }, 0);
     return;
   }
   mistakeCacheKifu = kifuKey;
