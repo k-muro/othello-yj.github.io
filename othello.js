@@ -9,6 +9,7 @@ const balanceBar = document.getElementById("balance-bar");
 const endgameEl = document.getElementById("endgame");
 
 let solverDepth = parseInt(localStorage.getItem('othello-solver-depth') || '20');
+let savedBranches = []; // 分岐ツリー（セッション内のみ、最大5手順）
 let _solverCancelFlag = false; // 全読みキャンセル用フラグ
 let _solverResult = ''; // 現局面の全読み結果テキスト
 
@@ -293,6 +294,7 @@ if (blackMoves.length === 0 && whiteMoves.length === 0) {
 computeAllEvals();
 updateScoreGraph();
 updateNavButtons();
+renderBranchTree();
 
 // 評価値表示が終わったら全読みを起動
 const solverGen = currentEvalGen;
@@ -358,6 +360,233 @@ function updateNavButtons() {
   document.getElementById('btn-redo').disabled    = !canForward;
   document.getElementById('btn-redo10').disabled  = !canForward;
   document.getElementById('btn-last').disabled    = !canForward;
+}
+
+// ===== 分岐ツリー =====
+function _addBranch(moves, atFront = false) {
+  if (savedBranches.length >= 5 || moves.length === 0) return false;
+  const key = moves.map(m => `${m.x},${m.y}`).join('|');
+  if (savedBranches.some(b => b.moves.map(m => `${m.x},${m.y}`).join('|') === key)) return false;
+  if (atFront) savedBranches.unshift({ moves });
+  else         savedBranches.push({ moves });
+  return true;
+}
+
+function isPathPrefixOfAnyBranch(path) {
+  if (path.length === 0) return true;
+  return savedBranches.some(b => {
+    if (path.length > b.moves.length) return false;
+    return path.every((key, i) => key === `${b.moves[i].x},${b.moves[i].y}`);
+  });
+}
+
+function saveBranch() {
+  if (currentMove === 0) return;
+  if (_addBranch(moveHistory.slice(0, currentMove))) renderBranchTree();
+}
+
+function saveReferenceKifu() {
+  if (currentMove === 0) return;
+  const moves = moveHistory.slice(0, currentMove);
+  const key = moves.map(m => `${m.x},${m.y}`).join('|');
+  if (savedBranches.some(b => b.moves.map(m => `${m.x},${m.y}`).join('|') === key)) return;
+  if (savedBranches.length >= 5) return;
+  savedBranches.unshift({ moves, isRef: true });
+}
+
+function deleteBranch(idx) {
+  savedBranches.splice(idx, 1);
+  renderBranchTree();
+}
+
+function loadBranch(idx) {
+  const { moves } = savedBranches[idx];
+  referenceKifu = moves.map(m => ({ x: m.x, y: m.y }));
+  const kifu = moves.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join('');
+  kifuToMoves(kifu);
+  drawBoard();
+}
+
+// pairs: [{moves, origIdx}]  origIdx = savedBranches の元インデックス
+function buildBranchTrie(pairs) {
+  const root = { move: null, moveIdx: -1, children: [], endBranchIdx: -1 };
+  for (const { moves, origIdx } of pairs) {
+    let node = root;
+    for (let mi = 0; mi < moves.length; mi++) {
+      const m = moves[mi];
+      let child = node.children.find(c => c.move.x === m.x && c.move.y === m.y);
+      if (!child) {
+        child = { move: m, moveIdx: mi, children: [], endBranchIdx: -1 };
+        node.children.push(child);
+      }
+      node = child;
+    }
+    node.endBranchIdx = origIdx;
+  }
+  return root;
+}
+
+function renderBranchTree() {
+  const container = document.getElementById('branch-tree-container');
+  const saveBtn   = document.getElementById('save-branch-btn');
+  if (!container) return;
+
+  if (saveBtn) {
+    saveBtn.disabled = savedBranches.length >= 5 || currentMove === 0;
+    saveBtn.textContent = `この手順を保存 (${savedBranches.length}/5)`;
+  }
+
+  container.innerHTML = '';
+
+  if (savedBranches.length === 0) {
+    const msg = document.createElement('div');
+    msg.className = 'text-secondary small text-center py-2';
+    msg.textContent = '保存された手順はありません';
+    container.appendChild(msg);
+    return;
+  }
+
+  const curPath = moveHistory.slice(0, currentMove).map(m => `${m.x},${m.y}`);
+  function coord(m) { return String.fromCharCode(97 + m.x) + (m.y + 1); }
+  function onPath(mi, m) { return mi < curPath.length && curPath[mi] === `${m.x},${m.y}`; }
+
+  // pairs: [{move, gameIdx}]  showFirst: 先頭何手表示するか
+  // 省略形式: f5→f4…(N手)…→c7
+  function appendMoves(line, pairs, showFirst) {
+    if (pairs.length === 0) return;
+    const needsTrunc = pairs.length > showFirst + 1;
+    const head = needsTrunc ? pairs.slice(0, showFirst) : pairs;
+
+    head.forEach(({ move, gameIdx }, i) => {
+      if (i > 0) {
+        const arr = document.createElement('span');
+        arr.className = 'tree-arrow';
+        arr.textContent = '→';
+        line.appendChild(arr);
+      }
+      const mv = document.createElement('span');
+      mv.className = 'tree-move' + (onPath(gameIdx, move) ? ' tree-move-active' : '');
+      mv.textContent = coord(move);
+      line.appendChild(mv);
+    });
+
+    if (needsTrunc) {
+      const ell = document.createElement('span');
+      ell.className = 'tree-arrow';
+      ell.textContent = `…(${pairs.length}手)…`;
+      line.appendChild(ell);
+
+      const arr = document.createElement('span');
+      arr.className = 'tree-arrow';
+      arr.textContent = '→';
+      line.appendChild(arr);
+
+      const { move, gameIdx } = pairs[pairs.length - 1];
+      const mv = document.createElement('span');
+      mv.className = 'tree-move' + (onPath(gameIdx, move) ? ' tree-move-active' : '');
+      mv.textContent = coord(move);
+      line.appendChild(mv);
+    }
+  }
+
+  // 終端共通パーツ（手数ラベル・現在バッジ・削除ボタン）
+  function appendLeafParts(line, bi) {
+    const { moves } = savedBranches[bi];
+    const len = moves.length;
+    const info = document.createElement('span');
+    info.className = 'tree-arrow ms-1';
+    info.textContent = `(${len}手 ${coord(moves[len - 1])})`;
+    line.appendChild(info);
+
+    if (currentMove === len && moves.every((m, i) => curPath[i] === `${m.x},${m.y}`)) {
+      const badge = document.createElement('span');
+      badge.className = 'tree-badge-now ms-1';
+      badge.textContent = '現在';
+      line.appendChild(badge);
+    }
+
+    const del = document.createElement('button');
+    del.className = 'btn btn-outline-danger btn-sm tree-del-btn';
+    del.textContent = '×';
+    del.title = 'この手順を削除';
+    del.onclick = e => { e.stopPropagation(); deleteBranch(bi); };
+    line.appendChild(del);
+  }
+
+  // ── 参照棋譜：先頭フラット行 ──
+  const refIdx = savedBranches.findIndex(b => b.isRef);
+  if (refIdx >= 0) {
+    const line = document.createElement('div');
+    line.className = 'tree-line ref-line clickable';
+    line.title = 'クリックでこの手順を読み込む';
+    line.onclick = () => loadBranch(refIdx);
+
+    const lbl = document.createElement('span');
+    lbl.className = 'tree-ref-label';
+    lbl.textContent = '参照';
+    line.appendChild(lbl);
+
+    appendMoves(line, savedBranches[refIdx].moves.map((m, i) => ({ move: m, gameIdx: i })), 4);
+    appendLeafParts(line, refIdx);
+    container.appendChild(line);
+  }
+
+  // ── 分岐ツリー（参照以外） ──
+  const nonRefPairs = savedBranches
+    .map((b, i) => ({ moves: b.moves, origIdx: i }))
+    .filter((_, i) => i !== refIdx);
+
+  if (nonRefPairs.length === 0) return;
+
+  const trie = buildBranchTrie(nonRefPairs);
+
+  function renderNode(node, isLast, prefix) {
+    const chain = [];
+    let cur = node;
+    while (cur.endBranchIdx === -1 && cur.children.length === 1) {
+      chain.push(cur); cur = cur.children[0];
+    }
+    chain.push(cur);
+    const lastNode = chain[chain.length - 1];
+
+    const frag = document.createDocumentFragment();
+    const line = document.createElement('div');
+    line.className = 'tree-line';
+    if (lastNode.endBranchIdx >= 0) {
+      line.classList.add('clickable');
+      line.title = 'クリックでこの手順を読み込む';
+      line.onclick = () => loadBranch(lastNode.endBranchIdx);
+    }
+
+    prefix.forEach(cont => {
+      const sp = document.createElement('span');
+      sp.className = 'tree-connector';
+      sp.textContent = cont ? '│  ' : '   ';
+      line.appendChild(sp);
+    });
+
+    const conn = document.createElement('span');
+    conn.className = 'tree-connector';
+    conn.textContent = isLast ? '└─' : '├─';
+    line.appendChild(conn);
+
+    appendMoves(line, chain.map(n => ({ move: n.move, gameIdx: n.moveIdx })), 2);
+
+    if (lastNode.endBranchIdx >= 0) {
+      appendLeafParts(line, lastNode.endBranchIdx);
+    }
+
+    frag.appendChild(line);
+    const childPrefix = [...prefix, !isLast];
+    lastNode.children.forEach((child, i) => {
+      frag.appendChild(renderNode(child, i === lastNode.children.length - 1, childPrefix));
+    });
+    return frag;
+  }
+
+  trie.children.forEach((child, i) => {
+    container.appendChild(renderNode(child, i === trie.children.length - 1, []));
+  });
 }
 
 function inBounds(x, y) {
@@ -599,6 +828,11 @@ function playMove(x, y) {
   const flips = getFlips(x, y, currentPlayer);
   if (flips.length === 0) return;
 
+  // 分岐自動保存: 打つ前の局面がツリー内にあれば、打った後の局面も確認する
+  const prevPath = savedBranches.length > 0
+    ? moveHistory.slice(0, currentMove).map(m => `${m.x},${m.y}`)
+    : null;
+
   moveHistory = moveHistory.slice(0, currentMove);
   moveHistory.push({x, y, player: currentPlayer});
   currentMove++;
@@ -607,6 +841,23 @@ function playMove(x, y) {
   flips.forEach(([fx, fy]) => board[fy][fx] = currentPlayer);
   currentPlayer *= -1;
   applyPassIfNeeded();
+
+  if (prevPath) {
+    // prevPath がある枝の末尾と完全一致 → その枝を延長更新
+    const extendIdx = savedBranches.findIndex(b =>
+      b.moves.length === prevPath.length &&
+      prevPath.every((key, i) => key === `${b.moves[i].x},${b.moves[i].y}`)
+    );
+    if (extendIdx >= 0) {
+      savedBranches[extendIdx].moves = moveHistory.slice(0, currentMove);
+    } else if (savedBranches.length < 5) {
+      // prevPath がどこかの枝のプレフィックス → 初めて外れた瞬間だけ新規保存
+      const currPath = moveHistory.slice(0, currentMove).map(m => `${m.x},${m.y}`);
+      if (isPathPrefixOfAnyBranch(prevPath) && !isPathPrefixOfAnyBranch(currPath)) {
+        _addBranch(moveHistory.slice(0, currentMove));
+      }
+    }
+  }
 
   drawBoard();
 }
@@ -708,6 +959,7 @@ function applyKifu() {
   for (let i = 0; i + 1 < kifu.length; i += 2)
     referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
   kifuToMoves(kifu);
+  saveReferenceKifu();
   drawBoard();
 }
 
@@ -752,6 +1004,7 @@ function loadFromURL() {
   for (let i = 0; i + 1 < kifu.length; i += 2)
     referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
   kifuToMoves(kifu);
+  saveReferenceKifu();
 }
 
 function copyShareURL() {
