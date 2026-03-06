@@ -238,7 +238,8 @@ function drawBoard() {
 
   if (empty <= solverDepth) {
     let score, bestPos, line;
-    if (egaroucidReady) {
+    // ENDGAME_SOLVE_LEVEL=10 は 20手まで完全読み。それ以上は bbSolveTop にフォールバック
+    if (egaroucidReady && empty <= 20) {
       ({ score, bestPos, line } = egaroucidSolveTop(board, currentPlayer));
     } else {
       let blackBB = 0n, whiteBB = 0n;
