@@ -10,6 +10,7 @@ const endgameEl = document.getElementById("endgame");
 
 let solverDepth = parseInt(localStorage.getItem('othello-solver-depth') || '20');
 let savedBranches = []; // 分岐ツリー（セッション内のみ、最大5手順）
+let _branchPaddingCache = new Map(); // bi -> paddingLeft（フリッカー防止用）
 let _solverCancelFlag = false; // 全読みキャンセル用フラグ
 let _solverResult = ''; // 現局面の全読み結果テキスト
 
@@ -375,6 +376,7 @@ function _addBranch(moves, atFront = false) {
   if (savedBranches.length >= 5 || moves.length === 0) return false;
   const key = moves.map(m => `${m.x},${m.y}`).join('|');
   if (savedBranches.some(b => b.moves.map(m => `${m.x},${m.y}`).join('|') === key)) return false;
+  _branchPaddingCache.clear();
   if (atFront) savedBranches.unshift({ moves });
   else         savedBranches.push({ moves });
   return true;
@@ -413,6 +415,7 @@ function saveReferenceKifu() {
 
 function deleteBranch(idx) {
   if (savedBranches[idx]?.isRef) return;
+  _branchPaddingCache.clear();
   savedBranches.splice(idx, 1);
   renderBranchTree();
 }
@@ -602,6 +605,10 @@ function renderBranchTree() {
     line.title = 'クリックでこの手順を読み込む';
     line.dataset.branchidx = bi;
     line.onclick = () => loadBranch(bi);
+    // キャッシュ済みのパディングを即時適用（フリッカー防止）
+    if (_branchPaddingCache.has(bi)) {
+      line.style.paddingLeft = _branchPaddingCache.get(bi) + 'px';
+    }
     line.appendChild(mkSpan('tree-connector', isLast ? '└─' : '├─'));
 
     renderSeq(line, branchPairs, pinIdxs, 2, 1);
@@ -609,7 +616,7 @@ function renderBranchTree() {
     container.appendChild(line);
   });
 
-  // 参照行の分岐点に └─/├─ を揃える
+  // 参照行の分岐点に └─/├─ を揃える（rAFでキャッシュを更新）
   if (refIdx >= 0) {
     requestAnimationFrame(() => {
       const refLine = container.querySelector('.ref-line');
@@ -620,9 +627,12 @@ function renderBranchTree() {
         if (divIdx === undefined) return;
         const marker = refLine.querySelector(`[data-gameidx="${divIdx}"]`);
         if (!marker) return;
-        const indent = marker.getBoundingClientRect().left - baseLeft;
+        const indent = Math.max(0, marker.getBoundingClientRect().left - baseLeft);
         const branchLine = container.querySelector(`[data-branchidx="${bi}"]`);
-        if (branchLine) branchLine.style.paddingLeft = Math.max(0, indent) + 'px';
+        if (branchLine) {
+          branchLine.style.paddingLeft = indent + 'px';
+          _branchPaddingCache.set(bi, indent);
+        }
       });
     });
   }
