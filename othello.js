@@ -10,6 +10,26 @@ const endgameEl = document.getElementById("endgame");
 
 let solverDepth = parseInt(localStorage.getItem('othello-solver-depth') || '20');
 let _solverCancelFlag = false; // 全読みキャンセル用フラグ
+let _solverResult = ''; // 現局面の全読み結果テキスト
+
+function _evalLabel() {
+  if (!egaroucidReady || currentMove >= evalCache.length) return '';
+  const v = evalCache[currentMove];
+  const a = Math.abs(v), s = v >= 0 ? '+' : '';
+  if (a < 6)  return '互角';
+  if (a < 15) return v > 0 ? `黒有利(${s}${v})` : `白有利(${v})`;
+  return v > 0 ? `黒勝勢(${s}${v})` : `白勝勢(${v})`;
+}
+
+function updateEndgameEl(solverText) {
+  if (solverText !== undefined) _solverResult = solverText;
+  const label = _evalLabel();
+  if (label && _solverResult) {
+    endgameEl.innerHTML = `${label}<br><span style="font-size:0.82em">${_solverResult}</span>`;
+  } else {
+    endgameEl.textContent = _solverResult || label;
+  }
+}
 let showMoveNumbers = localStorage.getItem('othello-show-numbers') === 'true';
 let moveHistory = [];
 let currentMove = 0;
@@ -238,6 +258,7 @@ function drawBoard() {
   const total = black + white;
   balanceBar.style.width = (total > 0 ? (black / total * 100) : 50).toFixed(1) + '%';
 
+  _solverResult = '';
   endgameEl.textContent = "";
 
   const kifu = moveHistory.slice(0, currentMove)
@@ -281,9 +302,9 @@ const snapEmpty = empty;
 const snapGameOver = blackMoves.length === 0 && whiteMoves.length === 0;
 function runSolver() {
   if (solverGen !== moveEvalGeneration) return;
-  if (snapGameOver) { endgameEl.textContent = ''; return; }
+  if (snapGameOver) { updateEndgameEl(''); return; }
   if (snapEmpty > solverDepth) return;
-  endgameEl.textContent = '読み中…';
+  updateEndgameEl('読み中…');
   _solverCancelFlag = false;
   try {
     let score, bestPos, line;
@@ -300,7 +321,7 @@ function runSolver() {
         }
       ({ score, bestPos, line } = bbSolveTop(blackBB, whiteBB, snapPlayer === 1));
     } else {
-      endgameEl.textContent = 'AI読み込み後に全読みできます';
+      updateEndgameEl('AI読み込み後に全読みできます');
       return;
     }
     if (solverGen !== moveEvalGeneration) return;
@@ -309,7 +330,7 @@ function runSolver() {
     if (score > 0)      result = `黒が +${score} で勝ち`;
     else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
     else                result = `引き分け`;
-    endgameEl.textContent = `最善手を読み切り: ${result}　(${lineStr})`;
+    updateEndgameEl(`最善手を読み切り: ${result}　(${lineStr})`);
     if (bestPos >= 0) {
       const bx = bestPos & 7, by = bestPos >> 3;
       const bestCell = boardElement.querySelector(`[data-pos="${bx},${by}"]`);
@@ -1432,6 +1453,8 @@ function updateScoreGraph() {
   zeroDs.borderColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
   scoreChart.update();
   renderMistakeList();
+
+  updateEndgameEl();
 }
 
 initBoard();
