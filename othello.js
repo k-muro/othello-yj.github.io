@@ -300,6 +300,18 @@ if (blackMoves.length === 0 && whiteMoves.length === 0) {
 computeAllEvals();
 updateScoreGraph();
 scheduleMoveEvals(validMoves, currentEvalGen);
+updateNavButtons();
+}
+
+function updateNavButtons() {
+  const canBack = currentMove > 0;
+  const canForward = currentMove < moveHistory.length;
+  document.getElementById('btn-first').disabled  = !canBack;
+  document.getElementById('btn-undo10').disabled  = !canBack;
+  document.getElementById('btn-undo').disabled    = !canBack;
+  document.getElementById('btn-redo').disabled    = !canForward;
+  document.getElementById('btn-redo10').disabled  = !canForward;
+  document.getElementById('btn-last').disabled    = !canForward;
 }
 
 function inBounds(x, y) {
