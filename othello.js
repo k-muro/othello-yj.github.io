@@ -786,7 +786,13 @@ function evaluateMove(x, y) {
     if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && b[ny][nx] === currentPlayer)
       tmp.forEach(([fx, fy]) => { b[fy][fx] = currentPlayer; });
   }
-  return evaluatePosition(b, -currentPlayer); // 黒視点スコア
+  // 着手後の残り手数を数え、12未満ならその値をレベルに使う
+  let empty = 0;
+  for (let r = 0; r < 8; r++)
+    for (let c = 0; c < 8; c++)
+      if (b[r][c] === 0) empty++;
+  const level = empty < 12 ? empty : evalLevel;
+  return evaluatePosition(b, -currentPlayer, level); // 黒視点スコア
 }
 
 // ===== Egaroucid AI 評価 =====
@@ -850,7 +856,7 @@ function onEgaroucidReady() {
 }
 
 // 盤面を WASM に渡して評価値（黒視点の予測石差）を返す
-function evaluatePosition(b, player) {
+function evaluatePosition(b, player, level = evalLevel) {
   // player: 1=黒, -1=白
   // ゲーム終了（空マスなし）はそのまま石差を返す
   let black = 0, white = 0, empty = 0;
@@ -872,7 +878,7 @@ function evaluatePosition(b, player) {
   const wasmPlayer = player === 1 ? 0 : 1;
   const ptr = _malloc(64 * 4);
   HEAP32.set(res, ptr >> 2);
-  const val = _ai_js(ptr, evalLevel, wasmPlayer);
+  const val = _ai_js(ptr, level, wasmPlayer);
   _free(ptr);
 
   // 戻り値デコード: y*8000 + x*1000 + (dif_stones+100)
