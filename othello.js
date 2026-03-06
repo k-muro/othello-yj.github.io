@@ -9,6 +9,7 @@ const balanceBar = document.getElementById("balance-bar");
 const endgameEl = document.getElementById("endgame");
 
 let solverDepth = parseInt(localStorage.getItem('othello-solver-depth') || '20');
+let _solverCancelFlag = false; // 全読みキャンセル用フラグ
 let showMoveNumbers = localStorage.getItem('othello-show-numbers') === 'true';
 let moveHistory = [];
 let currentMove = 0;
@@ -152,6 +153,7 @@ function getValidMoves(player) {
 
 function drawBoard() {
   if (_skipDraw) return;
+  _solverCancelFlag = true;  // 実行中の全読みをキャンセル
   boardElement.innerHTML = "";
   const validMoves = getValidMoves(currentPlayer);
   const validSet = new Set(validMoves.map(([x, y]) => `${x},${y}`));
@@ -236,38 +238,7 @@ function drawBoard() {
   const total = black + white;
   balanceBar.style.width = (total > 0 ? (black / total * 100) : 50).toFixed(1) + '%';
 
-  if (empty <= solverDepth) {
-    let score, bestPos, line;
-    // ENDGAME_SOLVE_LEVEL=10 は 20手まで完全読み。それ以上は bbSolveTop にフォールバック
-    if (egaroucidReady && empty <= 20) {
-      ({ score, bestPos, line } = egaroucidSolveTop(board, currentPlayer));
-    } else {
-      let blackBB = 0n, whiteBB = 0n;
-      for (let y = 0; y < 8; y++)
-        for (let x = 0; x < 8; x++) {
-          if (board[y][x] === 1)  blackBB |= 1n << BigInt(y * 8 + x);
-          else if (board[y][x] === -1) whiteBB |= 1n << BigInt(y * 8 + x);
-        }
-      ({ score, bestPos, line } = bbSolveTop(blackBB, whiteBB, currentPlayer === 1));
-    }
-    const lineStr = line.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join(" ");
-    let result;
-    if (score > 0)      result = `黒が +${score} で勝ち`;
-    else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
-    else                result = `引き分け`;
-    endgameEl.textContent = `最善手を読み切り: ${result}　(${lineStr})`;
-    if (bestPos >= 0) {
-      const bx = bestPos & 7, by = bestPos >> 3;
-      const bestCell = boardElement.querySelector(`[data-pos="${bx},${by}"]`);
-      if (bestCell) {
-        const dot = document.createElement("div");
-        dot.className = "best-move-dot";
-        bestCell.appendChild(dot);
-      }
-    }
-  } else {
-    endgameEl.textContent = "";
-  }
+  endgameEl.textContent = "";
 
   const kifu = moveHistory.slice(0, currentMove)
     .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
@@ -300,8 +271,60 @@ if (blackMoves.length === 0 && whiteMoves.length === 0) {
 }
 computeAllEvals();
 updateScoreGraph();
-scheduleMoveEvals(validMoves, currentEvalGen);
 updateNavButtons();
+
+// 評価値表示が終わったら全読みを起動
+const solverGen = currentEvalGen;
+const snapBoard = board.map(r => [...r]);
+const snapPlayer = currentPlayer;
+const snapEmpty = empty;
+const snapGameOver = blackMoves.length === 0 && whiteMoves.length === 0;
+function runSolver() {
+  if (solverGen !== moveEvalGeneration) return;
+  if (snapGameOver) { endgameEl.textContent = ''; return; }
+  if (snapEmpty > solverDepth) return;
+  endgameEl.textContent = '読み中…';
+  _solverCancelFlag = false;
+  try {
+    let score, bestPos, line;
+    if (egaroucidReady) {
+      // egaroucid が使えるなら残り手数に関わらず WASM で解く
+      ({ score, bestPos, line } = egaroucidSolveTop(snapBoard, snapPlayer, snapEmpty));
+    } else if (snapEmpty <= 10) {
+      // egaroucid 未準備のときは JS ソルバー（≤20手のみ）
+      let blackBB = 0n, whiteBB = 0n;
+      for (let y = 0; y < 8; y++)
+        for (let x = 0; x < 8; x++) {
+          if (snapBoard[y][x] === 1)  blackBB |= 1n << BigInt(y * 8 + x);
+          else if (snapBoard[y][x] === -1) whiteBB |= 1n << BigInt(y * 8 + x);
+        }
+      ({ score, bestPos, line } = bbSolveTop(blackBB, whiteBB, snapPlayer === 1));
+    } else {
+      endgameEl.textContent = 'AI読み込み後に全読みできます';
+      return;
+    }
+    if (solverGen !== moveEvalGeneration) return;
+    const lineStr = line.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join(" ");
+    let result;
+    if (score > 0)      result = `黒が +${score} で勝ち`;
+    else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
+    else                result = `引き分け`;
+    endgameEl.textContent = `最善手を読み切り: ${result}　(${lineStr})`;
+    if (bestPos >= 0) {
+      const bx = bestPos & 7, by = bestPos >> 3;
+      const bestCell = boardElement.querySelector(`[data-pos="${bx},${by}"]`);
+      if (bestCell) {
+        const dot = document.createElement("div");
+        dot.className = "best-move-dot";
+        bestCell.appendChild(dot);
+      }
+    }
+  } catch(e) {
+    if (e !== 'solver_cancelled') throw e;
+  }
+}
+
+scheduleMoveEvals(validMoves, currentEvalGen, runSolver);
 }
 
 function updateNavButtons() {
@@ -400,6 +423,7 @@ const BB_MOVE_WEIGHT = (() => {
 
 // アルファベータ探索（内部再帰用・score のみ返す）
 function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
+  if (_solverCancelFlag) throw 'solver_cancelled';
   const player   = blackToMove ? blackBB : whiteBB;
   const opponent = blackToMove ? whiteBB : blackBB;
   let moves = bbMoves(player, opponent);
@@ -766,13 +790,200 @@ function evalScoreColor(score) {
   return score >= 0 ? blackPalette[tier] : whitePalette[tier];
 }
 
+// ===== 悪手検出 =====
+// 各局面で全合法手を評価し、実際に打たれた手が平均より何石分悪かったかを計算
+let mistakeCache = []; // [{moveIdx, dev}]  dev < 0 = 平均より悪い手
+let mistakeCacheKifu = '';
+let mistakeGeneration = 0;
+
+function startMistakeAnalysis() {
+  if (!egaroucidReady) return;
+  // キャッシュを強制クリアして再計算
+  mistakeCacheKifu = '';
+  mistakeCache = [];
+  const btn = document.getElementById('mistake-analyze-btn');
+  if (btn) btn.textContent = '解析中…';
+  computeMistakes();
+}
+
+function computeMistakes() {
+  if (!egaroucidReady) return;
+  const kifuKey = moveHistory.map(m => `${m.x},${m.y}`).join('|');
+  if (kifuKey === mistakeCacheKifu && mistakeCache.length > 0) return;
+  mistakeCacheKifu = kifuKey;
+  mistakeCache = [];
+  const gen = ++mistakeGeneration;
+
+  const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+
+  function movesOn(b, player) {
+    const res = [];
+    for (let y = 0; y < 8; y++)
+      for (let x = 0; x < 8; x++) {
+        if (b[y][x] !== 0) continue;
+        for (const [dx, dy] of DIRS) {
+          let nx = x+dx, ny = y+dy;
+          if (nx<0||nx>=8||ny<0||ny>=8||b[ny][nx]!==-player) continue;
+          nx+=dx; ny+=dy;
+          while (nx>=0&&nx<8&&ny>=0&&ny<8&&b[ny][nx]===-player){nx+=dx;ny+=dy;}
+          if (nx>=0&&nx<8&&ny>=0&&ny<8&&b[ny][nx]===player){res.push([x,y]);break;}
+        }
+      }
+    return res;
+  }
+
+  function applyOn(b, x, y, player) {
+    const nb = b.map(r => [...r]);
+    nb[y][x] = player;
+    for (const [dx, dy] of DIRS) {
+      let nx=x+dx, ny=y+dy, tmp=[];
+      while (nx>=0&&nx<8&&ny>=0&&ny<8&&nb[ny][nx]===-player){tmp.push([nx,ny]);nx+=dx;ny+=dy;}
+      if (nx>=0&&nx<8&&ny>=0&&ny<8&&nb[ny][nx]===player) tmp.forEach(([fx,fy])=>{nb[fy][fx]=player;});
+    }
+    return nb;
+  }
+
+  let boardState = Array(8).fill().map(() => Array(8).fill(0));
+  boardState[3][3] = -1; boardState[4][4] = -1; boardState[3][4] = 1; boardState[4][3] = 1;
+  let cp = 1;
+  let idx = 0;
+  let validMoves = null; // 現在局面の合法手リスト
+  let scores = [];       // 現在局面の評価値リスト
+  let evalIdx = 0;       // 現在局面で何手目まで評価したか
+
+  // 1回の setTimeout で 1手分の評価だけ行い UI をブロックしない
+  function processNext() {
+    if (gen !== mistakeGeneration) return; // キャンセル
+
+    // 新しい局面の初期化
+    if (validMoves === null) {
+      if (idx >= moveHistory.length) {
+        renderMistakeList();
+        updateScoreGraph();
+        const btn = document.getElementById('mistake-analyze-btn');
+        if (btn) btn.textContent = '悪手を解析';
+        return;
+      }
+      validMoves = movesOn(boardState, cp);
+      scores = [];
+      evalIdx = 0;
+      // 合法手が1手以下なら評価不要：着手して次へ
+      if (validMoves.length <= 1) {
+        boardState = applyOn(boardState, moveHistory[idx].x, moveHistory[idx].y, cp);
+        cp = -cp;
+        if (movesOn(boardState, cp).length === 0 && movesOn(boardState, -cp).length > 0) cp = -cp;
+        idx++;
+        validMoves = null;
+        setTimeout(processNext, 0);
+        return;
+      }
+    }
+
+    // 現局面の合法手を 1手ずつ評価
+    if (evalIdx < validMoves.length) {
+      const [x, y] = validMoves[evalIdx++];
+      const nb = applyOn(boardState, x, y, cp);
+      let empty = 0;
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (nb[r][c] === 0) empty++;
+      const level = empty < 12 ? empty : evalLevel;
+      const blackScore = evaluatePosition(nb, -cp, level);
+      scores.push(cp === 1 ? blackScore : -blackScore);
+      setTimeout(processNext, 0);
+      return;
+    }
+
+    // 全合法手の評価が終わったら偏差を計算して次の局面へ
+    const m = moveHistory[idx];
+    const playedIdx = validMoves.findIndex(([x, y]) => x === m.x && y === m.y);
+    if (playedIdx >= 0) {
+      const mean = scores.reduce((a, v) => a + v, 0) / scores.length;
+      const dev  = scores[playedIdx] - mean;
+      const best = Math.max(...scores);
+      const loss = best - scores[playedIdx]; // 最善手との差（0=最善、正=悪い）
+      mistakeCache.push({ moveIdx: idx, dev, loss });
+    }
+    boardState = applyOn(boardState, m.x, m.y, cp);
+    cp = -cp;
+    if (movesOn(boardState, cp).length === 0 && movesOn(boardState, -cp).length > 0) cp = -cp;
+    idx++;
+    validMoves = null;
+    setTimeout(processNext, 0);
+  }
+
+  requestAnimationFrame(processNext);
+}
+
+// リストとグラフで共通して使う「表示対象の悪手セット」を返す
+function getShownMistakeSet() {
+  const toShow = [...mistakeCache]
+    .sort((a, b) => a.dev - b.dev)
+    .slice(0, 7)
+    .filter(e => e.loss >= 6);
+  return new Map(toShow.map(e => [e.moveIdx, e]));
+}
+
+function getMistakeInfo(moveIdx) {
+  const map = getShownMistakeSet();
+  const entry = map.get(moveIdx);
+  if (!entry) return null;
+  if (entry.loss >= 12) return { loss: entry.loss, label: '×', cls: 'mistake-blunder', graphRadius: 5 };
+  return { loss: entry.loss, label: '△', cls: 'mistake-mistake', graphRadius: 4 };
+}
+
+function renderMistakeList() {
+  const el = document.getElementById('mistake-list');
+  if (!el) return;
+  if (!egaroucidReady || mistakeCache.length === 0) { el.innerHTML = ''; return; }
+
+  const toShow = [...getShownMistakeSet().values()]
+    .sort((a, b) => a.moveIdx - b.moveIdx); // 手番順
+  function makeBadge({ moveIdx, loss }) {
+    const m = moveHistory[moveIdx];
+    if (!m) return null;
+    const coord = String.fromCharCode(97 + m.x) + (m.y + 1);
+    const cls   = loss >= 12 ? 'mistake-blunder' : 'mistake-mistake';
+    const label = loss >= 12 ? ' ×' : ' △';
+    const badge = document.createElement('span');
+    badge.className = `mistake-badge ${cls}`;
+    badge.textContent = `${moveIdx + 1}手 ${coord}${label}`;
+    badge.title = `最善手との差: ${loss.toFixed(1)}`;
+    badge.onclick = () => { currentMove = moveIdx; rebuildBoard(); };
+    return badge;
+  }
+
+  function makeLine(icon, entries) {
+    const row = document.createElement('div');
+    row.className = 'd-flex flex-wrap align-items-center gap-1';
+    const lbl = document.createElement('span');
+    lbl.className = 'text-secondary graph-caption';
+    lbl.textContent = `${icon}悪手:`;
+    row.appendChild(lbl);
+    entries.forEach(e => { const b = makeBadge(e); if (b) row.appendChild(b); });
+    return row;
+  }
+
+  const blackMistakes = toShow.filter(e => moveHistory[e.moveIdx]?.player === 1);
+  const whiteMistakes = toShow.filter(e => moveHistory[e.moveIdx]?.player === -1);
+
+  el.innerHTML = '';
+  el.appendChild(makeLine('⚫', blackMistakes));
+  el.appendChild(makeLine('⚪', whiteMistakes));
+}
+
 // 候補手の評価値を1手ずつ非同期で計算してDOMに書き込む
 // rAF で1フレーム描画を確実に挟んでから計算開始（iOS対応）
-function scheduleMoveEvals(validMoves, gen) {
-  if (!showMoveEvals || !egaroucidReady || validMoves.length === 0) return;
+function scheduleMoveEvals(validMoves, gen, onComplete) {
+  if (!showMoveEvals || !egaroucidReady || validMoves.length === 0) {
+    if (onComplete) setTimeout(onComplete, 0);
+    return;
+  }
   let idx = 0;
   function next() {
-    if (gen !== moveEvalGeneration || idx >= validMoves.length) return;
+    if (gen !== moveEvalGeneration) return; // キャンセル（onCompleteも呼ばない）
+    if (idx >= validMoves.length) {
+      if (onComplete) onComplete();
+      return;
+    }
     const [mx, my] = validMoves[idx++];
     const score = evaluateMove(mx, my);
     if (gen !== moveEvalGeneration) return;
@@ -871,7 +1082,10 @@ function onEgaroucidReady() {
       return;
     }
     egaroucidReady = true;
+    clearTimeout(window._aiLoadTimer);
     setAiStatus('AI準備完了', '#1a7f37');
+    const analyzeBtn = document.getElementById('mistake-analyze-btn');
+    if (analyzeBtn) analyzeBtn.disabled = false;
     computeAllEvals();
   } catch(e) {
     setAiStatus('AI読み込み失敗', '#dc3545');
@@ -947,8 +1161,8 @@ function computeAllEvals() {
 }
 
 // WASM に盤面を渡して最善手と評価値を取得（黒視点スコア）
-const ENDGAME_SOLVE_LEVEL = 10; // Level 10 = 20手完全読み
-function wasmBestMove(b, pl) {
+// level は残り手数に合わせて呼び出し側でスケール（20手=10, 24手=21）
+function wasmBestMove(b, pl, level) {
   const res = new Int32Array(64);
   for (let y = 0; y < 8; y++)
     for (let x = 0; x < 8; x++) {
@@ -958,7 +1172,7 @@ function wasmBestMove(b, pl) {
   const wp = pl === 1 ? 0 : 1;
   const ptr = _malloc(64 * 4);
   HEAP32.set(res, ptr >> 2);
-  const val = _ai_js(ptr, ENDGAME_SOLVE_LEVEL, wp);
+  const val = _ai_js(ptr, level ?? 10, wp);
   _free(ptr);
   const vy = Math.floor(val / 8000);
   const vx = Math.floor((val - vy * 8000) / 1000);
@@ -966,8 +1180,13 @@ function wasmBestMove(b, pl) {
   return { mx: vx, my: vy, score: wp === 0 ? dif : -dif };
 }
 
+// 残り手数からsolveレベルを決める（10=20手, 21=22手相当 で線形に補間）
+function solveLevel(empty) {
+  return empty <= 20 ? 10 : Math.min(21, 10 + Math.ceil((empty - 20) / 2));
+}
+
 // WASM で終盤全読みし { score, bestPos, line } を返す
-function egaroucidSolveTop(boardIn, player) {
+function egaroucidSolveTop(boardIn, player, empty) {
   const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
 
   function hasMove(b, pl) {
@@ -1000,7 +1219,8 @@ function egaroucidSolveTop(boardIn, player) {
   }
 
   // 最善手とスコアを取得
-  const { mx, my, score } = wasmBestMove(boardIn, player);
+  const lv = solveLevel(empty ?? 20);
+  const { mx, my, score } = wasmBestMove(boardIn, player, lv);
   const bestPos = my * 8 + mx;
 
   // 両者最善手を辿って手順列を構築
@@ -1015,7 +1235,7 @@ function egaroucidSolveTop(boardIn, player) {
       continue;
     }
     passes = 0;
-    const { mx: lx, my: ly } = wasmBestMove(b, cp);
+    const { mx: lx, my: ly } = wasmBestMove(b, cp, lv);
     line.push({ x: lx, y: ly });
     b = applyMove(b, lx, ly, cp);
     cp = -cp;
@@ -1180,12 +1400,38 @@ function updateScoreGraph() {
   scoreChart.data.labels = labels;
   ds.data = diffs;
   ds.borderColor = lineCol;
-  ds.pointRadius = diffs.map((_, i) => i === currentMove ? 5 : 0);
-  ds.pointBackgroundColor = diffs.map((_, i) => i === currentMove ? '#f97316' : lineCol);
+  const useMistakes = useAI && evalCache.length > 1;
+  const mistakeMap = useMistakes ? getShownMistakeSet() : new Map();
+  ds.pointStyle = diffs.map((_, i) => {
+    if (i > 0 && mistakeMap.has(i - 1)) return 'rect';
+    return 'circle';
+  });
+  ds.pointRadius = diffs.map((_, i) => {
+    if (i === currentMove) return 5;
+    if (i > 0) {
+      const e = mistakeMap.get(i - 1);
+      if (e) return e.loss >= 12 ? 5 : 4;
+    }
+    return 0;
+  });
+  ds.pointBackgroundColor = diffs.map((_, i) => {
+    if (i === currentMove) return '#22c55e';
+    if (i > 0) {
+      const e = mistakeMap.get(i - 1);
+      if (e) {
+        const isBlack = moveHistory[i - 1]?.player === 1;
+        // 黒: 赤系 / 白: 青系
+        if (e.loss >= 12) return isBlack ? '#dc2626' : '#7c3aed';
+        return isBlack ? '#f97316' : '#3b82f6';
+      }
+    }
+    return lineCol;
+  });
   // ±0 参照線: ラベル数分の 0 を設定
   zeroDs.data = new Array(labels.length).fill(0);
   zeroDs.borderColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
   scoreChart.update();
+  renderMistakeList();
 }
 
 initBoard();

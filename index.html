@@ -481,6 +481,27 @@ hr { opacity: 1; border-color: #d0d7de; }
   #graph-area > div { height: 70px !important; }
 }
 
+/* ===== 悪手ハイライト ===== */
+.mistake-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.1s;
+  white-space: nowrap;
+}
+.mistake-badge:hover { opacity: 0.7; }
+.mistake-blunder    { background: rgba(220,38,38,0.10); border-color: rgba(220,38,38,0.35); color: #dc2626; }
+.mistake-mistake    { background: rgba(249,115,22,0.10); border-color: rgba(249,115,22,0.35); color: #ea6718; }
+.mistake-inaccuracy { background: rgba(234,179,8,0.10); border-color: rgba(234,179,8,0.40); color: #a07000; }
+[data-bs-theme="dark"] .mistake-blunder    { color: #f87171; }
+[data-bs-theme="dark"] .mistake-mistake    { color: #fb923c; }
+[data-bs-theme="dark"] .mistake-inaccuracy { color: #facc15; }
+
 /* ===== スマホ最終上書き（ファイルの一番下に置く） ===== */
 @media (max-width: 560px) {
   #stone-count .stat-card {
@@ -604,6 +625,8 @@ hr { opacity: 1; border-color: #d0d7de; }
     <div class="d-flex justify-content-end gap-2 mt-2">
       <button id="move-eval-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2"
               onclick="toggleMoveEvals()" style="font-size:0.75rem;">候補手の評価値</button>
+      <button id="mistake-analyze-btn" class="btn btn-outline-secondary btn-sm py-0 px-2"
+              onclick="startMistakeAnalysis()" style="font-size:0.75rem;" disabled>悪手を解析</button>
       <button id="analysis-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2"
               onclick="toggleAnalysis()" style="font-size:0.75rem;">解析を表示</button>
     </div>
@@ -622,6 +645,7 @@ hr { opacity: 1; border-color: #d0d7de; }
       <div style="position:relative; height:90px;">
         <canvas id="score-graph"></canvas>
       </div>
+      <div id="mistake-list" class="mt-1"></div>
     </div>
 
     <div class="d-flex align-items-center gap-2 my-3">
@@ -725,8 +749,19 @@ var Module = {
   locateFile: (path) => path,
   onRuntimeInitialized: function() {
     if (typeof onEgaroucidReady === 'function') onEgaroucidReady();
+  },
+  onAbort: function(what) {
+    clearTimeout(window._aiLoadTimer);
+    if (typeof setAiStatus === 'function') setAiStatus('AI読み込み失敗 (再読込で再試行)', '#dc3545');
+    console.error('Egaroucid WASM aborted:', what);
   }
 };
+// 30秒以内に初期化されなければタイムアウト扱い
+window._aiLoadTimer = setTimeout(function() {
+  if (typeof egaroucidReady !== 'undefined' && !egaroucidReady) {
+    if (typeof setAiStatus === 'function') setAiStatus('AI読み込みタイムアウト (再読込で再試行)', '#dc3545');
+  }
+}, 15000);
 </script>
 <script src="ai.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
