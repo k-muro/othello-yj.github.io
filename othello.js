@@ -26,6 +26,7 @@ let evalCache = [];
 let evalKifu = '';
 let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '12');
 let showMoveEvals = localStorage.getItem('othello-show-move-evals') === 'true';
+let moveEvalGeneration = 0; // drawBoard のたびに更新し、古い評価タスクを破棄
 function showGameResult() {
   let black = 0;
   let white = 0;
@@ -166,14 +167,7 @@ function drawBoard() {
     });
   }
 
-  // 候補手評価値マップ（黒視点: +で黒有利）
-  let moveEvalMap = null;
-  if (showMoveEvals && egaroucidReady && validMoves.length > 0) {
-    moveEvalMap = new Map();
-    for (const [mx, my] of validMoves) {
-      moveEvalMap.set(`${mx},${my}`, evaluateMove(mx, my));
-    }
-  }
+  const currentEvalGen = ++moveEvalGeneration;
 
   const makeLabel = (text) => {
     const lbl = document.createElement("div");
@@ -216,14 +210,6 @@ function drawBoard() {
           ? (currentPlayer === 1 ? "hint-ref-black" : "hint-ref-white")
           : (currentPlayer === 1 ? "hint-black" : "hint-white"));
         cell.appendChild(hint);
-        if (moveEvalMap) {
-          const score = moveEvalMap.get(`${x},${y}`);
-          const evalEl = document.createElement("div");
-          evalEl.className = "move-eval";
-          evalEl.textContent = (score > 0 ? "+" : "") + score;
-          evalEl.style.color = evalScoreColor(score);
-          cell.appendChild(evalEl);
-        }
       }
       boardElement.appendChild(cell);
     }
@@ -313,6 +299,7 @@ if (blackMoves.length === 0 && whiteMoves.length === 0) {
 }
 computeAllEvals();
 updateScoreGraph();
+scheduleMoveEvals(validMoves, currentEvalGen);
 }
 
 function inBounds(x, y) {
@@ -763,6 +750,28 @@ function evalScoreColor(score) {
   const blackPalette = ['#c0c0c0', '#909090', '#505050', '#101010'];
   const whitePalette = ['#c0c0c0', '#dedede', '#f0f0f0', '#ffffff'];
   return score >= 0 ? blackPalette[tier] : whitePalette[tier];
+}
+
+// 候補手の評価値を1手ずつ非同期で計算してDOMに書き込む
+function scheduleMoveEvals(validMoves, gen) {
+  if (!showMoveEvals || !egaroucidReady || validMoves.length === 0) return;
+  let idx = 0;
+  function next() {
+    if (gen !== moveEvalGeneration || idx >= validMoves.length) return;
+    const [mx, my] = validMoves[idx++];
+    const score = evaluateMove(mx, my);
+    if (gen !== moveEvalGeneration) return;
+    const cell = boardElement.querySelector(`.cell[data-pos="${mx},${my}"]`);
+    if (cell) {
+      const evalEl = document.createElement('div');
+      evalEl.className = 'move-eval';
+      evalEl.textContent = (score > 0 ? '+' : '') + score;
+      evalEl.style.color = evalScoreColor(score);
+      cell.appendChild(evalEl);
+    }
+    setTimeout(next, 0);
+  }
+  setTimeout(next, 0);
 }
 
 function toggleMoveEvals() {
