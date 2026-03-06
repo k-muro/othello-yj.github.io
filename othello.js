@@ -305,7 +305,8 @@ updateNavButtons();
 
 function updateNavButtons() {
   const canBack = currentMove > 0;
-  const canForward = currentMove < moveHistory.length;
+  const canForward = currentMove < moveHistory.length ||
+    (currentMatchesReference() && currentMove < referenceKifu.length);
   document.getElementById('btn-first').disabled  = !canBack;
   document.getElementById('btn-undo10').disabled  = !canBack;
   document.getElementById('btn-undo').disabled    = !canBack;
