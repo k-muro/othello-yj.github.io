@@ -303,7 +303,7 @@ hr { opacity: 1; border-color: #d0d7de; }
 }
 .tree-connector { font-family: monospace; white-space: pre; color: var(--bs-secondary-color); flex-shrink: 0; }
 .tree-move { font-family: monospace; font-weight: 500; white-space: nowrap; }
-.tree-move-active { color: #22c55e; font-weight: 700; }
+.tree-move-active { color: #22c55e; }
 .tree-arrow { color: var(--bs-secondary-color); font-size: 0.85em; white-space: nowrap; flex-shrink: 0; }
 .tree-badge-now {
   font-size: 0.68em; background: #22c55e; color: #fff;
@@ -313,18 +313,16 @@ hr { opacity: 1; border-color: #d0d7de; }
 
 .collapse-toggle {
   font-size: 0.78rem;
-  padding: 1px 10px;
-  border-color: transparent;
+  cursor: pointer;
   color: var(--bs-secondary-color);
-  background: transparent;
+  user-select: none;
 }
 .collapse-toggle:hover {
-  border-color: var(--bs-border-color);
   color: var(--bs-body-color);
-  background: transparent;
 }
-.collapse-toggle::after { content: " ▴"; }
-.collapse-toggle.collapsed::after { content: " ▾"; }
+.collapse-toggle-label { font-weight: 600; }
+.collapse-toggle-label::after { content: " ▴"; }
+.collapse-toggle.collapsed .collapse-toggle-label::after { content: " ▾"; }
 
 /* ===== スマホ用 (横幅560px以下) ===== */
 @media (max-width: 560px) {
@@ -663,12 +661,9 @@ hr { opacity: 1; border-color: #d0d7de; }
       <button id="btn-last" class="btn btn-outline-secondary btn-sm" onclick="goToLast()">最後 ⏭</button>
     </div>
 
-    <div class="d-flex align-items-center gap-2 my-3">
-      <button class="btn collapse-toggle collapsed"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#analysis-panel"
-              aria-expanded="false">解析</button>
+    <div class="d-flex align-items-center gap-2 my-3 collapse-toggle collapsed"
+         role="button" data-bs-toggle="collapse" data-bs-target="#analysis-panel" aria-expanded="false">
+      <span class="collapse-toggle-label">解析</span>
       <div class="flex-grow-1" style="height:1px;background:var(--bs-border-color);"></div>
     </div>
 
@@ -697,12 +692,9 @@ hr { opacity: 1; border-color: #d0d7de; }
     </div>
     </div>
 
-    <div class="d-flex align-items-center gap-2 my-3">
-      <button class="btn collapse-toggle collapsed"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#branch-tree-panel"
-              aria-expanded="false">分岐ツリー</button>
+    <div class="d-flex align-items-center gap-2 my-3 collapse-toggle collapsed"
+         role="button" data-bs-toggle="collapse" data-bs-target="#branch-tree-panel" aria-expanded="false">
+      <span class="collapse-toggle-label">分岐ツリー</span>
       <div class="flex-grow-1" style="height:1px;background:var(--bs-border-color);"></div>
     </div>
 
@@ -715,12 +707,9 @@ hr { opacity: 1; border-color: #d0d7de; }
       <div id="branch-tree-container" class="branch-tree"></div>
     </div>
 
-    <div class="d-flex align-items-center gap-2 my-3">
-      <button class="btn collapse-toggle collapsed"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#settings-panel"
-              aria-expanded="false">棋譜・設定</button>
+    <div class="d-flex align-items-center gap-2 my-3 collapse-toggle collapsed"
+         role="button" data-bs-toggle="collapse" data-bs-target="#settings-panel" aria-expanded="false">
+      <span class="collapse-toggle-label">棋譜・設定</span>
       <div class="flex-grow-1" style="height:1px;background:var(--bs-border-color);"></div>
     </div>
 
