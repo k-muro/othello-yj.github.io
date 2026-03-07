@@ -1714,3 +1714,19 @@ document.getElementById('confirm-depth-btn').addEventListener('click', function(
 drawBoard();
 initScoreGraph();
 updateScoreGraph();
+
+// パネルの開閉状態を保持
+['analysis-panel', 'branch-tree-panel', 'settings-panel'].forEach(id => {
+  const panel = document.getElementById(id);
+  if (!panel) return;
+  if (localStorage.getItem(`othello-panel-${id}`) === 'open') {
+    panel.classList.add('show');
+    const toggle = document.querySelector(`[data-bs-target="#${id}"]`);
+    if (toggle) {
+      toggle.classList.remove('collapsed');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+  }
+  panel.addEventListener('show.bs.collapse', () => localStorage.setItem(`othello-panel-${id}`, 'open'));
+  panel.addEventListener('hide.bs.collapse', () => localStorage.setItem(`othello-panel-${id}`, 'closed'));
+});
