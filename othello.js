@@ -16,6 +16,8 @@ let _solverResult = ''; // 現局面の全読み結果テキスト
 let _solverPending = false; // ソルバーがまだ結果を出していない間 true
 let _solverScore = null; // 全読み確定スコア（黒視点）。null=未確定
 
+const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+
 function _evalLabel() {
   const v = _solverScore !== null ? _solverScore
           : (egaroucidReady && currentMove < evalCache.length) ? evalCache[currentMove]
@@ -100,32 +102,7 @@ function checkGameEnd() {
 
   return false;
 }
-function shortenName(name, maxLength = 10) {
-  if (!name) return "";
 
-  // 全角半角をざっくり均等扱いで安全にカット
-  const chars = Array.from(name);
-
-  if (chars.length <= maxLength) return name;
-
-  return chars.slice(0, maxLength).join("") + "…";
-}
-function updateNames() {
-  const bInput = document.getElementById("black-name-input");
-  const wInput = document.getElementById("white-name-input");
-
-  const bRaw = bInput.value.trim();
-  const wRaw = wInput.value.trim();
-
-  const bShort = shortenName(bRaw, 8);  // ←ここで最大文字数調整
-  const wShort = shortenName(wRaw, 8);
-
-  document.getElementById("sc-black-name").textContent = bShort || "黒";
-  document.getElementById("sc-white-name").textContent = wShort || "白";
-
-  localStorage.setItem("othello-black-name", bRaw);
-  localStorage.setItem("othello-white-name", wRaw);
-}
 function updateStoneCount() {
   // board はあなたの盤面配列（グローバル or state）に合わせて参照してください
   let black = 0, white = 0;
@@ -882,9 +859,8 @@ function bbExtractLine(blackBB, whiteBB, blackToMove, targetScore) {
 
 function getFlips(x, y, player) {
   if (board[y][x] !== 0) return [];
-  const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
   let flips = [];
-  for (let [dx, dy] of dirs) {
+  for (const [dx, dy] of DIRS) {
     let nx = x + dx;
     let ny = y + dy;
     let temp = [];
@@ -1183,8 +1159,6 @@ function computeMistakes() {
   mistakeCache = [];
   const gen = ++mistakeGeneration;
 
-  const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
-
   function movesOn(b, player) {
     const res = [];
     for (let y = 0; y < 8; y++)
@@ -1378,7 +1352,6 @@ function toggleMoveEvals() {
 
 // 指定マスに打った後の局面をEgaroucidで評価（黒視点の予測石差: +で黒有利 / −で白有利）
 function evaluateMove(x, y) {
-  const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
   const b = board.map(row => [...row]);
   b[y][x] = currentPlayer;
   for (const [dx, dy] of DIRS) {
@@ -1498,7 +1471,6 @@ function computeAllEvals() {
 
   const b = Array(8).fill().map(() => Array(8).fill(0));
   b[3][3] = -1; b[4][4] = -1; b[3][4] = 1; b[4][3] = 1;
-  const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
 
   let cp = 1; // 手番 (1=黒, -1=白)
   evalCache.push(evaluatePosition(b, cp));
@@ -1547,8 +1519,6 @@ function solveLevel(empty) {
 
 // WASM で終盤全読みし { score, bestPos, line } を返す
 function egaroucidSolveTop(boardIn, player, empty) {
-  const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
-
   function hasMove(b, pl) {
     for (let y = 0; y < 8; y++)
       for (let x = 0; x < 8; x++) {
@@ -1741,7 +1711,6 @@ function updateScoreGraph() {
     b[3][3] = -1; b[4][4] = -1; b[3][4] = 1; b[4][3] = 1;
     labels = ['開始'];
     diffs = [0];
-    const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
     for (const m of moveHistory) {
       b[m.y][m.x] = m.player;
       for (const [dx, dy] of DIRS) {
