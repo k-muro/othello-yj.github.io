@@ -1601,7 +1601,21 @@ function egaroucidSolveTop(boardIn, player, empty) {
     cp = -cp;
   }
 
-  return { score, bestPos, line };
+  // line を最後まで打ち切った盤面 b から実際の石数を数えてスコアを確定する。
+  // wasmBestMove の返す score はヒューリスティック推定値でズレることがあるため使わない。
+  let actB = 0, actW = 0, actE = 0;
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++) {
+      if (b[y][x] === 1) actB++;
+      else if (b[y][x] === -1) actW++;
+      else actE++;
+    }
+  // 空マスは勝者に加算（日本ルール）
+  if (actB > actW) actB += actE;
+  else if (actW > actB) actW += actE;
+  const lineScore = actB - actW;
+
+  return { score: lineScore, bestPos, line };
 }
 
 // ===== 石差グラフ =====
