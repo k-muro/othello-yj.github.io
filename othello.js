@@ -282,19 +282,20 @@ if (blackMoves.length === 0 && whiteMoves.length === 0) {
   info.textContent = currentPlayer === 1
     ? `${blackName}（⚫）の番`
     : `${whiteName}（⚪）の番`;
+}
 
-  const branchBtn = document.getElementById('branch-btn');
-  if (branchBtn) {
-    const len = Math.min(currentMove, referenceKifu.length);
-    let hasBranch = false;
-    for (let i = 0; i < len; i++) {
-      if (moveHistory[i].x !== referenceKifu[i].x || moveHistory[i].y !== referenceKifu[i].y) {
-        hasBranch = true;
-        break;
-      }
+const branchBtn = document.getElementById('branch-btn');
+if (branchBtn) {
+  const refMoves = _getRefMoves();
+  const len = Math.min(currentMove, refMoves.length);
+  let hasBranch = false;
+  for (let i = 0; i < len; i++) {
+    if (moveHistory[i].x !== refMoves[i].x || moveHistory[i].y !== refMoves[i].y) {
+      hasBranch = true;
+      break;
     }
-    branchBtn.disabled = !hasBranch;
   }
+  branchBtn.disabled = !hasBranch;
 }
 _solverPending = !(blackMoves.length === 0 && whiteMoves.length === 0) && empty <= solverDepth;
 computeAllEvals();
@@ -1039,10 +1040,16 @@ function applyKifu() {
   drawBoard();
 }
 
+function _getRefMoves() {
+  const refBranch = savedBranches.find(b => b.isRef);
+  return refBranch ? refBranch.moves : referenceKifu;
+}
+
 function goToBranchPoint() {
-  const len = Math.min(currentMove, referenceKifu.length);
+  const refMoves = _getRefMoves();
+  const len = Math.min(currentMove, refMoves.length);
   let i = 0;
-  while (i < len && moveHistory[i].x === referenceKifu[i].x && moveHistory[i].y === referenceKifu[i].y) i++;
+  while (i < len && moveHistory[i].x === refMoves[i].x && moveHistory[i].y === refMoves[i].y) i++;
   currentMove = i;
   rebuildBoard();
 }
