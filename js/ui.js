@@ -14,6 +14,7 @@ const endgameEl = document.getElementById("endgame");
 
 let savedBranches = []; // 分岐ツリー（セッション内のみ、最大5手順）
 let _branchPaddingCache = new Map(); // bi -> paddingLeft（フリッカー防止用）
+let showOpenings = localStorage.getItem(STORAGE_KEYS.SHOW_OPENINGS) === 'true';
 
 // URL コピー完了メッセージの非表示タイマー
 let _urlCopyTimer = null;
@@ -355,6 +356,20 @@ function renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap) {
           ? (currentPlayer === 1 ? "hint-ref-black" : "hint-ref-white")
           : (currentPlayer === 1 ? "hint-black" : "hint-white"));
         cell.appendChild(hint);
+        if (showOpenings) {
+          const om = getMatchingOpenings([...moveHistory.slice(0, currentMove), { x, y }]);
+          if (om.length > 0) {
+            const dotRow = document.createElement('div');
+            dotRow.className = 'opening-dot-row';
+            om.forEach(name => {
+              const dot = document.createElement('div');
+              dot.className = 'opening-dot';
+              dot.style.backgroundColor = OPENING_COLORS[name];
+              dotRow.appendChild(dot);
+            });
+            cell.appendChild(dotRow);
+          }
+        }
       }
       boardElement.appendChild(cell);
     }
@@ -445,6 +460,7 @@ function drawBoard() {
   updateScoreGraph();
   updateNavButtons();
   renderBranchTree();
+  updateOpeningDisplay();
 
   // 分岐の先端にいる間は悪手解析を自動実行
   if (egaroucidReady && currentMove > 0) {
@@ -654,6 +670,33 @@ document.getElementById('confirm-depth-btn').addEventListener('click', function(
 drawBoard();
 initScoreGraph();
 updateScoreGraph();
+(function() {
+  const btn = document.getElementById('opening-guide-btn');
+  if (btn) btn.classList.toggle('active', showOpenings);
+})();
+
+function updateOpeningDisplay() {
+  const el = document.getElementById("opening-name");
+  if (!el) return;
+  el.innerHTML = '';
+  if (!showOpenings) return;
+  const matches = getMatchingOpenings(moveHistory.slice(0, currentMove));
+  matches.forEach(name => {
+    const badge = document.createElement('span');
+    badge.className = 'opening-badge';
+    badge.style.backgroundColor = OPENING_COLORS[name];
+    badge.textContent = name;
+    el.appendChild(badge);
+  });
+}
+
+function toggleOpenings() {
+  showOpenings = !showOpenings;
+  localStorage.setItem(STORAGE_KEYS.SHOW_OPENINGS, showOpenings);
+  const btn = document.getElementById('opening-guide-btn');
+  if (btn) btn.classList.toggle('active', showOpenings);
+  drawBoard();
+}
 
 // パネルの開閉状態を保持
 ['analysis-panel', 'branch-tree-panel', 'settings-panel'].forEach(id => {

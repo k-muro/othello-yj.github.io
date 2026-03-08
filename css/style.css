@@ -668,3 +668,33 @@ hr {
   .hint { width: 8px; height: 8px; }
   .stone-num { font-size: 9px; }
 }
+
+/* ===== 定石ガイド ===== */
+.opening-dot-row {
+  position: absolute;
+  top: 2px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.opening-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.25);
+}
+
+.opening-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.78em;
+  font-weight: 500;
+  color: #fff;
+  margin-right: 4px;
+}

@@ -52,6 +52,7 @@
     </div>
 
     <p id="info" class="mb-2"></p>
+    <p id="opening-name" class="mb-1 text-secondary small" style="min-height:1.2em;"></p>
 
     <div class="d-flex flex-wrap justify-content-center gap-1 mb-2">
       <button id="btn-first" class="btn btn-outline-secondary btn-sm" onclick="goToFirst()">⏮ 最初</button>
@@ -75,6 +76,8 @@
               onclick="toggleMoveEvals()" style="font-size:0.75rem;">候補手の評価値</button>
       <button id="mistake-analyze-btn" class="btn btn-outline-secondary btn-sm py-0 px-2"
               onclick="toggleMistakeList()" style="font-size:0.75rem;">悪手を表示</button>
+      <button id="opening-guide-btn" class="btn btn-outline-secondary btn-sm py-0 px-2"
+              onclick="toggleOpenings()" style="font-size:0.75rem;">定石ガイド</button>
     </div>
     <p id="endgame" class="mt-2 mb-0"></p>
 
