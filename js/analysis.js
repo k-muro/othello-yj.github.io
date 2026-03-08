@@ -214,6 +214,7 @@ function initScoreGraph() {
           borderWidth: 1.5,
           fill: false,
           tension: 0.15,
+          spanGaps: false,
           pointRadius: [],
           pointBackgroundColor: [],
           pointHoverRadius: 5,
@@ -250,7 +251,7 @@ function initScoreGraph() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          filter: (item) => item.datasetIndex === 0, // ゼロ線は除外
+          filter: (item) => item.datasetIndex === 0 && item.raw !== null, // ゼロ線・空白は除外
           callbacks: {
             title: (items) => items[0].label === '開始' ? '開始' : `${items[0].label}手目`,
             label: (item) => {
@@ -299,7 +300,7 @@ function updateScoreGraph() {
   if (useAI) {
     // AI 評価値（黒視点の予測石差）を使用
     labels = evalCache.map((_, i) => i === 0 ? '開始' : String(i));
-    diffs = evalCache;
+    diffs = [...evalCache];
   } else {
     // 石差モード or AI 未準備: 実石数差（createInitialBoard を使用）
     let b = createInitialBoard();
@@ -311,6 +312,13 @@ function updateScoreGraph() {
       labels.push(String(diffs.length));
       diffs.push(black - white);
     }
+  }
+
+  // X軸を常に60手分（開始+60）に固定: 残り部分を null でパディング
+  const GRAPH_MAX = 61; // 開始(0) + 60手
+  while (labels.length < GRAPH_MAX) {
+    labels.push(String(labels.length));
+    diffs.push(null);
   }
 
   // キャプション更新
@@ -351,8 +359,8 @@ function updateScoreGraph() {
     }
     return lineCol;
   });
-  // ±0 参照線: ラベル数分の 0 を設定
-  zeroDs.data = new Array(labels.length).fill(0);
+  // ±0 参照線: 常に GRAPH_MAX 個の 0 を設定（空白域まで線を引く）
+  zeroDs.data = new Array(GRAPH_MAX).fill(0);
   zeroDs.borderColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
   scoreChart.update();
   renderMistakeList();
