@@ -31,6 +31,21 @@ let _skipDraw = false;
 
 // ===== PURE GAME LOGIC =====
 
+// 初期盤面の2次元配列を生成して返す
+function createInitialBoard() {
+  const b = Array(8).fill(null).map(() => Array(8).fill(0));
+  b[3][3] = -1;
+  b[4][4] = -1;
+  b[3][4] = 1;
+  b[4][3] = 1;
+  return b;
+}
+
+// 棋譜配列を "a1b2…" 形式の文字列に変換する
+function movesToKifuString(moves) {
+  return moves.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join('');
+}
+
 function countStones(b) {
   let black = 0, white = 0;
   for (let r = 0; r < 8; r++)
@@ -68,6 +83,7 @@ function getFlips(x, y, player) {
       nx += dx;
       ny += dy;
     }
+    // temp.length > 0 を確認: 相手石を少なくとも1枚挟む手のみ合法
     if (inBounds(nx, ny) && board[ny][nx] === player && temp.length > 0) {
       flips = flips.concat(temp);
     }
@@ -79,6 +95,7 @@ function getValidMoves(player) {
   const moves = [];
   for (let y = 0; y < 8; y++) {
     for (let x = 0; x < 8; x++) {
+      // getFlips が空でない座標だけが合法手
       if (getFlips(x, y, player).length > 0) moves.push([x, y]);
     }
   }
@@ -92,11 +109,7 @@ function applyPassIfNeeded() {
 }
 
 function resetBoardState() {
-  board = Array(8).fill().map(() => Array(8).fill(0));
-  board[3][3] = -1;
-  board[4][4] = -1;
-  board[3][4] = 1;
-  board[4][3] = 1;
+  board = createInitialBoard();
   currentPlayer = 1;
 }
 
@@ -108,14 +121,27 @@ function initBoard() {
 
 // ===== BOARD NAVIGATION =====
 
+// _skipDraw フラグを立てて fn() を実行し、終わったら drawBoard() を呼ぶ
+function withSkipDraw(fn) {
+  _skipDraw = true;
+  fn();
+  _skipDraw = false;
+  drawBoard();
+}
+
+// グローバル board に対して (x,y) に player を置き、フリップを適用する
+function applyMoveToBoard(x, y, player) {
+  const flips = getFlips(x, y, player);
+  board[y][x] = player;
+  flips.forEach(([fx, fy]) => { board[fy][fx] = player; });
+  currentPlayer = -player;
+}
+
 function rebuildBoard() {
   resetBoardState();
   for (let i = 0; i < currentMove; i++) {
     const m = moveHistory[i];
-    const flips = getFlips(m.x, m.y, m.player);
-    board[m.y][m.x] = m.player;
-    flips.forEach(([fx, fy]) => board[fy][fx] = m.player);
-    currentPlayer = -m.player;
+    applyMoveToBoard(m.x, m.y, m.player);
   }
   applyPassIfNeeded();
   drawBoard();
@@ -174,21 +200,19 @@ function goToFirst() {
 }
 
 function redo10() {
-  _skipDraw = true;
-  for (let i = 0; i < 10; i++) redo();
-  _skipDraw = false;
-  drawBoard();
+  withSkipDraw(() => {
+    for (let i = 0; i < 10; i++) redo();
+  });
 }
 
 function goToLast() {
-  _skipDraw = true;
-  let prev;
-  do {
-    prev = currentMove;
-    redo();
-  } while (currentMove !== prev);
-  _skipDraw = false;
-  drawBoard();
+  withSkipDraw(() => {
+    let prev;
+    do {
+      prev = currentMove;
+      redo();
+    } while (currentMove !== prev);
+  });
 }
 
 function currentMatchesReference() {
@@ -228,12 +252,9 @@ function kifuToMoves(kifu) {
   initBoard();
   for (let i = 0; i + 1 < kifu.length; i += 2) {
     const {x, y} = coordToXY(kifu.substring(i, i + 2));
-    const flips = getFlips(x, y, currentPlayer);
-    if (flips.length === 0) break;
+    if (getFlips(x, y, currentPlayer).length === 0) break;
     moveHistory.push({x, y, player: currentPlayer});
-    board[y][x] = currentPlayer;
-    flips.forEach(([fx, fy]) => board[fy][fx] = currentPlayer);
-    currentPlayer *= -1;
+    applyMoveToBoard(x, y, currentPlayer);
     applyPassIfNeeded();
     currentMove++;
   }

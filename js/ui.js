@@ -15,6 +15,9 @@ const endgameEl = document.getElementById("endgame");
 let savedBranches = []; // 分岐ツリー（セッション内のみ、最大5手順）
 let _branchPaddingCache = new Map(); // bi -> paddingLeft（フリッカー防止用）
 
+// URL コピー完了メッセージの非表示タイマー
+let _urlCopyTimer = null;
+
 // ===== BRANCH TREE FUNCTIONS =====
 
 function _addBranch(moves, atFront = false) {
@@ -68,9 +71,95 @@ function deleteBranch(idx) {
 function loadBranch(idx) {
   const { moves } = savedBranches[idx];
   referenceKifu = moves.map(m => ({ x: m.x, y: m.y }));
-  const kifu = moves.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join('');
+  const kifu = movesToKifuString(moves);
   kifuToMoves(kifu);
   drawBoard();
+}
+
+// ===== BRANCH TREE RENDERING HELPERS =====
+// これらは renderBranchTree 内でのみ使うが、モジュールレベルに置くことで
+// 関数定義のネストを避け可読性を高める。
+
+function _branchCoord(m) {
+  return String.fromCharCode(97 + m.x) + (m.y + 1);
+}
+
+function _mkSpan(cls, text) {
+  const s = document.createElement('span');
+  s.className = cls;
+  s.textContent = text;
+  return s;
+}
+
+function _branchOnPath(curPath, mi, m) {
+  return mi < curPath.length && curPath[mi] === `${m.x},${m.y}`;
+}
+
+function _appendMove(line, curPath, move, gameIdx) {
+  const mv = _mkSpan(
+    'tree-move' + (_branchOnPath(curPath, gameIdx, move) ? ' tree-move-active' : ''),
+    _branchCoord(move)
+  );
+  mv.dataset.gameidx = gameIdx;
+  line.appendChild(mv);
+}
+
+// ランドマークに基づいて手順を描画する。
+// pairs: [{move, gameIdx}]
+// pinIdxs: Set<number> — pairs内で必ず表示するインデックス（現在位置・分岐点等）
+// baseHead: 先頭から必ず表示する手数（デフォルト2）
+// baseTail: 末尾から必ず表示する手数（デフォルト1）
+function _renderSeq(line, curPath, pairs, pinIdxs, baseHead = 2, baseTail = 1) {
+  if (pairs.length === 0) return;
+  const len = pairs.length;
+
+  const lms = new Set(pinIdxs || []);
+  for (let i = 0; i < Math.min(baseHead, len); i++) lms.add(i);
+  for (let i = Math.max(0, len - baseTail); i < len; i++) lms.add(i);
+
+  // ギャップが1手だけの場合はその手も追加（…(1手)… を避ける）
+  const sorted = [...lms].sort((a, b) => a - b);
+  for (let i = 0; i < sorted.length - 1; i++) {
+    if (sorted[i + 1] - sorted[i] === 2) lms.add(sorted[i] + 1);
+  }
+
+  const landmarks = [...lms].sort((a, b) => a - b);
+  let prev = -1;
+  landmarks.forEach(lmIdx => {
+    if (prev >= 0) {
+      const gap = lmIdx - prev - 1;
+      if (gap > 0) line.appendChild(_mkSpan('tree-arrow', `…(${gap}手)…`));
+      line.appendChild(_mkSpan('tree-arrow', '→'));
+    }
+    _appendMove(line, curPath, pairs[lmIdx].move, pairs[lmIdx].gameIdx);
+    prev = lmIdx;
+  });
+}
+
+// branchMoves が refMoves と最初に異なるインデックスを返す
+function _findDivIdx(branchMoves, refMoves) {
+  const len = Math.min(branchMoves.length, refMoves.length);
+  for (let i = 0; i < len; i++) {
+    if (branchMoves[i].x !== refMoves[i].x || branchMoves[i].y !== refMoves[i].y) return i;
+  }
+  return len;
+}
+
+// 手数ラベル・現在バッジ・削除ボタンを line に追加する
+function _appendLeafSuffix(line, bi, curPath) {
+  const { moves, isRef } = savedBranches[bi];
+  line.appendChild(_mkSpan('tree-arrow ms-1', `[${moves.length}手]`));
+  if (currentMove === moves.length && moves.every((m, i) => curPath[i] === `${m.x},${m.y}`)) {
+    line.appendChild(_mkSpan('tree-badge-now ms-1', '現在'));
+  }
+  if (!isRef) {
+    const del = document.createElement('button');
+    del.className = 'btn btn-outline-danger btn-sm tree-del-btn';
+    del.textContent = '×';
+    del.title = 'この手順を削除';
+    del.onclick = e => { e.stopPropagation(); deleteBranch(bi); };
+    line.appendChild(del);
+  }
 }
 
 function renderBranchTree() {
@@ -107,82 +196,6 @@ function renderBranchTree() {
   }
 
   const curPath = moveHistory.slice(0, currentMove).map(m => `${m.x},${m.y}`);
-  function coord(m) { return String.fromCharCode(97 + m.x) + (m.y + 1); }
-  function onPath(mi, m) { return mi < curPath.length && curPath[mi] === `${m.x},${m.y}`; }
-
-  function mkSpan(cls, text) {
-    const s = document.createElement('span');
-    s.className = cls;
-    s.textContent = text;
-    return s;
-  }
-
-  function appendMove(line, move, gameIdx) {
-    const mv = mkSpan(
-      'tree-move' + (onPath(gameIdx, move) ? ' tree-move-active' : ''),
-      coord(move)
-    );
-    mv.dataset.gameidx = gameIdx;
-    line.appendChild(mv);
-  }
-
-  // ランドマークに基づいて手順を描画する。
-  // pairs: [{move, gameIdx}]
-  // pinIdxs: Set<number> — pairs内で必ず表示するインデックス（現在位置・分岐点等）
-  // baseHead: 先頭から必ず表示する手数（デフォルト2）
-  // baseTail: 末尾から必ず表示する手数（デフォルト1）
-  function renderSeq(line, pairs, pinIdxs, baseHead = 2, baseTail = 1) {
-    if (pairs.length === 0) return;
-    const len = pairs.length;
-
-    const lms = new Set(pinIdxs || []);
-    for (let i = 0; i < Math.min(baseHead, len); i++) lms.add(i);
-    for (let i = Math.max(0, len - baseTail); i < len; i++) lms.add(i);
-
-    // ギャップが1手だけの場合はその手も追加（…(1手)… を避ける）
-    const sorted = [...lms].sort((a, b) => a - b);
-    for (let i = 0; i < sorted.length - 1; i++) {
-      if (sorted[i + 1] - sorted[i] === 2) lms.add(sorted[i] + 1);
-    }
-
-    const landmarks = [...lms].sort((a, b) => a - b);
-    let prev = -1;
-    landmarks.forEach(lmIdx => {
-      if (prev >= 0) {
-        const gap = lmIdx - prev - 1;
-        if (gap > 0) line.appendChild(mkSpan('tree-arrow', `…(${gap}手)…`));
-        line.appendChild(mkSpan('tree-arrow', '→'));
-      }
-      appendMove(line, pairs[lmIdx].move, pairs[lmIdx].gameIdx);
-      prev = lmIdx;
-    });
-  }
-
-  // branchMoves が refMoves と最初に異なるインデックスを返す
-  function findDivIdx(branchMoves, refMoves) {
-    const len = Math.min(branchMoves.length, refMoves.length);
-    for (let i = 0; i < len; i++) {
-      if (branchMoves[i].x !== refMoves[i].x || branchMoves[i].y !== refMoves[i].y) return i;
-    }
-    return len;
-  }
-
-  // 手数ラベル・現在バッジ・削除ボタン
-  function appendLeafSuffix(line, bi) {
-    const { moves, isRef } = savedBranches[bi];
-    line.appendChild(mkSpan('tree-arrow ms-1', `[${moves.length}手]`));
-    if (currentMove === moves.length && moves.every((m, i) => curPath[i] === `${m.x},${m.y}`)) {
-      line.appendChild(mkSpan('tree-badge-now ms-1', '現在'));
-    }
-    if (!isRef) {
-      const del = document.createElement('button');
-      del.className = 'btn btn-outline-danger btn-sm tree-del-btn';
-      del.textContent = '×';
-      del.title = 'この手順を削除';
-      del.onclick = e => { e.stopPropagation(); deleteBranch(bi); };
-      line.appendChild(del);
-    }
-  }
 
   const refIdx = savedBranches.findIndex(b => b.isRef);
   const refMoves = refIdx >= 0 ? savedBranches[refIdx].moves : null;
@@ -190,7 +203,7 @@ function renderBranchTree() {
   // 各非参照分岐の分岐インデックス（refMovesとの最初の相違点）
   const divIdxMap = new Map();
   savedBranches.forEach((b, i) => {
-    if (i !== refIdx && refMoves) divIdxMap.set(i, findDivIdx(b.moves, refMoves));
+    if (i !== refIdx && refMoves) divIdxMap.set(i, _findDivIdx(b.moves, refMoves));
   });
 
   // ── 参照棋譜 ──
@@ -215,10 +228,10 @@ function renderBranchTree() {
     line.className = 'tree-line ref-line clickable';
     line.title = 'クリックでこの手順を読み込む';
     line.onclick = () => loadBranch(refIdx);
-    line.appendChild(mkSpan('tree-ref-label', '参照'));
+    line.appendChild(_mkSpan('tree-ref-label', '参照'));
 
-    renderSeq(line, refPairs, pinIdxs, 2, 2);
-    appendLeafSuffix(line, refIdx);
+    _renderSeq(line, curPath, refPairs, pinIdxs, 2, 2);
+    _appendLeafSuffix(line, refIdx, curPath);
     staging.appendChild(line);
   }
 
@@ -246,10 +259,10 @@ function renderBranchTree() {
     if (_branchPaddingCache.has(bi)) {
       line.style.paddingLeft = _branchPaddingCache.get(bi) + 'px';
     }
-    line.appendChild(mkSpan('tree-connector', isLast ? '└─' : '├─'));
+    line.appendChild(_mkSpan('tree-connector', isLast ? '└─' : '├─'));
 
-    renderSeq(line, branchPairs, pinIdxs, 2, 1);
-    appendLeafSuffix(line, bi);
+    _renderSeq(line, curPath, branchPairs, pinIdxs, 2, 1);
+    _appendLeafSuffix(line, bi, curPath);
     staging.appendChild(line);
   });
 
@@ -406,10 +419,7 @@ function drawBoard() {
   solverState.score = null;
   endgameEl.classList.add('endgame-pending');
 
-  const kifu = moveHistory.slice(0, currentMove)
-    .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
-    .join("");
-  document.getElementById("current-kifu").value = kifu;
+  document.getElementById("current-kifu").value = movesToKifuString(moveHistory.slice(0, currentMove));
 
   // ===== 終局チェック =====
   const blackMoves = getValidMoves(1);
@@ -500,15 +510,15 @@ function drawBoard() {
 }
 
 function updateNavButtons() {
-  const canBack = currentMove > 0;
+  const canBack    = currentMove > 0;
   const canForward = currentMove < moveHistory.length ||
     (currentMatchesReference() && currentMove < referenceKifu.length);
-  document.getElementById('btn-first').disabled  = !canBack;
-  document.getElementById('btn-undo10').disabled  = !canBack;
-  document.getElementById('btn-undo').disabled    = !canBack;
-  document.getElementById('btn-redo').disabled    = !canForward;
-  document.getElementById('btn-redo10').disabled  = !canForward;
-  document.getElementById('btn-last').disabled    = !canForward;
+
+  const btnIds  = ['btn-first', 'btn-undo10', 'btn-undo', 'btn-redo', 'btn-redo10', 'btn-last'];
+  const canNavs = [canBack, canBack, canBack, canForward, canForward, canForward];
+  btnIds.forEach((id, i) => {
+    document.getElementById(id).disabled = !canNavs[i];
+  });
 }
 
 function showGameResult() {
@@ -561,7 +571,7 @@ function setSolverDepth(val) {
   document.getElementById('solver-depth').value = n;
   const warningEl = document.getElementById('depth-warning');
   if (n !== solverDepth) {
-    if (n > 20) {
+    if (n > DEFAULT_SOLVER_DEPTH) {
       warningEl.textContent = `残り ${n} 手からの全読みは計算に時間がかかる場合があります。`;
       warningEl.className = 'text-center small mt-1 text-warning';
       warningEl.style.display = '';
@@ -610,9 +620,7 @@ function copyCurrentKifu() {
 }
 
 function copyShareURL() {
-  const kifu = moveHistory.slice(0, currentMove)
-    .map(m => String.fromCharCode(97 + m.x) + (m.y + 1))
-    .join("");
+  const kifu = movesToKifuString(moveHistory.slice(0, currentMove));
   const black = document.getElementById("black-name-input").value.trim();
   const white = document.getElementById("white-name-input").value.trim();
   const params = new URLSearchParams();
@@ -624,8 +632,8 @@ function copyShareURL() {
   navigator.clipboard.writeText(url).then(() => {
     const msg = document.getElementById("url-copy-msg");
     msg.style.display = "";
-    clearTimeout(msg._hideTimer);
-    msg._hideTimer = setTimeout(() => { msg.style.display = "none"; }, 2000);
+    clearTimeout(_urlCopyTimer);
+    _urlCopyTimer = setTimeout(() => { msg.style.display = "none"; }, 2000);
   });
 }
 

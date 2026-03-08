@@ -92,6 +92,20 @@ function bbFlips(pos, player, opponent) {
 
 function bbPopcount(b) { let n=0; while(b){b&=b-1n;n++;} return n; }
 
+// moves ビットボードから { pos, lsb, w } の配列を重み降順で返す
+function bbBuildMoveList(moves) {
+  const moveList = [];
+  let m = moves;
+  while (m) {
+    const lsb = m & -m;
+    m ^= lsb;
+    const pos = BB_POS.get(lsb);
+    moveList.push({ pos, lsb, w: BB_MOVE_WEIGHT[pos] });
+  }
+  moveList.sort((a, b) => b.w - a.w);
+  return moveList;
+}
+
 // アルファベータ探索（内部再帰用・score のみ返す）
 function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
   if (solverState.cancelFlag) throw 'solver_cancelled';
@@ -104,16 +118,7 @@ function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
     return bbSolve(blackBB, whiteBB, !blackToMove, alpha, beta); // パス
   }
 
-  // 合法手を重みでソート（降順）
-  const moveList = [];
-  let m = moves;
-  while (m) {
-    const lsb = m & -m;
-    m ^= lsb;
-    const pos = BB_POS.get(lsb);
-    moveList.push({ pos, lsb, w: BB_MOVE_WEIGHT[pos] });
-  }
-  moveList.sort((a, b) => b.w - a.w);
+  const moveList = bbBuildMoveList(moves);
 
   let best = blackToMove ? -65 : 65;
   for (const { pos, lsb } of moveList) {
@@ -146,15 +151,7 @@ function bbSolveTop(blackBB, whiteBB, blackToMove) {
     return { score: bbPopcount(blackBB) - bbPopcount(whiteBB), bestPos: -1, line: [] };
   }
 
-  const moveList = [];
-  let m = moves;
-  while (m) {
-    const lsb = m & -m;
-    m ^= lsb;
-    const pos = BB_POS.get(lsb);
-    moveList.push({ pos, lsb, w: BB_MOVE_WEIGHT[pos] });
-  }
-  moveList.sort((a, b) => b.w - a.w);
+  const moveList = bbBuildMoveList(moves);
 
   let best = blackToMove ? -65 : 65, bestPos = moveList[0].pos;
   let alpha = -65, beta = 65;
@@ -280,6 +277,28 @@ function onEgaroucidReady() {
   }
 }
 
+// 盤面 b を WASM 形式の Int32Array に変換し、HEAP に書き込んで ptr を返す
+// 呼び出し元は使用後に必ず _free(ptr) を呼ぶこと
+function encodeBoard(b) {
+  const res = new Int32Array(64);
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++) {
+      const v = b[y][x];
+      res[y * 8 + x] = v === 1 ? 0 : v === -1 ? 1 : -1;
+    }
+  const ptr = _malloc(64 * 4);
+  HEAP32.set(res, ptr >> 2);
+  return ptr;
+}
+
+// _ai_js の戻り値をデコードして { mx, my, score_raw } を返す
+function decodeWasmResult(val) {
+  const my = Math.floor(val / 8000);
+  const mx = Math.floor((val - my * 8000) / 1000);
+  const score_raw = val - my * 8000 - mx * 1000 - 100;
+  return { mx, my, score_raw };
+}
+
 // 盤面を WASM に渡して評価値（黒視点の予測石差）を返す
 function evaluatePosition(b, player, level = evalLevel) {
   // player: 1=黒, -1=白
@@ -293,26 +312,15 @@ function evaluatePosition(b, player, level = evalLevel) {
     }
   if (empty === 0) return black - white;
 
-  // WASM 形式に変換: 0=黒, 1=白, -1=空
-  const res = new Int32Array(64);
-  for (let y = 0; y < 8; y++)
-    for (let x = 0; x < 8; x++) {
-      const v = b[y][x];
-      res[y * 8 + x] = v === 1 ? 0 : v === -1 ? 1 : -1;
-    }
   const wasmPlayer = player === 1 ? 0 : 1;
-  const ptr = _malloc(64 * 4);
-  HEAP32.set(res, ptr >> 2);
+  const ptr = encodeBoard(b);
   const val = _ai_js(ptr, level, wasmPlayer);
   _free(ptr);
 
-  // 戻り値デコード: y*8000 + x*1000 + (dif_stones+100)
-  const vy = Math.floor(val / 8000);
-  const vx = Math.floor((val - vy * 8000) / 1000);
-  const dif = val - vy * 8000 - vx * 1000 - 100;
+  const { score_raw } = decodeWasmResult(val);
 
   // 黒視点に正規化（白番なら符号反転）
-  return wasmPlayer === 0 ? dif : -dif;
+  return wasmPlayer === 0 ? score_raw : -score_raw;
 }
 
 // moveHistory を先頭から再生しながら各局面を評価
@@ -323,9 +331,7 @@ function computeAllEvals() {
   evalKifu = kifuKey;
   evalCache = [];
 
-  let b = Array(8).fill().map(() => Array(8).fill(0));
-  b[3][3] = -1; b[4][4] = -1; b[3][4] = 1; b[4][3] = 1;
-
+  let b = createInitialBoard();
   let cp = 1; // 手番 (1=黒, -1=白)
   evalCache.push(evaluatePosition(b, cp));
 
@@ -341,21 +347,12 @@ function computeAllEvals() {
 // WASM に盤面を渡して最善手と評価値を取得（黒視点スコア）
 // level は残り手数に合わせて呼び出し側でスケール（20手=10, 24手=21）
 function wasmBestMove(b, pl, level) {
-  const res = new Int32Array(64);
-  for (let y = 0; y < 8; y++)
-    for (let x = 0; x < 8; x++) {
-      const v = b[y][x];
-      res[y*8+x] = v === 1 ? 0 : v === -1 ? 1 : -1;
-    }
   const wp = pl === 1 ? 0 : 1;
-  const ptr = _malloc(64 * 4);
-  HEAP32.set(res, ptr >> 2);
+  const ptr = encodeBoard(b);
   const val = _ai_js(ptr, level ?? 10, wp);
   _free(ptr);
-  const vy = Math.floor(val / 8000);
-  const vx = Math.floor((val - vy * 8000) / 1000);
-  const dif = val - vy * 8000 - vx * 1000 - 100;
-  return { mx: vx, my: vy, score: wp === 0 ? dif : -dif };
+  const { mx, my, score_raw } = decodeWasmResult(val);
+  return { mx, my, score: wp === 0 ? score_raw : -score_raw };
 }
 
 // 残り手数からsolveレベルを決める（10=20手, 21=22手相当 で線形に補間）
@@ -367,7 +364,7 @@ function solveLevel(empty) {
 function egaroucidSolveTop(boardIn, player, empty) {
   // 最善手とスコアを取得
   const lv = solveLevel(empty ?? 20);
-  const { mx, my, score } = wasmBestMove(boardIn, player, lv);
+  const { mx, my } = wasmBestMove(boardIn, player, lv);
   const bestPos = my * 8 + mx;
 
   // 両者最善手を辿って手順列を構築
@@ -390,17 +387,13 @@ function egaroucidSolveTop(boardIn, player, empty) {
 
   // line を最後まで打ち切った盤面 b から実際の石数を数えてスコアを確定する。
   // wasmBestMove の返す score はヒューリスティック推定値でズレることがあるため使わない。
-  let actB = 0, actW = 0, actE = 0;
-  for (let y = 0; y < 8; y++)
-    for (let x = 0; x < 8; x++) {
-      if (b[y][x] === 1) actB++;
-      else if (b[y][x] === -1) actW++;
-      else actE++;
-    }
+  // countStones を使って石数を得る
+  const { black: actB, white: actW, empty: actE } = countStones(b);
+  let finalB = actB, finalW = actW;
   // 空マスは勝者に加算（日本ルール）
-  if (actB > actW) actB += actE;
-  else if (actW > actB) actW += actE;
-  const lineScore = actB - actW;
+  if (finalB > finalW) finalB += actE;
+  else if (finalW > finalB) finalW += actE;
+  const lineScore = finalB - finalW;
 
   return { score: lineScore, bestPos, line };
 }

@@ -50,8 +50,7 @@ function computeMistakes() {
   mistakeCache = [];
   const gen = ++mistakeGeneration;
 
-  let boardState = Array(8).fill().map(() => Array(8).fill(0));
-  boardState[3][3] = -1; boardState[4][4] = -1; boardState[3][4] = 1; boardState[4][3] = 1;
+  let boardState = createInitialBoard();
   let cp = 1;
   let idx = 0;
   let validMoves = null; // 現在局面の合法手リスト
@@ -143,6 +142,7 @@ function renderMistakeList() {
 
   const toShow = [...getShownMistakeSet().values()]
     .sort((a, b) => a.moveIdx - b.moveIdx); // 手番順
+
   function makeBadge({ moveIdx, loss }) {
     const m = moveHistory[moveIdx];
     if (!m) return null;
@@ -301,9 +301,8 @@ function updateScoreGraph() {
     labels = evalCache.map((_, i) => i === 0 ? '開始' : String(i));
     diffs = evalCache;
   } else {
-    // 石差モード or AI 未準備: 実石数差
-    let b = Array(8).fill().map(() => Array(8).fill(0));
-    b[3][3] = -1; b[4][4] = -1; b[3][4] = 1; b[4][3] = 1;
+    // 石差モード or AI 未準備: 実石数差（createInitialBoard を使用）
+    let b = createInitialBoard();
     labels = ['開始'];
     diffs = [0];
     for (const m of moveHistory) {
