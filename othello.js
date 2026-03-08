@@ -8,13 +8,33 @@ const scWhiteName = document.getElementById("sc-white-name");
 const balanceBar = document.getElementById("balance-bar");
 const endgameEl = document.getElementById("endgame");
 
-let solverDepth = parseInt(localStorage.getItem('othello-solver-depth') || '20');
+// ===== 定数 =====
+const STORAGE_KEYS = {
+  SOLVER_DEPTH:    'othello-solver-depth',
+  SHOW_NUMBERS:    'othello-show-numbers',
+  GRAPH_MODE:      'othello-graph-mode',
+  EVAL_LEVEL:      'othello-eval-level',
+  SHOW_MOVE_EVALS: 'othello-show-move-evals',
+  panel:           id => `othello-panel-${id}`,
+};
+const MAX_SAVED_BRANCHES       = 5;
+const DEFAULT_SOLVER_DEPTH     = 20;
+const EVAL_ADVANTAGE_THRESHOLD = 15;
+const MAX_SHOWN_MISTAKES       = 7;
+const MIN_LOSS_FOR_MISTAKE     = 6;
+const BLUNDER_THRESHOLD        = 12;
+
+let solverDepth = parseInt(localStorage.getItem(STORAGE_KEYS.SOLVER_DEPTH) || String(DEFAULT_SOLVER_DEPTH));
 let savedBranches = []; // 分岐ツリー（セッション内のみ、最大5手順）
 let _branchPaddingCache = new Map(); // bi -> paddingLeft（フリッカー防止用）
-let _solverCancelFlag = false; // 全読みキャンセル用フラグ
-let _solverResult = ''; // 現局面の全読み結果テキスト
-let _solverPending = false; // ソルバーがまだ結果を出していない間 true
-let _solverScore = null; // 全読み確定スコア（黒視点）。null=未確定
+
+// ソルバーの状態をひとまとめに管理
+const solverState = {
+  cancelFlag: false, // 全読みキャンセル用フラグ
+  result:     '',    // 現局面の全読み結果テキスト
+  pending:    false, // ソルバーがまだ結果を出していない間 true
+  score:      null,  // 全読み確定スコア（黒視点）。null=未確定
+};
 
 const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
 
@@ -40,30 +60,30 @@ function applyBoardMove(b, x, y, player) {
 }
 
 function _evalLabel() {
-  const v = _solverScore !== null ? _solverScore
+  const v = solverState.score !== null ? solverState.score
           : (egaroucidReady && currentMove < evalCache.length) ? evalCache[currentMove]
           : null;
   if (v === null) return '';
   const a = Math.abs(v), s = v >= 0 ? '+' : '';
   if (v === 0) return '互角';
-  if (a < 15) return v > 0 ? `黒有利(${s}${v})` : `白有利(${v})`;
+  if (a < EVAL_ADVANTAGE_THRESHOLD) return v > 0 ? `黒有利(${s}${v})` : `白有利(${v})`;
   return v > 0 ? `黒勝勢(${s}${v})` : `白勝勢(${v})`;
 }
 
 function updateEndgameEl(solverText) {
-  if (solverText !== undefined) _solverResult = solverText;
+  if (solverText !== undefined) solverState.result = solverText;
   // ソルバーの結果が出るまで更新しない（緑枠を透明テキストで維持）
-  if (_solverPending) return;
+  if (solverState.pending) return;
   endgameEl.classList.remove('endgame-pending');
   const label = _evalLabel();
-  const solving = _solverResult === '読み中…';
-  if (!solving && label && _solverResult) {
-    endgameEl.innerHTML = `${label}<br><span style="font-size:0.82em">${_solverResult}</span>`;
+  const solving = solverState.result === '読み中…';
+  if (!solving && label && solverState.result) {
+    endgameEl.innerHTML = `${label}<br><span style="font-size:0.82em">${solverState.result}</span>`;
   } else {
-    endgameEl.textContent = solving ? _solverResult : (_solverResult || label);
+    endgameEl.textContent = solving ? solverState.result : (solverState.result || label);
   }
 }
-let showMoveNumbers = localStorage.getItem('othello-show-numbers') === 'true';
+let showMoveNumbers = localStorage.getItem(STORAGE_KEYS.SHOW_NUMBERS) === 'true';
 let moveHistory = [];
 let currentMove = 0;
 let board = [];
@@ -74,11 +94,11 @@ let whiteName = "白";
 let _skipDraw = false;
 let scoreChart = null;
 let egaroucidReady = false;
-let graphMode = localStorage.getItem('othello-graph-mode') || 'ai'; // 'ai' | 'stone'
+let graphMode = localStorage.getItem(STORAGE_KEYS.GRAPH_MODE) || 'ai'; // 'ai' | 'stone'
 let evalCache = [];
 let evalKifu = '';
-let evalLevel = parseInt(localStorage.getItem('othello-eval-level') || '8');
-let showMoveEvals = localStorage.getItem('othello-show-move-evals') === 'true';
+let evalLevel = parseInt(localStorage.getItem(STORAGE_KEYS.EVAL_LEVEL) || '8');
+let showMoveEvals = localStorage.getItem(STORAGE_KEYS.SHOW_MOVE_EVALS) === 'true';
 let moveEvalGeneration = 0; // drawBoard のたびに更新し、古い評価タスクを破棄
 function showGameResult() {
   const { black, white } = countStones(board);
@@ -142,26 +162,10 @@ function getValidMoves(player) {
   return moves;
 }
 
-function drawBoard() {
-  if (_skipDraw) return;
-  _solverCancelFlag = true;  // 実行中の全読みをキャンセル
-  boardElement.innerHTML = "";
-  const validMoves = getValidMoves(currentPlayer);
-  const validSet = new Set(validMoves.map(([x, y]) => `${x},${y}`));
-  const lastMove = currentMove > 0 ? moveHistory[currentMove - 1] : null;
-  const nextRef = currentMatchesReference() && currentMove < referenceKifu.length
-    ? referenceKifu[currentMove] : null;
-  const nextRefKey = nextRef ? `${nextRef.x},${nextRef.y}` : null;
+// ===== drawBoard ヘルパー =====
 
-  const moveNumMap = new Map();
-  if (showMoveNumbers) {
-    moveHistory.slice(0, currentMove).forEach((m, i) => {
-      moveNumMap.set(`${m.x},${m.y}`, { num: i + 1, player: m.player });
-    });
-  }
-
-  const currentEvalGen = ++moveEvalGeneration;
-
+// ボードのグリッド・石・ヒントを描画する
+function renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap) {
   const makeLabel = (text) => {
     const lbl = document.createElement("div");
     lbl.className = "board-label";
@@ -213,7 +217,10 @@ function drawBoard() {
   boardElement.appendChild(document.createElement("div"));
   for (let x = 0; x < 8; x++) boardElement.appendChild(makeLabel(String.fromCharCode(97 + x)));
   boardElement.appendChild(document.createElement("div"));
+}
 
+// スコアパネル（石数・バランスバー・名前）を更新し、空マス数を返す
+function updateStoneDisplay() {
   const { black, white, empty } = countStones(board);
   scBlack.textContent = black;
   scWhite.textContent = white;
@@ -222,9 +229,46 @@ function drawBoard() {
   scWhiteName.textContent = whiteName;
   const total = black + white;
   balanceBar.style.width = (total > 0 ? (black / total * 100) : 50).toFixed(1) + '%';
+  return empty;
+}
 
-  _solverResult = '';
-  _solverScore = null;
+// 終局チェックを行い info テキストを更新する
+function updateGameStatusDisplay(blackMoves, whiteMoves) {
+  if (blackMoves.length === 0 && whiteMoves.length === 0) {
+    showGameResult();
+  } else {
+    info.textContent = currentPlayer === 1
+      ? `${blackName}（⚫）の番`
+      : `${whiteName}（⚪）の番`;
+  }
+}
+
+function drawBoard() {
+  if (_skipDraw) return;
+  solverState.cancelFlag = true;  // 実行中の全読みをキャンセル
+  boardElement.innerHTML = "";
+  const validMoves = getValidMoves(currentPlayer);
+  const validSet = new Set(validMoves.map(([x, y]) => `${x},${y}`));
+  const lastMove = currentMove > 0 ? moveHistory[currentMove - 1] : null;
+  const nextRef = currentMatchesReference() && currentMove < referenceKifu.length
+    ? referenceKifu[currentMove] : null;
+  const nextRefKey = nextRef ? `${nextRef.x},${nextRef.y}` : null;
+
+  const moveNumMap = new Map();
+  if (showMoveNumbers) {
+    moveHistory.slice(0, currentMove).forEach((m, i) => {
+      moveNumMap.set(`${m.x},${m.y}`, { num: i + 1, player: m.player });
+    });
+  }
+
+  const currentEvalGen = ++moveEvalGeneration;
+
+  renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap);
+
+  const empty = updateStoneDisplay();
+
+  solverState.result = '';
+  solverState.score = null;
   endgameEl.classList.add('endgame-pending');
 
   const kifu = moveHistory.slice(0, currentMove)
@@ -233,100 +277,94 @@ function drawBoard() {
   document.getElementById("current-kifu").value = kifu;
 
   // ===== 終局チェック =====
-const blackMoves = getValidMoves(1);
-const whiteMoves = getValidMoves(-1);
+  const blackMoves = getValidMoves(1);
+  const whiteMoves = getValidMoves(-1);
 
-if (blackMoves.length === 0 && whiteMoves.length === 0) {
-  showGameResult();
-} else {
-  info.textContent = currentPlayer === 1
-    ? `${blackName}（⚫）の番`
-    : `${whiteName}（⚪）の番`;
-}
+  updateGameStatusDisplay(blackMoves, whiteMoves);
 
-const branchBtn = document.getElementById('branch-btn');
-if (branchBtn) {
-  const refMoves = _getRefMoves();
-  const len = Math.min(currentMove, refMoves.length);
-  let hasBranch = false;
-  for (let i = 0; i < len; i++) {
-    if (moveHistory[i].x !== refMoves[i].x || moveHistory[i].y !== refMoves[i].y) {
-      hasBranch = true;
-      break;
-    }
-  }
-  branchBtn.disabled = !hasBranch;
-}
-_solverPending = !(blackMoves.length === 0 && whiteMoves.length === 0) && empty <= solverDepth;
-computeAllEvals();
-updateScoreGraph();
-updateNavButtons();
-renderBranchTree();
-
-// 分岐の先端にいる間は悪手解析を自動実行
-if (egaroucidReady && currentMove > 0) {
-  const _atBranchEnd = savedBranches.some(b =>
-    b.moves.length === currentMove &&
-    b.moves.every((m, i) => m.x === moveHistory[i].x && m.y === moveHistory[i].y)
-  );
-  if (_atBranchEnd) setTimeout(computeMistakes, 0);
-}
-
-// 評価値表示が終わったら全読みを起動
-const solverGen = currentEvalGen;
-const snapBoard = board.map(r => [...r]);
-const snapPlayer = currentPlayer;
-const snapEmpty = empty;
-const snapGameOver = blackMoves.length === 0 && whiteMoves.length === 0;
-function runSolver() {
-  if (solverGen !== moveEvalGeneration) return;
-  if (snapGameOver) { _solverPending = false; updateEndgameEl(''); return; }
-  if (snapEmpty > solverDepth) { _solverPending = false; updateEndgameEl(); return; }
-  updateEndgameEl('読み中…');
-  _solverCancelFlag = false;
-  try {
-    let score, bestPos, line;
-    if (egaroucidReady) {
-      // egaroucid が使えるなら残り手数に関わらず WASM で解く
-      ({ score, bestPos, line } = egaroucidSolveTop(snapBoard, snapPlayer, snapEmpty));
-    } else if (snapEmpty <= 10) {
-      // egaroucid 未準備のときは JS ソルバー（≤20手のみ）
-      let blackBB = 0n, whiteBB = 0n;
-      for (let y = 0; y < 8; y++)
-        for (let x = 0; x < 8; x++) {
-          if (snapBoard[y][x] === 1)  blackBB |= 1n << BigInt(y * 8 + x);
-          else if (snapBoard[y][x] === -1) whiteBB |= 1n << BigInt(y * 8 + x);
-        }
-      ({ score, bestPos, line } = bbSolveTop(blackBB, whiteBB, snapPlayer === 1));
-    } else {
-      _solverPending = false;
-      updateEndgameEl('AI読み込み後に全読みできます');
-      return;
-    }
-    if (solverGen !== moveEvalGeneration) return;
-    const lineStr = line.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join(" ");
-    let result;
-    if (score > 0)      result = `黒が +${score} で勝ち`;
-    else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
-    else                result = `引き分け`;
-    _solverPending = false;
-    _solverScore = score; // 黒視点の確定スコアを保存（以降の _evalLabel に使用）
-    updateEndgameEl(`最善手を読み切り: ${result}　(${lineStr})`);
-    if (bestPos >= 0) {
-      const bx = bestPos & 7, by = bestPos >> 3;
-      const bestCell = boardElement.querySelector(`[data-pos="${bx},${by}"]`);
-      if (bestCell) {
-        const dot = document.createElement("div");
-        dot.className = "best-move-dot";
-        bestCell.appendChild(dot);
+  const branchBtn = document.getElementById('branch-btn');
+  if (branchBtn) {
+    const refMoves = _getRefMoves();
+    const len = Math.min(currentMove, refMoves.length);
+    let hasBranch = false;
+    for (let i = 0; i < len; i++) {
+      if (moveHistory[i].x !== refMoves[i].x || moveHistory[i].y !== refMoves[i].y) {
+        hasBranch = true;
+        break;
       }
     }
-  } catch(e) {
-    if (e !== 'solver_cancelled') throw e;
+    branchBtn.disabled = !hasBranch;
   }
-}
+  solverState.pending = !(blackMoves.length === 0 && whiteMoves.length === 0) && empty <= solverDepth;
+  computeAllEvals();
+  updateScoreGraph();
+  updateNavButtons();
+  renderBranchTree();
 
-scheduleMoveEvals(validMoves, currentEvalGen, runSolver);
+  // 分岐の先端にいる間は悪手解析を自動実行
+  if (egaroucidReady && currentMove > 0) {
+    const _atBranchEnd = savedBranches.some(b =>
+      b.moves.length === currentMove &&
+      b.moves.every((m, i) => m.x === moveHistory[i].x && m.y === moveHistory[i].y)
+    );
+    if (_atBranchEnd) setTimeout(computeMistakes, 0);
+  }
+
+  // 評価値表示が終わったら全読みを起動
+  const solverGen = currentEvalGen;
+  const snapBoard = board.map(r => [...r]);
+  const snapPlayer = currentPlayer;
+  const snapEmpty = empty;
+  const snapGameOver = blackMoves.length === 0 && whiteMoves.length === 0;
+  function runSolver() {
+    if (solverGen !== moveEvalGeneration) return;
+    if (snapGameOver) { solverState.pending = false; updateEndgameEl(''); return; }
+    if (snapEmpty > solverDepth) { solverState.pending = false; updateEndgameEl(); return; }
+    updateEndgameEl('読み中…');
+    solverState.cancelFlag = false;
+    try {
+      let score, bestPos, line;
+      if (egaroucidReady) {
+        // egaroucid が使えるなら残り手数に関わらず WASM で解く
+        ({ score, bestPos, line } = egaroucidSolveTop(snapBoard, snapPlayer, snapEmpty));
+      } else if (snapEmpty <= 10) {
+        // egaroucid 未準備のときは JS ソルバー（≤20手のみ）
+        let blackBB = 0n, whiteBB = 0n;
+        for (let y = 0; y < 8; y++)
+          for (let x = 0; x < 8; x++) {
+            if (snapBoard[y][x] === 1)  blackBB |= 1n << BigInt(y * 8 + x);
+            else if (snapBoard[y][x] === -1) whiteBB |= 1n << BigInt(y * 8 + x);
+          }
+        ({ score, bestPos, line } = bbSolveTop(blackBB, whiteBB, snapPlayer === 1));
+      } else {
+        solverState.pending = false;
+        updateEndgameEl('AI読み込み後に全読みできます');
+        return;
+      }
+      if (solverGen !== moveEvalGeneration) return;
+      const lineStr = line.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join(" ");
+      let result;
+      if (score > 0)      result = `黒が +${score} で勝ち`;
+      else if (score < 0) result = `白が +${Math.abs(score)} で勝ち`;
+      else                result = `引き分け`;
+      solverState.pending = false;
+      solverState.score = score; // 黒視点の確定スコアを保存（以降の _evalLabel に使用）
+      updateEndgameEl(`最善手を読み切り: ${result}　(${lineStr})`);
+      if (bestPos >= 0) {
+        const bx = bestPos & 7, by = bestPos >> 3;
+        const bestCell = boardElement.querySelector(`[data-pos="${bx},${by}"]`);
+        if (bestCell) {
+          const dot = document.createElement("div");
+          dot.className = "best-move-dot";
+          bestCell.appendChild(dot);
+        }
+      }
+    } catch(e) {
+      if (e !== 'solver_cancelled') throw e;
+    }
+  }
+
+  scheduleMoveEvals(validMoves, currentEvalGen, runSolver);
 }
 
 function updateNavButtons() {
@@ -343,7 +381,7 @@ function updateNavButtons() {
 
 // ===== 分岐ツリー =====
 function _addBranch(moves, atFront = false) {
-  if (savedBranches.length >= 5 || moves.length === 0) return false;
+  if (savedBranches.length >= MAX_SAVED_BRANCHES || moves.length === 0) return false;
   const key = moves.map(m => `${m.x},${m.y}`).join('|');
   if (savedBranches.some(b => b.moves.map(m => `${m.x},${m.y}`).join('|') === key)) return false;
   _branchPaddingCache.clear();
@@ -379,7 +417,7 @@ function saveReferenceKifu() {
     }
     return;
   }
-  if (savedBranches.length >= 5) return;
+  if (savedBranches.length >= MAX_SAVED_BRANCHES) return;
   savedBranches.unshift({ moves, isRef: true });
 }
 
@@ -423,8 +461,8 @@ function renderBranchTree() {
   if (!container) return;
 
   if (saveBtn) {
-    saveBtn.disabled = savedBranches.length >= 5 || currentMove === 0;
-    saveBtn.textContent = `この手順を保存 (${savedBranches.length}/5)`;
+    saveBtn.disabled = savedBranches.length >= MAX_SAVED_BRANCHES || currentMove === 0;
+    saveBtn.textContent = `この手順を保存 (${savedBranches.length}/${MAX_SAVED_BRANCHES})`;
   }
 
   // 新コンテンツは staging に構築し、確定後に container へ差し替える
@@ -711,7 +749,7 @@ const BB_MOVE_WEIGHT = (() => {
 
 // アルファベータ探索（内部再帰用・score のみ返す）
 function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
-  if (_solverCancelFlag) throw 'solver_cancelled';
+  if (solverState.cancelFlag) throw 'solver_cancelled';
   const player   = blackToMove ? blackBB : whiteBB;
   const opponent = blackToMove ? whiteBB : blackBB;
   let moves = bbMoves(player, opponent);
@@ -887,7 +925,7 @@ function playMove(x, y) {
     );
     if (extendIdx >= 0) {
       savedBranches[extendIdx].moves = moveHistory.slice(0, currentMove);
-    } else if (savedBranches.length < 5) {
+    } else if (savedBranches.length < MAX_SAVED_BRANCHES) {
       // prevPath がどこかの枝のプレフィックス → 初めて外れた瞬間だけ新規保存
       const currPath = moveHistory.slice(0, currentMove).map(m => `${m.x},${m.y}`);
       if (isPathPrefixOfAnyBranch(prevPath) && !isPathPrefixOfAnyBranch(currPath)) {
@@ -1071,7 +1109,7 @@ function copyShareURL() {
 }
 
 function setSolverDepth(val) {
-  const n = Math.min(24, Math.max(6, parseInt(val) || 20));
+  const n = Math.min(24, Math.max(6, parseInt(val) || DEFAULT_SOLVER_DEPTH));
   document.getElementById('solver-depth').value = n;
   const warningEl = document.getElementById('depth-warning');
   if (n !== solverDepth) {
@@ -1086,13 +1124,13 @@ function setSolverDepth(val) {
     warningEl.style.display = 'none';
   }
   solverDepth = n;
-  localStorage.setItem('othello-solver-depth', n);
+  localStorage.setItem(STORAGE_KEYS.SOLVER_DEPTH, n);
   drawBoard();
 }
 
 function toggleMoveNumbers() {
   showMoveNumbers = !showMoveNumbers;
-  localStorage.setItem('othello-show-numbers', showMoveNumbers);
+  localStorage.setItem(STORAGE_KEYS.SHOW_NUMBERS, showMoveNumbers);
   document.getElementById('num-toggle').textContent = showMoveNumbers ? '着手順を隠す' : '着手順を表示';
   drawBoard();
 }
@@ -1227,8 +1265,8 @@ function computeMistakes() {
 function getShownMistakeSet() {
   const toShow = [...mistakeCache]
     .sort((a, b) => a.dev - b.dev)
-    .slice(0, 7)
-    .filter(e => e.loss >= 6);
+    .slice(0, MAX_SHOWN_MISTAKES)
+    .filter(e => e.loss >= MIN_LOSS_FOR_MISTAKE);
   return new Map(toShow.map(e => [e.moveIdx, e]));
 }
 
@@ -1236,7 +1274,7 @@ function getMistakeInfo(moveIdx) {
   const map = getShownMistakeSet();
   const entry = map.get(moveIdx);
   if (!entry) return null;
-  if (entry.loss >= 12) return { loss: entry.loss, label: '×', cls: 'mistake-blunder', graphRadius: 5 };
+  if (entry.loss >= BLUNDER_THRESHOLD) return { loss: entry.loss, label: '×', cls: 'mistake-blunder', graphRadius: 5 };
   return { loss: entry.loss, label: '△', cls: 'mistake-mistake', graphRadius: 4 };
 }
 
@@ -1251,8 +1289,8 @@ function renderMistakeList() {
     const m = moveHistory[moveIdx];
     if (!m) return null;
     const coord = String.fromCharCode(97 + m.x) + (m.y + 1);
-    const cls   = loss >= 12 ? 'mistake-blunder' : 'mistake-mistake';
-    const label = loss >= 12 ? ' ×' : ' △';
+    const cls   = loss >= BLUNDER_THRESHOLD ? 'mistake-blunder' : 'mistake-mistake';
+    const label = loss >= BLUNDER_THRESHOLD ? ' ×' : ' △';
     const badge = document.createElement('span');
     badge.className = `mistake-badge ${cls}`;
     badge.textContent = `${moveIdx + 1}手 ${coord}${label}`;
@@ -1312,7 +1350,7 @@ function scheduleMoveEvals(validMoves, gen, onComplete) {
 
 function toggleMoveEvals() {
   showMoveEvals = !showMoveEvals;
-  localStorage.setItem('othello-show-move-evals', showMoveEvals);
+  localStorage.setItem(STORAGE_KEYS.SHOW_MOVE_EVALS, showMoveEvals);
   const btn = document.getElementById('move-eval-toggle');
   if (btn) btn.textContent = showMoveEvals ? '評価値を隠す' : '候補手の評価値';
   drawBoard();
@@ -1330,7 +1368,7 @@ function evaluateMove(x, y) {
 function setEvalLevel(val) {
   const n = Math.min(15, Math.max(1, parseInt(val) || 5));
   evalLevel = n;
-  localStorage.setItem('othello-eval-level', n);
+  localStorage.setItem(STORAGE_KEYS.EVAL_LEVEL, n);
   if (egaroucidReady) {
     evalKifu = ''; // キャッシュ無効化して再計算
     setAiStatus('計算中…', '#f97316');
@@ -1340,7 +1378,7 @@ function setEvalLevel(val) {
 
 function toggleGraphMode() {
   graphMode = graphMode === 'ai' ? 'stone' : 'ai';
-  localStorage.setItem('othello-graph-mode', graphMode);
+  localStorage.setItem(STORAGE_KEYS.GRAPH_MODE, graphMode);
   updateScoreGraph();
 }
 
@@ -1673,7 +1711,7 @@ function updateScoreGraph() {
     if (i === currentMove) return 5;
     if (i > 0) {
       const e = mistakeMap.get(i - 1);
-      if (e) return e.loss >= 12 ? 5 : 4;
+      if (e) return e.loss >= BLUNDER_THRESHOLD ? 5 : 4;
     }
     return 0;
   });
@@ -1684,7 +1722,7 @@ function updateScoreGraph() {
       if (e) {
         const isBlack = moveHistory[i - 1]?.player === 1;
         // 黒: 赤系 / 白: 青系
-        if (e.loss >= 12) return isBlack ? '#dc2626' : '#7c3aed';
+        if (e.loss >= BLUNDER_THRESHOLD) return isBlack ? '#dc2626' : '#7c3aed';
         return isBlack ? '#f97316' : '#3b82f6';
       }
     }
@@ -1719,7 +1757,7 @@ updateScoreGraph();
 ['analysis-panel', 'branch-tree-panel', 'settings-panel'].forEach(id => {
   const panel = document.getElementById(id);
   if (!panel) return;
-  if (localStorage.getItem(`othello-panel-${id}`) === 'open') {
+  if (localStorage.getItem(STORAGE_KEYS.panel(id)) === 'open') {
     panel.classList.add('show');
     const toggle = document.querySelector(`[data-bs-target="#${id}"]`);
     if (toggle) {
@@ -1727,6 +1765,6 @@ updateScoreGraph();
       toggle.setAttribute('aria-expanded', 'true');
     }
   }
-  panel.addEventListener('show.bs.collapse', () => localStorage.setItem(`othello-panel-${id}`, 'open'));
-  panel.addEventListener('hide.bs.collapse', () => localStorage.setItem(`othello-panel-${id}`, 'closed'));
+  panel.addEventListener('show.bs.collapse', () => localStorage.setItem(STORAGE_KEYS.panel(id), 'open'));
+  panel.addEventListener('hide.bs.collapse', () => localStorage.setItem(STORAGE_KEYS.panel(id), 'closed'));
 });
