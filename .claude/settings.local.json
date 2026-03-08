@@ -10,7 +10,8 @@
       "Bash(ls:*)",
       "Bash(do echo:*)",
       "Bash(mkdir:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npx prettier:*)"
     ]
   }
 }
