@@ -6,7 +6,9 @@
       "WebSearch",
       "WebFetch(domain:www.egaroucid.nyanyan.dev)",
       "Bash(wc:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(do echo:*)"
     ]
   }
 }
