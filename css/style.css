@@ -542,20 +542,7 @@ hr {
 
 /* スマホ用 (横幅560px以下) */
 @media (max-width: 560px) {
-  .move-controls {
-  display: grid !important;
-  grid-template-columns: 1fr 1.4fr 1.4fr;
-  gap: 6px;
-  width: 100%;
-}
-
-.move-controls > button {
-  width: 100%;
-}
-
-#btn-undo {
-  height: 70px;
-}
+  
   h1 {
     font-size: 1.1em;
     flex: 1;
