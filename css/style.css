@@ -542,7 +542,7 @@ hr {
 
 /* スマホ用 (横幅560px以下) */
 @media (max-width: 560px) {
-  
+
   h1 {
     font-size: 1.1em;
     flex: 1;
@@ -698,4 +698,58 @@ hr {
   font-weight: 500;
   color: #fff;
   margin-right: 4px;
+}
+
+/* ===== 手順ナビ：PCは横並びのまま、iPhoneだけ2段組み ===== */
+@media (max-width: 560px) {
+  .nav-control-group {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .nav-control-group .btn {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 4px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  /* 2段目の3ボタン配置 */
+  #btn-first {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  #branch-btn {
+    grid-column: 2 / span 2;
+    grid-row: 2;
+  }
+
+  #btn-last {
+    grid-column: 4;
+    grid-row: 2;
+  }
+}
+#btn-undo10,
+#btn-redo10{
+  font-size:0;
+}
+
+#btn-undo10::after{
+  content:"◀◀";
+  font-size:16px;
+}
+
+#btn-redo10::after{
+  content:"▶▶";
+  font-size:16px;
+}
+#btn-first,
+#branch-btn,
+#btn-last{
+  padding:4px 0;
+  font-size:0.75rem;
 }
