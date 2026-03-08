@@ -646,7 +646,7 @@ hr {
     justify-content: center;
   }
 
-  #graph-area > div { height: 70px !important; }
+  /* #graph-area > div { height: 70px !important; } */
 
   .move-eval { font-size: 8px; bottom: 2px; right: 2px; }
 }
@@ -700,7 +700,7 @@ hr {
   margin-right: 4px;
 }
 
-/* ===== 手順ナビ：PCは横並びのまま、iPhoneだけ2段組み ===== */
+/* ===== 手順ボタン：PCは元のまま / iPhoneだけ2段組み ===== */
 @media (max-width: 560px) {
   .nav-control-group {
     display: grid !important;
@@ -712,44 +712,79 @@ hr {
   .nav-control-group .btn {
     width: 100%;
     min-width: 0;
-    padding: 10px 4px;
-    font-size: 0.9rem;
     white-space: nowrap;
   }
 
-  /* 2段目の3ボタン配置 */
+  /* 1段目 */
+  #btn-undo10 {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 0;
+    padding: 10px 4px;
+  }
+  #btn-undo10::after {
+    content: "◀◀";
+    font-size: 16px;
+  }
+
+  #btn-undo {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 10px 4px;
+    font-size: 0.9rem;
+  }
+
+  #btn-redo {
+    grid-column: 3;
+    grid-row: 1;
+    padding: 10px 4px;
+    font-size: 0.9rem;
+  }
+
+  #btn-redo10 {
+    grid-column: 4;
+    grid-row: 1;
+    font-size: 0;
+    padding: 10px 4px;
+  }
+  #btn-redo10::after {
+    content: "▶▶";
+    font-size: 16px;
+  }
+
+  /* 2段目 */
   #btn-first {
     grid-column: 1;
     grid-row: 2;
+    padding: 4px 4px;
+    font-size: 0.72rem;
   }
 
   #branch-btn {
     grid-column: 2 / span 2;
     grid-row: 2;
+    padding: 4px 4px;
+    font-size: 0.72rem;
   }
 
   #btn-last {
     grid-column: 4;
     grid-row: 2;
+    padding: 4px 4px;
+    font-size: 0.72rem;
   }
-}
-#btn-undo10,
-#btn-redo10{
-  font-size:0;
+} 
+
+#mistake-list:empty {
+  display: none;
 }
 
-#btn-undo10::after{
-  content:"◀◀";
-  font-size:16px;
+#graph-area > div:first-child {
+  margin-bottom: 2px;
+  line-height: 1;
 }
 
-#btn-redo10::after{
-  content:"▶▶";
-  font-size:16px;
-}
-#btn-first,
-#branch-btn,
-#btn-last{
-  padding:4px 0;
-  font-size:0.75rem;
+#graph-area .graph-caption {
+  margin: 0;
+  line-height: 1;
 }
