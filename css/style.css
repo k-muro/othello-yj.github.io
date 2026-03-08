@@ -473,10 +473,10 @@ hr { opacity: 1; border-color: #d0d7de; }
   z-index: 0;
 }
 .custom-stones .stone.black::after {
-  background: url('YJB.png') center/cover no-repeat;
+  background: url('../assets/YJB.png') center/cover no-repeat;
 }
 .custom-stones .stone.white::after {
-  background: url('YJW.png') center/cover no-repeat;
+  background: url('../assets/YJW.png') center/cover no-repeat;
 }
 .stat-mini-stone { position: relative; }
 .custom-stones .stat-card-black .stat-mini-stone { box-shadow: none; }
@@ -489,10 +489,10 @@ hr { opacity: 1; border-color: #d0d7de; }
   border-radius: 50%;
 }
 .custom-stones .stat-card-black .stat-mini-stone::after {
-  background: url('YJB.png') center/cover no-repeat;
+  background: url('../assets/YJB.png') center/cover no-repeat;
 }
 .custom-stones .stat-card-white .stat-mini-stone::after {
-  background: url('YJW.png') center/cover no-repeat;
+  background: url('../assets/YJW.png') center/cover no-repeat;
 }
 
 /* ===== 石差グラフ ===== */
