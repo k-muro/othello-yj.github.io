@@ -123,27 +123,45 @@
     </div>
 
     <div class="collapse" id="settings-panel">
-      <div id="kifu-area" class="mt-1 mx-auto">
-        <div class="d-flex gap-2">
-          <input type="text" id="kifu-input" class="form-control form-control-sm flex-input" placeholder="棋譜を入力 (例: d3c4...)" onclick="this.select()">
-          <button class="btn btn-primary btn-sm text-nowrap" onclick="applyKifu()">棋譜を反映</button>
-        </div>
-      </div>
 
-      <div id="current-kifu-area" class="mt-2 mx-auto">
-        <div class="d-flex align-items-center gap-2">
-          <span class="text-secondary small text-nowrap">現在の棋譜:</span>
-          <input type="text" id="current-kifu" class="form-control form-control-sm flex-input" readonly>
-          <button class="btn btn-outline-secondary btn-sm text-nowrap" onclick="copyCurrentKifu()">コピー</button>
-        </div>
+      <!-- 棋譜 -->
+      <div class="d-flex gap-2 mt-1">
+        <input type="text" id="kifu-input" class="form-control form-control-sm flex-input" placeholder="棋譜を入力 (例: d3c4...)" onclick="this.select()">
+        <button class="btn btn-primary btn-sm text-nowrap" onclick="applyKifu()">棋譜を反映</button>
       </div>
-
-      <div class="mt-2 d-flex justify-content-center align-items-center gap-2">
-        <button class="btn btn-outline-secondary btn-sm" id="copy-url-btn" onclick="copyShareURL()">URLをコピー</button>
+      <div class="d-flex align-items-center gap-2 mt-2">
+        <span class="text-secondary small text-nowrap">現在の棋譜:</span>
+        <input type="text" id="current-kifu" class="form-control form-control-sm flex-input" readonly>
+        <button class="btn btn-outline-secondary btn-sm text-nowrap" onclick="copyCurrentKifu()">コピー</button>
+        <button class="btn btn-outline-secondary btn-sm text-nowrap" id="copy-url-btn" onclick="copyShareURL()">URL</button>
         <span id="url-copy-msg" class="small text-success" style="display:none;">コピーしました</span>
       </div>
 
-      <div class="mt-2 d-flex justify-content-center align-items-center gap-2">
+      <!-- 表示設定 -->
+      <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mt-3">
+        <select id="board-theme-select" class="form-select form-select-sm w-auto" onchange="setBoardTheme(this.value)">
+          <option value="green">グリーン</option>
+          <option value="wood">ウッド</option>
+          <option value="blue">ブルー</option>
+          <option value="dark">ダーク</option>
+          <option value="classic">クラシック</option>
+        </select>
+        <button id="num-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleMoveNumbers()">着手順を表示</button>
+        <button id="stone-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleStones()">野獣先輩モード</button>
+      </div>
+
+      <!-- プレイヤー名 -->
+      <div id="name-area" class="mt-2 d-flex justify-content-center align-items-center gap-2">
+        <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('name-inputs').classList.toggle('d-none')">プレイヤー名設定</button>
+        <span id="name-inputs" class="d-none d-flex align-items-center gap-2">
+          ⚫<input type="text" id="black-name-input" class="form-control form-control-sm name-input" placeholder="黒" oninput="updateNames()" onclick="this.select()">
+          <button class="btn btn-outline-secondary btn-sm px-1" onclick="swapNames()" title="名前を入れ替え">⇄</button>
+          ⚪<input type="text" id="white-name-input" class="form-control form-control-sm name-input" placeholder="白" oninput="updateNames()" onclick="this.select()">
+        </span>
+      </div>
+
+      <!-- 全読み設定 -->
+      <div class="mt-2 mb-1 d-flex justify-content-center align-items-center gap-2">
         <span class="text-secondary small text-nowrap">全読み開始:</span>
         <input type="number" id="solver-depth" class="form-control form-control-sm text-center"
                min="6" max="24" value="20">
@@ -152,16 +170,6 @@
       </div>
       <div id="depth-warning" class="text-center small mt-1" style="display:none;"></div>
 
-      <div id="name-area" class="mt-2 mb-1 d-flex justify-content-center align-items-center gap-2">
-        <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('name-inputs').classList.toggle('d-none')">プレイヤー名設定</button>
-
-        <span id="name-inputs" class="d-none d-flex align-items-center gap-2">
-          ⚫<input type="text" id="black-name-input" class="form-control form-control-sm name-input" placeholder="黒" oninput="updateNames()" onclick="this.select()">
-          <button class="btn btn-outline-secondary btn-sm px-1" onclick="swapNames()" title="名前を入れ替え">⇄</button>
-          ⚪<input type="text" id="white-name-input" class="form-control form-control-sm name-input" placeholder="白" oninput="updateNames()" onclick="this.select()">
-        </span><button id="stone-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleStones()">野獣先輩モード</button>
-        <button id="num-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleMoveNumbers()">着手順を表示</button>
-      </div>
     </div>
 
     <p class="text-secondary mt-3 mb-0 copyright">™&amp;© Othello, Co. and MegaHouse</p>

@@ -8,6 +8,7 @@ const STORAGE_KEYS = {
   SHOW_MOVE_EVALS: 'othello-show-move-evals',
   panel:           id => `othello-panel-${id}`,
   SHOW_OPENINGS:   'othello-show-openings',
+  BOARD_THEME:     'othello-board-theme',
 };
 
 // ===== NUMERIC CONSTANTS =====
@@ -18,6 +19,16 @@ const EVAL_ADVANTAGE_THRESHOLD = 15;  // 「勝勢」と判定するスコア閾
 const MAX_SHOWN_MISTAKES       = 7;   // 悪手リストの最大表示件数
 const MIN_LOSS_FOR_MISTAKE     = 6;   // 悪手と判定する最善手との差の下限
 const BLUNDER_THRESHOLD        = 12;  // ブランダー（×）と判定する差の閾値
+
+// ===== BOARD THEMES =====
+// 盤面カラーテーマの定義（#board のインラインCSS変数として直接適用）
+const BOARD_THEMES = {
+  green:   { '--board-bg': '#1b3a2d', '--cell-bg': '#2d6a4f', '--cell-hover-bg': '#3a7d5e' },
+  wood:    { '--board-bg': '#5c3d1e', '--cell-bg': '#8b6343', '--cell-hover-bg': '#9b7253' },
+  blue:    { '--board-bg': '#0d2137', '--cell-bg': '#1a3a5c', '--cell-hover-bg': '#234a70' },
+  dark:    { '--board-bg': '#666666', '--cell-bg': '#1e1e1e', '--cell-hover-bg': '#2e2e2e' },
+  classic: { '--board-bg': '#7a5c30', '--cell-bg': '#c8a96a', '--cell-hover-bg': '#d4b87a' },
+};
 
 // ===== BOARD DIRECTIONS =====
 // 8方向の差分ベクトル [dx, dy]（水平・垂直・斜めの全8方向）

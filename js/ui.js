@@ -811,6 +811,26 @@ updateScoreGraph();
   panel.addEventListener('hide.bs.collapse', () => localStorage.setItem(STORAGE_KEYS.panel(id), 'closed'));
 });
 
+// ===== BOARD THEME =====
+
+// 盤面テーマを切り替える（#board のインラインCSS変数を直接書き換え）
+function setBoardTheme(name) {
+  const boardEl = document.getElementById('board');
+  const theme = BOARD_THEMES[name] || BOARD_THEMES.green;
+  Object.entries(theme).forEach(([prop, val]) => boardEl.style.setProperty(prop, val));
+  // テーマ名を属性として持たせ、CSS でテーマ別スタイルを適用できるようにする
+  boardEl.dataset.boardTheme = name || 'green';
+  localStorage.setItem(STORAGE_KEYS.BOARD_THEME, name);
+  const sel = document.getElementById('board-theme-select');
+  if (sel) sel.value = name;
+}
+
+// 起動時: 保存済みテーマを適用
+(function() {
+  const saved = localStorage.getItem(STORAGE_KEYS.BOARD_THEME) || 'green';
+  setBoardTheme(saved);
+})();
+
 // ===== KEYBOARD SHORTCUTS =====
 // PC のみ有効（スマホは除外）。入力欄フォーカス中・モーダル表示中は無効。
 document.addEventListener('keydown', function(e) {

@@ -21,6 +21,8 @@
   --tree-active-color: #22c55e;
 }
 
+
+
 /* ===== BASE ===== */
 body {
   font-family: 'M PLUS 1', sans-serif;
@@ -107,6 +109,40 @@ hr {
 .hint-ref-black { background: rgba(239, 68, 68, 0.75); }
 .hint-ref-white { background: rgba(248, 113, 113, 0.75); }
 
+/* ダークテーマ: 黒のヒント点が背景に溶け込まないよう明るい色に変更 */
+#board[data-board-theme="dark"] .hint-black { background: rgba(255, 255, 255, 0.35); }
+
+/* ウッドテーマ: background-attachment:fixed でビューポート基準のグラデーションを共有し、
+   全セルにまたがる統一した木目を表現（格子線・外周はフラットな木色のまま）*/
+#board[data-board-theme="wood"] .cell {
+  background:
+    /* 細かい縞（8px周期・89°）*/
+    repeating-linear-gradient(
+      89deg,
+      transparent 0px, transparent 6px,
+      rgba(90, 45, 5, 0.07) 7px, rgba(90, 45, 5, 0.07) 8px
+    ),
+    /* 中程度の縞（19px周期・91°）*/
+    repeating-linear-gradient(
+      91deg,
+      transparent 0px, transparent 16px,
+      rgba(70, 35, 5, 0.09) 17px, rgba(70, 35, 5, 0.09) 19px
+    ),
+    /* 大きい縞（43px周期・88°）*/
+    repeating-linear-gradient(
+      88deg,
+      transparent 0px, transparent 38px,
+      rgba(55, 25, 5, 0.08) 40px, rgba(55, 25, 5, 0.08) 43px
+    ),
+    /* ベースカラー */
+    linear-gradient(90deg, #bf7e3a, #d4974e 30%, #c08040 60%, #d4974e 80%, #bf7e3a);
+  background-attachment: fixed;
+}
+#board[data-board-theme="wood"] .cell:hover {
+  background: var(--cell-hover-bg);
+}
+
+
 /* 最善手マーカー（青い点） */
 .best-move-dot {
   position: absolute;
@@ -166,6 +202,14 @@ hr {
 }
 
 .stone.black { background: radial-gradient(circle at 50% 40%, #2a2a2a 0%, #000 75%); }
+
+/* ダークテーマ: 黒石が背景に溶け込まないようにリング状のハイライトを追加 */
+#board[data-board-theme="dark"] .stone.black {
+  box-shadow:
+    inset 0 -4px 6px rgba(0,0,0,0.25),
+    0 2px 4px rgba(0,0,0,0.3),
+    0 0 0 2px rgba(255,255,255,0.2);
+}
 
 .stone.white {
   background: radial-gradient(circle at 50% 40%, #ffffff 0%, #e5e5e5 80%);
