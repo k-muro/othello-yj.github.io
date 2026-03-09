@@ -21,7 +21,7 @@
   --tree-active-color: #22c55e;
 }
 
-/* ===== RESET / BASE ===== */
+/* ===== BASE ===== */
 body {
   font-family: 'M PLUS 1', sans-serif;
   font-weight: 400;
@@ -50,11 +50,16 @@ hr {
   margin: 0 auto;
 }
 
+/* ヘッダー左右のスペーサーとテーマトグルボタン */
+#header-spacer      { width: 88px; }
+#theme-toggle       { width: 88px; }
+.header-title-link  { color: inherit; text-decoration: none; }
+
 /* ===== BOARD ===== */
 #board {
   display: grid;
   grid-template-columns: var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
-  grid-template-rows: var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
+  grid-template-rows:    var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
   gap: 2px;
   justify-content: center;
   margin: 16px auto;
@@ -86,62 +91,23 @@ hr {
   transition: background 0.12s;
 }
 
-.cell:hover {
-  background: var(--cell-hover-bg);
-}
+.cell:hover { background: var(--cell-hover-bg); }
 
-.last-move {
-  box-shadow: inset 0 0 0 3px var(--last-move-shadow);
-}
+.last-move { box-shadow: inset 0 0 0 3px var(--last-move-shadow); }
 
-.hint-ref-black { background: rgba(239, 68, 68, 0.75); }
-.hint-ref-white { background: rgba(248, 113, 113, 0.75); }
-
-/* ===== STONES ===== */
-.stone {
-  width: var(--stone-size);
-  height: var(--stone-size);
-  border-radius: 50%;
-  position: relative;
-  overflow: hidden;
-  box-shadow:
-    inset 0 -4px 6px rgba(0,0,0,0.25),
-    0 2px 4px rgba(0,0,0,0.3);
-}
-
-/* 黒石（よりフラット寄り） */
-.black {
-  background: radial-gradient(circle at 50% 40%, #2a2a2a 0%, #000 75%);
-}
-
-/* 白石（よりはっきり） */
-.white {
-  background: radial-gradient(circle at 50% 40%, #ffffff 0%, #e5e5e5 80%);
-  border: 1px solid rgba(0,0,0,0.15);
-}
-
-.stone::before {
-  content: "";
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: -6px;
-  height: 16px;
-  border-radius: 50%;
-  z-index: 0;
-}
-
-/* ===== HINTS ===== */
+/* 合法手ヒント */
 .hint {
   width: var(--hint-size);
   height: var(--hint-size);
   border-radius: 50%;
 }
 
-.hint-black { background: rgba(0, 0, 0, 0.3); }
-.hint-white { background: rgba(255, 255, 255, 0.173); }
+.hint-black     { background: rgba(0, 0, 0, 0.3); }
+.hint-white     { background: rgba(255, 255, 255, 0.173); }
+.hint-ref-black { background: rgba(239, 68, 68, 0.75); }
+.hint-ref-white { background: rgba(248, 113, 113, 0.75); }
 
-/* ===== BEST MOVE DOT ===== */
+/* 最善手マーカー（青い点） */
 .best-move-dot {
   position: absolute;
   width: 3px;
@@ -156,7 +122,7 @@ hr {
   box-shadow: 0 0 2px rgba(2, 103, 255, 0.8);
 }
 
-/* ===== MOVE NUMBER ===== */
+/* 着手順番号（石の上に重ねる） */
 .stone-num {
   position: absolute;
   top: 50%;
@@ -170,16 +136,10 @@ hr {
   font-family: 'M PLUS 1', sans-serif;
 }
 
-.stone-num-by-black {
-  color: #000;
-  text-shadow: 0 0 3px #fff, 0 0 3px #fff;
-}
+.stone-num-by-black { color: #000; text-shadow: 0 0 3px #fff, 0 0 3px #fff; }
+.stone-num-by-white { color: #fff; text-shadow: 0 0 3px #000, 0 0 3px #000; }
 
-.stone-num-by-white {
-  color: #fff;
-  text-shadow: 0 0 3px #000, 0 0 3px #000;
-}
-
+/* 候補手の評価値（マスの右下に表示） */
 .move-eval {
   position: absolute;
   bottom: 3px;
@@ -191,6 +151,36 @@ hr {
   z-index: 2;
   font-family: 'M PLUS 1', sans-serif;
   text-shadow: none;
+}
+
+/* ===== STONES ===== */
+.stone {
+  width: var(--stone-size);
+  height: var(--stone-size);
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    inset 0 -4px 6px rgba(0,0,0,0.25),
+    0 2px 4px rgba(0,0,0,0.3);
+}
+
+.stone.black { background: radial-gradient(circle at 50% 40%, #2a2a2a 0%, #000 75%); }
+
+.stone.white {
+  background: radial-gradient(circle at 50% 40%, #ffffff 0%, #e5e5e5 80%);
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+.stone::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -6px;
+  height: 16px;
+  border-radius: 50%;
+  z-index: 0;
 }
 
 /* ===== SCORE PANEL ===== */
@@ -220,22 +210,12 @@ hr {
   height: 90px;
 }
 
-.stat-card-black {
-  background: #1c1c1e;
-  color: #fff;
-}
+.stat-card-black     { background: #1c1c1e; color: #fff; }
+.stat-card-white     { background: #f0f0f0; color: #111; border: 1px solid #d8d8d8; }
+.stat-card-remaining { background: #eaf4ec; color: var(--green-primary); border: 1px solid rgba(26, 127, 55, 0.2); }
 
-.stat-card-white {
-  background: #f0f0f0;
-  color: #111;
-  border: 1px solid #d8d8d8;
-}
-
-.stat-card-remaining {
-  background: #eaf4ec;
-  color: var(--green-primary);
-  border: 1px solid rgba(26, 127, 55, 0.2);
-}
+/* 「残」カード内の上部スペーサー（stat-mini-stone と高さを合わせる） */
+.stat-spacer { height: 24px; }
 
 .stat-mini-stone {
   position: relative;
@@ -244,15 +224,8 @@ hr {
   border-radius: 50%;
 }
 
-.stat-card-black .stat-mini-stone {
-  background: radial-gradient(circle at 35% 35%, #666, #111);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-}
-
-.stat-card-white .stat-mini-stone {
-  background: radial-gradient(circle at 35% 35%, #fff, #ccc);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
+.stat-card-black .stat-mini-stone { background: radial-gradient(circle at 35% 35%, #666, #111); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+.stat-card-white .stat-mini-stone { background: radial-gradient(circle at 35% 35%, #fff, #ccc); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
 
 .stat-num {
   font-size: 1.7rem;
@@ -308,6 +281,8 @@ hr {
 #endgame.endgame-pending,
 #endgame.endgame-pending * { color: transparent !important; }
 
+.copyright { font-size: 0.72rem; }
+
 /* ===== BUTTONS ===== */
 .btn {
   border-radius: 8px;
@@ -316,96 +291,39 @@ hr {
   touch-action: manipulation;
 }
 
-.btn-primary {
-  background: var(--green-primary);
-  border-color: var(--green-primary);
+.btn-primary       { background: var(--green-primary); border-color: var(--green-primary); }
+.btn-primary:hover { background: var(--green-hover);   border-color: var(--green-hover); }
+
+/* 解析パネル内の小さなボタン共通サイズ */
+.analysis-btn { font-size: 0.75rem; }
+
+/* ===== ANALYSIS GRAPH ===== */
+#graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  line-height: 1;
 }
 
-.btn-primary:hover {
-  background: var(--green-hover);
-  border-color: var(--green-hover);
-}
-
-/* ===== BRANCH TREE ===== */
-.branch-tree { font-size: 0.83rem; text-align: left; }
-
-.tree-line {
+#graph-controls {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
-  min-height: 26px;
-  border-radius: 4px;
-  padding: 2px 4px;
-  overflow: hidden;
-}
-
-.tree-line.clickable { cursor: pointer; }
-.tree-line.clickable:hover { background: rgba(0,0,0,0.06); }
-
-.ref-line {
-  border-bottom: 1px solid var(--bs-border-color);
-  margin-bottom: 5px;
-  padding-bottom: 5px;
-}
-
-.tree-ref-label {
-  font-size: 0.70em;
-  color: var(--bs-secondary-color);
-  border: 1px solid currentColor;
-  border-radius: 3px;
-  padding: 0 4px;
-  flex-shrink: 0;
-  margin-right: 3px;
-  white-space: nowrap;
-}
-
-.tree-connector {
-  font-family: monospace;
-  white-space: pre;
-  color: var(--bs-secondary-color);
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.tree-move { font-family: monospace; font-weight: 500; white-space: nowrap; }
-.tree-move-active { color: var(--tree-active-color); }
+#ai-status { color: #f97316; }
 
-.tree-arrow {
-  color: var(--bs-secondary-color);
-  font-size: 0.85em;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+.graph-canvas-wrap { position: relative; height: 90px; }
 
-.tree-badge-now {
-  font-size: 0.68em;
-  background: var(--tree-active-color);
-  color: #fff;
-  border-radius: 3px;
-  padding: 0 4px;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.tree-del-btn { margin-left: auto; flex-shrink: 0; font-size: 0.72em; padding: 0 5px; line-height: 1.4; }
-
-.collapse-toggle {
-  font-size: 0.78rem;
-  cursor: pointer;
-  color: var(--bs-secondary-color);
-  user-select: none;
-}
-
-.collapse-toggle:hover { color: var(--bs-body-color); }
-.collapse-toggle-label { font-weight: 600; }
-.collapse-toggle-label::after { content: " ▴"; }
-.collapse-toggle.collapsed .collapse-toggle-label::after { content: " ▾"; }
-
-/* ===== GRAPH ===== */
 .graph-caption {
   font-size: 0.68rem;
   text-align: left;
   padding-left: 2px;
-  margin-bottom: 2px;
+  margin: 0;
+  line-height: 1;
 }
 
 /* ===== MISTAKE BADGES ===== */
@@ -428,300 +346,9 @@ hr {
 .mistake-mistake    { background: rgba(249,115,22,0.10); border-color: rgba(249,115,22,0.35); color: #ea6718; }
 .mistake-inaccuracy { background: rgba(234,179,8,0.10); border-color: rgba(234,179,8,0.40); color: #a07000; }
 
-/* ===== DARK THEME ===== */
-[data-bs-theme="dark"] body {
-  background: #0d1117;
-}
+#mistake-list:empty { display: none; }
 
-[data-bs-theme="dark"] .app-card {
-  background: #161b22;
-  border-color: #30363d;
-}
-
-[data-bs-theme="dark"] .board-label {
-  color: #c9d1d9;
-}
-
-[data-bs-theme="dark"] .stat-card-black {
-  background: #2c2c2e;
-}
-
-[data-bs-theme="dark"] .stat-card-white {
-  background: #e8e8ea;
-}
-
-[data-bs-theme="dark"] .stat-card-remaining {
-  background: rgba(63, 185, 80, 0.1);
-  color: #3fb950;
-  border-color: rgba(63, 185, 80, 0.25);
-}
-
-[data-bs-theme="dark"] .balance-bar-wrap {
-  background: #30363d;
-}
-
-[data-bs-theme="dark"] .balance-bar {
-  background: #8b949e;
-}
-
-[data-bs-theme="dark"] #info {
-  color: #58a6ff;
-}
-
-[data-bs-theme="dark"] #endgame {
-  color: #3fb950;
-  background: rgba(63, 185, 80, 0.08);
-  border-color: rgba(63, 185, 80, 0.25);
-}
-
-[data-bs-theme="dark"] hr { border-color: #21262d; }
-
-[data-bs-theme="dark"] .tree-line.clickable:hover { background: rgba(255,255,255,0.08); }
-
-[data-bs-theme="dark"] .mistake-blunder    { color: #f87171; }
-[data-bs-theme="dark"] .mistake-mistake    { color: #fb923c; }
-[data-bs-theme="dark"] .mistake-inaccuracy { color: #facc15; }
-
-/* ===== CUSTOM STONES (野獣先輩モード) ===== */
-.custom-stones .stone.black,
-.custom-stones .stone.white { border: none; }
-
-.custom-stones .stone::before { display: none; }
-.custom-stones .stone { box-shadow: none; }
-
-.custom-stones .stone.black::after,
-.custom-stones .stone.white::after {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  z-index: 0;
-}
-
-.custom-stones .stone.black::after {
-  background: url('../assets/YJB.png') center/cover no-repeat;
-}
-
-.custom-stones .stone.white::after {
-  background: url('../assets/YJW.png') center/cover no-repeat;
-}
-
-.custom-stones .stat-card-black .stat-mini-stone,
-.custom-stones .stat-card-white .stat-mini-stone { box-shadow: none; }
-
-.custom-stones .stat-card-black .stat-mini-stone::after,
-.custom-stones .stat-card-white .stat-mini-stone::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-}
-
-.custom-stones .stat-card-black .stat-mini-stone::after {
-  background: url('../assets/YJB.png') center/cover no-repeat;
-}
-
-.custom-stones .stat-card-white .stat-mini-stone::after {
-  background: url('../assets/YJW.png') center/cover no-repeat;
-}
-
-/* ===== HEADER ===== */
-#header-spacer { width: 88px; }
-#theme-toggle  { width: 88px; }
-.header-title-link { color: inherit; text-decoration: none; }
-
-/* ===== STAT SPACER ===== */
-.stat-spacer { height: 24px; }
-
-/* ===== COLLAPSE DIVIDER ===== */
-.collapse-divider {
-  flex-grow: 1;
-  height: 1px;
-  background: var(--bs-border-color);
-}
-
-/* ===== ANALYSIS BUTTONS ===== */
-.analysis-btn { font-size: 0.75rem; }
-
-/* ===== GRAPH LAYOUT ===== */
-#graph-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 2px;
-  line-height: 1;
-}
-
-#graph-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-#ai-status { color: #f97316; }
-
-.graph-canvas-wrap { position: relative; height: 90px; }
-
-/* ===== KIFU & SETTINGS AREA ===== */
-#kifu-area,
-#current-kifu-area { max-width: 480px; }
-
-.flex-input  { min-width: 0; flex: 1; }
-#solver-depth { width: 70px; }
-.name-input   { width: 90px; }
-
-/* ===== COPYRIGHT ===== */
-.copyright { font-size: 0.72rem; }
-
-/* ===== RESPONSIVE ===== */
-
-/* タブレット中間サイズ (561px〜767px) */
-@media (min-width: 561px) and (max-width: 767px) {
-  .container {
-    max-width: 100%;
-    padding: 0;
-  }
-  .app-card {
-    padding: 16px 8px;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-  }
-}
-
-/* スマホ用 (横幅560px以下) */
-@media (max-width: 560px) {
-
-  h1 {
-    font-size: 1.1em;
-    flex: 1;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    letter-spacing: 0.04em;
-  }
-
-  body {
-    padding-top: 6px !important;
-    padding-bottom: 6px !important;
-  }
-
-  .app-card {
-    padding: 12px;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-  }
-
-  .app-card > .d-flex.justify-content-between {
-    flex-wrap: nowrap;
-    gap: 6px;
-    margin-bottom: 0 !important;
-  }
-
-  #board {
-    --cell-size: 38px;
-    --label-size: 13px;
-    grid-template-columns: var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
-    grid-template-rows: var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
-    gap: 1px;
-    margin: 6px auto;
-    padding: 2px;
-  }
-
-  .board-label { font-size: 10px; }
-
-  .cell {
-    width: var(--cell-size);
-    height: var(--cell-size);
-  }
-
-  .stone { width: 28px; height: 28px; }
-  .hint { width: 9px; height: 9px; }
-
-  .move-eval { font-size: 9px; }
-
-  .best-move-dot { width: 3px; height: 3px; }
-
-  .stone-num { font-size: 11px; }
-
-  #header-spacer { display: none; }
-
-  #theme-toggle {
-    width: auto !important;
-    padding: 4px 8px;
-    white-space: nowrap;
-    flex: 0 0 auto;
-  }
-
-  #stone-count {
-    gap: 4px;
-    margin-top: 4px !important;
-    margin-bottom: 4px !important;
-  }
-
-  .stat-card {
-    padding: 6px 14px;
-    gap: 1px;
-    min-width: 64px;
-    height: 70px !important;
-  }
-
-  .stat-num { font-size: 1.3rem; }
-
-  .stat-mini-stone {
-    width: 18px;
-    height: 18px;
-  }
-
-  .balance-bar-wrap { height: 3px; }
-
-  #info { margin-bottom: 4px !important; }
-
-  .d-flex.flex-wrap.justify-content-center.gap-1 { margin-bottom: 4px !important; }
-
-  #endgame { margin-top: 4px !important; }
-
-  .d-flex.align-items-center.gap-2.my-3 {
-    margin-top: 6px !important;
-    margin-bottom: 6px !important;
-  }
-
-  #name-area { flex-wrap: wrap; }
-
-  #name-inputs {
-    width: 100%;
-    justify-content: center;
-  }
-
-  /* #graph-area > div { height: 70px !important; } */
-
-  .move-eval { font-size: 8px; bottom: 2px; right: 2px; }
-}
-
-/* さらに小さい端末 (横幅360px以下) */
-@media (max-width: 360px) {
-  #board {
-    --cell-size: 33px;
-    --label-size: 11px;
-    grid-template-columns: var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
-    grid-template-rows: var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
-  }
-
-  .cell {
-    width: var(--cell-size);
-    height: var(--cell-size);
-  }
-
-  .stone { width: 24px; height: 24px; }
-  .hint { width: 8px; height: 8px; }
-  .stone-num { font-size: 9px; }
-}
-
-/* ===== 定石ガイド ===== */
+/* ===== OPENING GUIDE ===== */
 .opening-dot-row {
   position: absolute;
   top: 2px;
@@ -751,8 +378,245 @@ hr {
   margin-right: 4px;
 }
 
-/* ===== 手順ボタン：PCは元のまま / iPhoneだけ2段組み ===== */
+/* ===== BRANCH TREE ===== */
+.branch-tree { font-size: 0.83rem; text-align: left; }
+
+.tree-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-height: 26px;
+  border-radius: 4px;
+  padding: 2px 4px;
+  overflow: hidden;
+}
+
+.tree-line.clickable       { cursor: pointer; }
+.tree-line.clickable:hover { background: rgba(0,0,0,0.06); }
+
+.ref-line {
+  border-bottom: 1px solid var(--bs-border-color);
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+}
+
+.tree-ref-label {
+  font-size: 0.70em;
+  color: var(--bs-secondary-color);
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 0 4px;
+  flex-shrink: 0;
+  margin-right: 3px;
+  white-space: nowrap;
+}
+
+.tree-connector {
+  font-family: monospace;
+  white-space: pre;
+  color: var(--bs-secondary-color);
+  flex-shrink: 0;
+}
+
+.tree-move        { font-family: monospace; font-weight: 500; white-space: nowrap; }
+.tree-move-active { color: var(--tree-active-color); }
+
+.tree-arrow {
+  color: var(--bs-secondary-color);
+  font-size: 0.85em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tree-badge-now {
+  font-size: 0.68em;
+  background: var(--tree-active-color);
+  color: #fff;
+  border-radius: 3px;
+  padding: 0 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.tree-del-btn { margin-left: auto; flex-shrink: 0; font-size: 0.72em; padding: 0 5px; line-height: 1.4; }
+
+/* セクション区切りの折りたたみトグル */
+.collapse-toggle {
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--bs-secondary-color);
+  user-select: none;
+}
+
+.collapse-toggle:hover                           { color: var(--bs-body-color); }
+.collapse-toggle-label                           { font-weight: 600; }
+.collapse-toggle-label::after                    { content: " ▴"; }
+.collapse-toggle.collapsed .collapse-toggle-label::after { content: " ▾"; }
+
+/* トグルと区切り線の間のセパレーター */
+.collapse-divider {
+  flex-grow: 1;
+  height: 1px;
+  background: var(--bs-border-color);
+}
+
+/* ===== SETTINGS ===== */
+#kifu-area,
+#current-kifu-area { max-width: 480px; }
+
+.flex-input   { min-width: 0; flex: 1; }
+#solver-depth { width: 70px; }
+.name-input   { width: 90px; }
+
+/* ===== DARK THEME ===== */
+[data-bs-theme="dark"] body              { background: #0d1117; }
+[data-bs-theme="dark"] .app-card        { background: #161b22; border-color: #30363d; }
+[data-bs-theme="dark"] .board-label     { color: #c9d1d9; }
+[data-bs-theme="dark"] .stat-card-black { background: #2c2c2e; }
+[data-bs-theme="dark"] .stat-card-white { background: #e8e8ea; }
+[data-bs-theme="dark"] .stat-card-remaining {
+  background: rgba(63, 185, 80, 0.1);
+  color: #3fb950;
+  border-color: rgba(63, 185, 80, 0.25);
+}
+[data-bs-theme="dark"] .balance-bar-wrap { background: #30363d; }
+[data-bs-theme="dark"] .balance-bar      { background: #8b949e; }
+[data-bs-theme="dark"] #info             { color: #58a6ff; }
+[data-bs-theme="dark"] #endgame {
+  color: #3fb950;
+  background: rgba(63, 185, 80, 0.08);
+  border-color: rgba(63, 185, 80, 0.25);
+}
+[data-bs-theme="dark"] hr                         { border-color: #21262d; }
+[data-bs-theme="dark"] .tree-line.clickable:hover { background: rgba(255,255,255,0.08); }
+[data-bs-theme="dark"] .mistake-blunder    { color: #f87171; }
+[data-bs-theme="dark"] .mistake-mistake    { color: #fb923c; }
+[data-bs-theme="dark"] .mistake-inaccuracy { color: #facc15; }
+
+/* ===== CUSTOM STONES (野獣先輩モード) ===== */
+.custom-stones .stone.black,
+.custom-stones .stone.white { border: none; box-shadow: none; }
+
+.custom-stones .stone::before { display: none; }
+
+.custom-stones .stone.black::after,
+.custom-stones .stone.white::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.custom-stones .stone.black::after { background: url('../assets/YJB.png') center/cover no-repeat; }
+.custom-stones .stone.white::after { background: url('../assets/YJW.png') center/cover no-repeat; }
+
+.custom-stones .stat-card-black .stat-mini-stone,
+.custom-stones .stat-card-white .stat-mini-stone { box-shadow: none; }
+
+.custom-stones .stat-card-black .stat-mini-stone::after,
+.custom-stones .stat-card-white .stat-mini-stone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.custom-stones .stat-card-black .stat-mini-stone::after { background: url('../assets/YJB.png') center/cover no-repeat; }
+.custom-stones .stat-card-white .stat-mini-stone::after { background: url('../assets/YJW.png') center/cover no-repeat; }
+
+/* ===== RESPONSIVE ===== */
+
+/* タブレット中間サイズ (561px〜767px) */
+@media (min-width: 561px) and (max-width: 767px) {
+  .container {
+    max-width: 100%;
+    padding: 0;
+  }
+  .app-card {
+    padding: 16px 8px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+/* スマホ用 (横幅560px以下) */
 @media (max-width: 560px) {
+
+  body {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
+
+  h1 {
+    font-size: 1.1em;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.04em;
+  }
+
+  .app-card {
+    padding: 12px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .app-card > .d-flex.justify-content-between {
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin-bottom: 0 !important;
+  }
+
+  /* ヘッダー */
+  #header-spacer { display: none; }
+  #theme-toggle  { width: auto !important; padding: 4px 8px; white-space: nowrap; flex: 0 0 auto; }
+
+  /* ボード */
+  #board {
+    --cell-size: 38px;
+    --label-size: 13px;
+    grid-template-columns: var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
+    grid-template-rows:    var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
+    gap: 1px;
+    margin: 6px auto;
+    padding: 2px;
+  }
+
+  .board-label { font-size: 10px; }
+  .stone       { width: 28px; height: 28px; }
+  .hint        { width: 9px; height: 9px; }
+  .stone-num   { font-size: 11px; }
+  .move-eval   { font-size: 8px; bottom: 2px; right: 2px; }
+
+  /* スコアパネル */
+  #stone-count {
+    gap: 4px;
+    margin-top: 4px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .stat-card { padding: 6px 14px; gap: 1px; min-width: 64px; height: 70px !important; }
+  .stat-num  { font-size: 1.3rem; }
+  .stat-mini-stone { width: 18px; height: 18px; }
+  .balance-bar-wrap { height: 3px; }
+
+  /* 各要素の余白調整 */
+  #info    { margin-bottom: 4px !important; }
+  #endgame { margin-top: 4px !important; }
+
+  .d-flex.flex-wrap.justify-content-center.gap-1 { margin-bottom: 4px !important; }
+  .d-flex.align-items-center.gap-2.my-3 { margin-top: 6px !important; margin-bottom: 6px !important; }
+
+  /* プレイヤー名エリア */
+  #name-area    { flex-wrap: wrap; }
+  #name-inputs  { width: 100%; justify-content: center; }
+
+  /* 手順ボタン: 2段組みグリッド */
   .nav-control-group {
     display: grid !important;
     grid-template-columns: repeat(4, 1fr);
@@ -760,77 +624,33 @@ hr {
     margin-bottom: 6px !important;
   }
 
-  .nav-control-group .btn {
-    width: 100%;
-    min-width: 0;
-    white-space: nowrap;
-  }
+  .nav-control-group .btn { width: 100%; min-width: 0; white-space: nowrap; }
 
-  /* 1段目 */
-  #btn-undo10 {
-    grid-column: 1;
-    grid-row: 1;
-    font-size: 0;
-    padding: 10px 4px;
-  }
-  #btn-undo10::after {
-    content: "◀◀";
-    font-size: 16px;
-  }
+  /* 1段目: ◀◀ 戻る 進む ▶▶ */
+  #btn-undo10 { grid-column: 1; grid-row: 1; font-size: 0;      padding: 10px 4px; }
+  #btn-undo   { grid-column: 2; grid-row: 1; font-size: 0.9rem; padding: 10px 4px; }
+  #btn-redo   { grid-column: 3; grid-row: 1; font-size: 0.9rem; padding: 10px 4px; }
+  #btn-redo10 { grid-column: 4; grid-row: 1; font-size: 0;      padding: 10px 4px; }
 
-  #btn-undo {
-    grid-column: 2;
-    grid-row: 1;
-    padding: 10px 4px;
-    font-size: 0.9rem;
-  }
+  #btn-undo10::after { content: "◀◀"; font-size: 16px; }
+  #btn-redo10::after { content: "▶▶"; font-size: 16px; }
 
-  #btn-redo {
-    grid-column: 3;
-    grid-row: 1;
-    padding: 10px 4px;
-    font-size: 0.9rem;
-  }
-
-  #btn-redo10 {
-    grid-column: 4;
-    grid-row: 1;
-    font-size: 0;
-    padding: 10px 4px;
-  }
-  #btn-redo10::after {
-    content: "▶▶";
-    font-size: 16px;
-  }
-
-  /* 2段目 */
-  #btn-first {
-    grid-column: 1;
-    grid-row: 2;
-    padding: 4px 4px;
-    font-size: 0.72rem;
-  }
-
-  #branch-btn {
-    grid-column: 2 / span 2;
-    grid-row: 2;
-    padding: 4px 4px;
-    font-size: 0.72rem;
-  }
-
-  #btn-last {
-    grid-column: 4;
-    grid-row: 2;
-    padding: 4px 4px;
-    font-size: 0.72rem;
-  }
-} 
-
-#mistake-list:empty {
-  display: none;
+  /* 2段目: 最初 分岐点へ 最後 */
+  #btn-first  { grid-column: 1;          grid-row: 2; padding: 4px; font-size: 0.72rem; }
+  #branch-btn { grid-column: 2 / span 2; grid-row: 2; padding: 4px; font-size: 0.72rem; }
+  #btn-last   { grid-column: 4;          grid-row: 2; padding: 4px; font-size: 0.72rem; }
 }
 
-#graph-area .graph-caption {
-  margin: 0;
-  line-height: 1;
+/* さらに小さい端末 (横幅360px以下) */
+@media (max-width: 360px) {
+  #board {
+    --cell-size: 33px;
+    --label-size: 11px;
+    grid-template-columns: var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
+    grid-template-rows:    var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
+  }
+
+  .stone     { width: 24px; height: 24px; }
+  .hint      { width: 8px; height: 8px; }
+  .stone-num { font-size: 9px; }
 }
