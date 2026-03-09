@@ -197,8 +197,10 @@ hr {
 /* ===== THEME: DARK ===== */
 /* ダークテーマ: 中二病スタイル全体 */
 
-/* ラベル: 魔力が滲む紫の光 */
+/* ラベル: 魔力が滲む紫の光・ドラマチックなローマン体 */
 #board[data-board-theme="dark"] .board-label {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
   color: rgba(190, 110, 255, 0.85);
   text-shadow: 0 0 8px rgba(160, 60, 255, 0.6);
 }
@@ -272,8 +274,10 @@ hr {
 /* ウッドテーマ: background-attachment:fixed でビューポート基準のグラデーションを共有し、
    全セルにまたがる統一した木目を表現（格子線・外周はフラットな木色のまま）*/
 
-/* ラベル: 木目を刻んだような温かみのあるハニー色 */
+/* ラベル: 木目を刻んだような温かみのあるハニー色・クラシックなセリフ体 */
 #board[data-board-theme="wood"] .board-label {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
   color: rgba(210, 162, 85, 0.9);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
@@ -323,8 +327,11 @@ hr {
 /* ===== THEME: BLUE ===== */
 /* ブルーテーマ: 深海イメージ */
 
-/* ラベル: 深海の水面から差し込む青い光 */
+/* ラベル: 深海の水面から差し込む青い光・幾何学的な未来的フォント */
 #board[data-board-theme="blue"] .board-label {
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.06em;
   color: rgba(110, 195, 240, 0.85);
   text-shadow: 0 0 6px rgba(60, 160, 220, 0.4);
 }
@@ -370,8 +377,11 @@ hr {
 /* ===== THEME: URUSHI ===== */
 /* 漆テーマ */
 
-/* ラベル: 蒔絵の金箔のような輝き */
+/* ラベル: 蒔絵の金箔のような輝き・格調あるローマン体 */
 #board[data-board-theme="urushi"] .board-label {
+  font-family: 'Cinzel', serif;
+  font-weight: 400;
+  letter-spacing: 0.04em;
   color: rgba(212, 175, 55, 0.9);
   text-shadow: 0 0 6px rgba(212, 155, 30, 0.35);
 }
@@ -425,8 +435,11 @@ hr {
 /* ===== THEME: METAL ===== */
 /* メタリックテーマ */
 
-/* ラベル: 刻印されたような銀白色 */
+/* ラベル: 刻印されたような銀白色・工業的なボールドフォント */
 #board[data-board-theme="metal"] .board-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   color: rgba(195, 200, 212, 0.9);
   text-shadow:
     0 1px 0 rgba(0, 0, 0, 0.7),
