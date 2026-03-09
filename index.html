@@ -25,6 +25,7 @@
       <div id="header-spacer"></div>
       <h1 class="mb-0"><a href="https://othello-yj.wplaceoki.com/" class="header-title-link">Yajuオセロ盤面検討ツール</a></h1>
       <div class="d-flex gap-1">
+        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#usage-modal" title="使い方">?</button>
         <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#kb-help-modal" title="キーボードショートカット">⌨</button>
         <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleTheme()"></button>
       </div>
@@ -248,6 +249,44 @@ window._aiLoadTimer = setTimeout(function() {
 <script src="js/solver.js"></script>
 <script src="js/analysis.js"></script>
 <script src="js/ui.js"></script>
+
+<!-- 使い方モーダル -->
+<div class="modal fade" id="usage-modal" tabindex="-1" aria-labelledby="usage-modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title mb-0" id="usage-modal-title">使い方ガイド</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+      </div>
+      <div class="modal-body py-2 small">
+
+        <h6 class="usage-section-title">棋譜の入力</h6>
+        <p>「棋譜・設定」欄の入力欄に棋譜（例: <code>d3c4e3...</code>）を貼り付けて「棋譜を反映」を押すと盤面が再現されます。URL の <code>?kifu=...</code> パラメータでも共有できます。</p>
+
+        <h6 class="usage-section-title">手順の移動</h6>
+        <p>「戻る／進む」ボタンで1手ずつ、「10手戻／進」で10手ずつ移動できます。グラフをクリックするとその手数に直接ジャンプします。</p>
+
+        <h6 class="usage-section-title">解析パネル</h6>
+        <table class="table table-sm table-borderless mb-1">
+          <tbody>
+            <tr><td class="text-nowrap fw-medium">候補手の評価値</td><td>各合法手に評価スコアを表示します（AI読み込み後に有効）。</td></tr>
+            <tr><td class="text-nowrap fw-medium">悪手を表示</td><td>棋譜中の悪手・ブランダーを自動検出してリスト表示します。</td></tr>
+            <tr><td class="text-nowrap fw-medium">定石ガイド</td><td>定石の分岐を色付きドットで盤面に表示します。</td></tr>
+            <tr><td class="text-nowrap fw-medium">読み切り点</td><td>全読み完了後、最善手に青い点を表示します。</td></tr>
+          </tbody>
+        </table>
+        <p>終盤（残り手数が設定値以下）になると自動で全読みを実行し、結果と最善手順を表示します。</p>
+
+        <h6 class="usage-section-title">分岐ツリー</h6>
+        <p>「この手順を保存」で最大5手順を登録できます。参照棋譜を読み込むと分岐点や手順の差を視覚的に比較でき、「分岐点へ」ボタンで参照棋譜との相違点に一発移動できます。</p>
+
+        <h6 class="usage-section-title">URL 共有</h6>
+        <p>「URL」ボタンで現在の局面・プレイヤー名を含む共有リンクをコピーできます。</p>
+
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- キーボードショートカット説明モーダル -->
 <div class="modal fade" id="kb-help-modal" tabindex="-1" aria-labelledby="kb-help-title" aria-hidden="true">

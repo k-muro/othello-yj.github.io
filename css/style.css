@@ -837,6 +837,17 @@ hr {
 
 .copyright { font-size: 0.72rem; }
 
+/* 使い方モーダルのセクション見出し */
+.usage-section-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+.usage-section-title:first-child { margin-top: 0; }
+
 /* ===== BUTTONS ===== */
 .btn {
   border-radius: 8px;
