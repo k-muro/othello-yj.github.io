@@ -76,7 +76,8 @@ hr {
   justify-content: center;
   font-size: 12px;
   font-weight: 600;
-  color: var(--label-color);
+  /* デフォルト（グリーンテーマ）は緑系の薄いミント */
+  color: rgba(150, 205, 175, 0.82);
 }
 
 .cell {
@@ -196,6 +197,12 @@ hr {
 /* ===== THEME: DARK ===== */
 /* ダークテーマ: 中二病スタイル全体 */
 
+/* ラベル: 魔力が滲む紫の光 */
+#board[data-board-theme="dark"] .board-label {
+  color: rgba(190, 110, 255, 0.85);
+  text-shadow: 0 0 8px rgba(160, 60, 255, 0.6);
+}
+
 /* 盤面外周: 紫→深紅の多重グロー */
 #board[data-board-theme="dark"] {
   box-shadow:
@@ -264,6 +271,12 @@ hr {
 /* ===== THEME: WOOD ===== */
 /* ウッドテーマ: background-attachment:fixed でビューポート基準のグラデーションを共有し、
    全セルにまたがる統一した木目を表現（格子線・外周はフラットな木色のまま）*/
+
+/* ラベル: 木目を刻んだような温かみのあるハニー色 */
+#board[data-board-theme="wood"] .board-label {
+  color: rgba(210, 162, 85, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
 #board[data-board-theme="wood"] .cell {
   background:
     /* 細かい縞（8px周期・89°）*/
@@ -310,6 +323,12 @@ hr {
 /* ===== THEME: BLUE ===== */
 /* ブルーテーマ: 深海イメージ */
 
+/* ラベル: 深海の水面から差し込む青い光 */
+#board[data-board-theme="blue"] .board-label {
+  color: rgba(110, 195, 240, 0.85);
+  text-shadow: 0 0 6px rgba(60, 160, 220, 0.4);
+}
+
 /* 盤面全体に深海の青いグロー */
 #board[data-board-theme="blue"] {
   box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 48px rgba(20, 90, 200, 0.35);
@@ -350,6 +369,12 @@ hr {
 
 /* ===== THEME: URUSHI ===== */
 /* 漆テーマ */
+
+/* ラベル: 蒔絵の金箔のような輝き */
+#board[data-board-theme="urushi"] .board-label {
+  color: rgba(212, 175, 55, 0.9);
+  text-shadow: 0 0 6px rgba(212, 155, 30, 0.35);
+}
 
 /* 盤面外周: 金の二重縁 + 朱の残光 */
 #board[data-board-theme="urushi"] {
@@ -399,6 +424,14 @@ hr {
 
 /* ===== THEME: METAL ===== */
 /* メタリックテーマ */
+
+/* ラベル: 刻印されたような銀白色 */
+#board[data-board-theme="metal"] .board-label {
+  color: rgba(195, 200, 212, 0.9);
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.7),
+    0 -1px 0 rgba(255, 255, 255, 0.08);
+}
 
 /* 盤面: ダークグラデーション + クロームの多重リング */
 #board[data-board-theme="metal"] {
@@ -671,6 +704,11 @@ hr {
 
 /* ===== THEME: CLASSIC ===== */
 /* クラシックテーマ: 平成のHTML感。石はベタ塗り・立体感なし・反射光なし */
+
+/* ラベル: 古いゲームボードらしい白抜き文字 */
+#board[data-board-theme="classic"] .board-label {
+  color: rgba(230, 245, 230, 0.9);
+}
 #board[data-board-theme="classic"] .stone::before { display: none; }
 #board[data-board-theme="classic"] .stone.black {
   background: #000;
