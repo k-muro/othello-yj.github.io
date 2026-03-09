@@ -24,7 +24,10 @@
     <div class="d-flex justify-content-between align-items-center mb-2">
       <div id="header-spacer"></div>
       <h1 class="mb-0"><a href="https://othello-yj.wplaceoki.com/" class="header-title-link">Yajuオセロ盤面検討ツール</a></h1>
-      <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleTheme()"></button>
+      <div class="d-flex gap-1">
+        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#kb-help-modal" title="キーボードショートカット">⌨</button>
+        <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleTheme()"></button>
+      </div>
     </div>
 
     <div id="board"></div>
@@ -233,6 +236,32 @@ window._aiLoadTimer = setTimeout(function() {
 <script src="js/solver.js"></script>
 <script src="js/analysis.js"></script>
 <script src="js/ui.js"></script>
+
+<!-- キーボードショートカット説明モーダル -->
+<div class="modal fade" id="kb-help-modal" tabindex="-1" aria-labelledby="kb-help-title" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title mb-0" id="kb-help-title">⌨ キーボードショートカット</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+      </div>
+      <div class="modal-body py-2">
+        <table class="table table-sm table-borderless mb-0">
+          <tbody>
+            <tr><td><kbd>←</kbd> / <kbd>→</kbd></td><td>1手戻る / 進む</td></tr>
+            <tr><td><kbd>Shift</kbd>+<kbd>←</kbd> / <kbd>→</kbd></td><td>10手戻る / 進む</td></tr>
+            <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>最初 / 最後へ</td></tr>
+            <tr><td><kbd>B</kbd></td><td>分岐点へ</td></tr>
+            <tr><td><kbd>E</kbd></td><td>評価値 表示切替</td></tr>
+            <tr><td><kbd>M</kbd></td><td>悪手 表示切替</td></tr>
+            <tr><td><kbd>O</kbd></td><td>定石ガイド 表示切替</td></tr>
+            <tr><td><kbd>D</kbd></td><td>ダーク/ライト切替</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

@@ -810,3 +810,36 @@ updateScoreGraph();
   panel.addEventListener('show.bs.collapse', () => localStorage.setItem(STORAGE_KEYS.panel(id), 'open'));
   panel.addEventListener('hide.bs.collapse', () => localStorage.setItem(STORAGE_KEYS.panel(id), 'closed'));
 });
+
+// ===== KEYBOARD SHORTCUTS =====
+// PC のみ有効（スマホは除外）。入力欄フォーカス中・モーダル表示中は無効。
+document.addEventListener('keydown', function(e) {
+  if (!window.matchMedia('(min-width: 561px)').matches) return;
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (document.querySelector('.modal.show')) return;
+
+  switch (e.key) {
+    case 'ArrowLeft':
+      e.preventDefault();
+      e.shiftKey ? undo10() : undo();
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      e.shiftKey ? redo10() : redo();
+      break;
+    case 'Home':
+      e.preventDefault();
+      goToFirst();
+      break;
+    case 'End':
+      e.preventDefault();
+      goToLast();
+      break;
+    case 'b': case 'B': goToBranchPoint(); break;
+    case 'e': case 'E': toggleMoveEvals();  break;
+    case 'm': case 'M': toggleMistakeList(); break;
+    case 'o': case 'O': toggleOpenings();   break;
+    case 'd': case 'D': toggleTheme();      break;
+  }
+});

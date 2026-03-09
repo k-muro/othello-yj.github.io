@@ -27,6 +27,7 @@ function getMatchingOpenings(moves) {
   return [...found];
 }
 
+
 // ===== PURE BOARD HELPERS =====
 // グローバル board を参照しない純粋関数群。
 // 任意の盤面 b を引数として渡せるため、analysis.js・solver.js でも再利用できる。
