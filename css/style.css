@@ -109,8 +109,27 @@ hr {
 .hint-ref-black { background: rgba(239, 68, 68, 0.75); }
 .hint-ref-white { background: rgba(248, 113, 113, 0.75); }
 
-/* ダークテーマ: 黒のヒント点が背景に溶け込まないよう明るい色に変更 */
-#board[data-board-theme="dark"] .hint-black { background: rgba(255, 255, 255, 0.35); }
+/* ダークテーマ: 中二病スタイル全体 */
+
+/* 盤面外周: 紫→深紅の多重グロー */
+#board[data-board-theme="dark"] {
+  box-shadow:
+    0 0 0 1px rgba(160, 40, 255, 0.5),
+    0 0 16px rgba(130, 20, 230, 0.7),
+    0 0 40px rgba(100, 0, 180, 0.45),
+    0 0 80px rgba(120, 0, 100, 0.25),
+    0 0 130px rgba(80, 0, 60, 0.15);
+  border-radius: 6px;
+}
+
+/* セル: 暗黒の虚空。ホバーで魔力が滲む */
+#board[data-board-theme="dark"] .cell:hover {
+  background: var(--cell-hover-bg);
+  box-shadow: inset 0 0 14px rgba(180, 60, 255, 0.35);
+}
+
+/* ヒント点: 黒番は紫の光点に */
+#board[data-board-theme="dark"] .hint-black { background: rgba(200, 100, 255, 0.6); }
 
 /* ウッドテーマ: background-attachment:fixed でビューポート基準のグラデーションを共有し、
    全セルにまたがる統一した木目を表現（格子線・外周はフラットな木色のまま）*/
@@ -142,6 +161,25 @@ hr {
   background: var(--cell-hover-bg);
 }
 
+
+/* ===== STAR POINTS ===== */
+/* 盤面の識別点（星）: (3,3)(3,6)(6,3)(6,6) = 0-indexed (2,2)(2,5)(5,2)(5,5) セルの右下コーナーに配置 */
+.cell[data-pos="1,1"]::after,
+.cell[data-pos="1,5"]::after,
+.cell[data-pos="5,1"]::after,
+.cell[data-pos="5,5"]::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--board-bg);
+  transform: translate(50%, 50%);
+  z-index: 1;
+  pointer-events: none;
+}
 
 /* 最善手マーカー（青い点） */
 .best-move-dot {
@@ -203,12 +241,106 @@ hr {
 
 .stone.black { background: radial-gradient(circle at 50% 40%, #2a2a2a 0%, #000 75%); }
 
-/* ダークテーマ: 黒石が背景に溶け込まないようにリング状のハイライトを追加 */
-#board[data-board-theme="dark"] .stone.black {
+/* ウッドテーマ: 黒石→ダークウォールナット、白石→アイボリーメープル */
+#board[data-board-theme="wood"] .stone.black {
+  background: radial-gradient(circle at 40% 35%, #5c3318, #1a0900);
   box-shadow:
-    inset 0 -4px 6px rgba(0,0,0,0.25),
-    0 2px 4px rgba(0,0,0,0.3),
-    0 0 0 2px rgba(255,255,255,0.2);
+    inset 0 -4px 6px rgba(0,0,0,0.4),
+    0 2px 5px rgba(0,0,0,0.45);
+}
+#board[data-board-theme="wood"] .stone.white {
+  background: radial-gradient(circle at 40% 35%, #fdf3dc, #c9a96e);
+  border: 1px solid rgba(140, 85, 20, 0.35);
+  box-shadow:
+    inset 0 -4px 6px rgba(0,0,0,0.15),
+    0 2px 4px rgba(0,0,0,0.25);
+}
+
+/* ブルーテーマ: 深海イメージ */
+/* セル: 光が上から差し込む水深グラデーション */
+/* 盤面全体に深海の青いグロー */
+#board[data-board-theme="blue"] {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 48px rgba(20, 90, 200, 0.35);
+}
+/* セル: 上からの光と底の闇をインセットシャドウで表現 */
+#board[data-board-theme="blue"] .cell {
+  background: var(--cell-bg);
+  box-shadow:
+    inset 0 3px 8px  rgba(120, 210, 255, 0.13),
+    inset 0 -4px 10px rgba(0, 10, 40, 0.55);
+}
+#board[data-board-theme="blue"] .cell:hover {
+  background: var(--cell-hover-bg);
+  box-shadow:
+    inset 0 3px 8px  rgba(140, 230, 255, 0.2),
+    inset 0 -4px 10px rgba(0, 10, 40, 0.35);
+}
+/* 黒石: 深淵の闇 + 深海の青い発光 */
+#board[data-board-theme="blue"] .stone.black {
+  background: radial-gradient(circle at 38% 32%, #0e2a4a, #020810);
+  box-shadow:
+    inset 0 -4px 8px rgba(0, 50, 120, 0.5),
+    0 0 10px rgba(20, 90, 180, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.7);
+}
+/* 白石: 深海の生物発光（淡いシアン〜白） */
+#board[data-board-theme="blue"] .stone.white {
+  background: radial-gradient(circle at 38% 32%, #e8f8ff, #80d0f0);
+  border: 1px solid rgba(80, 180, 230, 0.5);
+  box-shadow:
+    inset 0 -4px 6px rgba(40, 140, 200, 0.25),
+    0 0 12px rgba(100, 210, 255, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* クラシックテーマ: 平成のHTML感。石はベタ塗り・立体感なし・反射光なし */
+#board[data-board-theme="classic"] .stone::before { display: none; }
+#board[data-board-theme="classic"] .stone.black {
+  background: #000;
+  box-shadow: none;
+}
+#board[data-board-theme="classic"] .stone.white {
+  background: #fff;
+  border: 1px solid #000;
+  box-shadow: none;
+}
+
+/* ダークテーマ: デフォルトCSSのリセット
+   - overflow:hidden を解除してグローが外に自由に広がるようにする
+   - ::before（反射光）を非表示 */
+#board[data-board-theme="dark"] .stone {
+  overflow: visible;
+}
+#board[data-board-theme="dark"] .stone::before { display: none; }
+
+/* ダークテーマ: 中二病スタイル */
+#board[data-board-theme="dark"] .stone.black {
+  background: radial-gradient(circle at 40% 30%, #2a0a3a, #0a0010);
+  box-shadow:
+    inset 0 -4px 8px rgba(140, 0, 255, 0.4),
+    0 0 8px  rgba(180, 80, 255, 1),
+    0 0 20px rgba(140, 0, 255, 0.9),
+    0 0 45px rgba(100, 0, 200, 0.65),
+    0 0 80px rgba(80, 0, 160, 0.35);
+  filter: drop-shadow(0 0 6px rgba(160, 60, 255, 1));
+}
+#board[data-board-theme="dark"] .stone.white {
+  /* .stone.white のデフォルト黒ボーダーを上書き */
+  border: 1px solid rgba(210, 170, 255, 0.4);
+  /* 白い中心を持たない霊体カラー: 淡紫 → 紫 → 漆黒の虚無 */
+  background: radial-gradient(
+    circle at 40% 30%,
+    rgba(220,192,255,0.31) 0%,
+    rgba(128,48,192,0.96) 50%,
+    rgba(16,0,32,0.31) 100%
+  );
+  box-shadow:
+    inset 0 -4px 10px rgba(60, 0, 130, 0.5),
+    0 0 8px  rgba(220, 180, 255, 0.9),
+    0 0 20px rgba(180, 80, 255, 0.8),
+    0 0 45px rgba(130, 30, 255, 0.5),
+    0 0 80px rgba(100, 0, 220, 0.25);
+  filter: drop-shadow(0 0 5px rgba(210, 150, 255, 0.9));
 }
 
 .stone.white {
