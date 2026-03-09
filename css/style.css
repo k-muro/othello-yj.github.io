@@ -131,6 +131,14 @@ hr {
 /* ヒント点: 黒番は紫の光点に */
 #board[data-board-theme="dark"] .hint-black { background: rgba(200, 100, 255, 0.6); }
 
+/* 評価値: 暗い背景で読めるよう白いアウトライン */
+#board[data-board-theme="dark"] .move-eval,
+#board[data-board-theme="urushi"] .move-eval {
+  text-shadow:
+    0 0 3px rgba(255,255,255,0.85),
+    0 0 3px rgba(255,255,255,0.85);
+}
+
 /* ウッドテーマ: background-attachment:fixed でビューポート基準のグラデーションを共有し、
    全セルにまたがる統一した木目を表現（格子線・外周はフラットな木色のまま）*/
 #board[data-board-theme="wood"] .cell {
@@ -291,6 +299,54 @@ hr {
     inset 0 -4px 6px rgba(40, 140, 200, 0.25),
     0 0 12px rgba(100, 210, 255, 0.5),
     0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* ===== 漆テーマ ===== */
+
+/* 盤面外周: 金の二重縁 + 朱の残光 */
+#board[data-board-theme="urushi"] {
+  box-shadow:
+    0 0 0 2px rgba(212, 175, 55, 0.75),
+    0 0 0 5px rgba(60, 10, 5, 0.95),
+    0 8px 28px rgba(0, 0, 0, 0.85),
+    0 0 50px rgba(160, 40, 10, 0.18);
+}
+
+/* セル: 漆黒の深み。上から蝋燭の光が差す */
+#board[data-board-theme="urushi"] .cell {
+  background: var(--cell-bg);
+  box-shadow: inset 0 3px 12px rgba(180, 50, 15, 0.1);
+}
+
+/* ホバー: 朱の炎が内側から滲む */
+#board[data-board-theme="urushi"] .cell:hover {
+  background: var(--cell-hover-bg);
+  box-shadow: inset 0 0 16px rgba(210, 70, 25, 0.4);
+}
+
+/* ヒント点: 金色の光点 */
+#board[data-board-theme="urushi"] .hint-black { background: rgba(212, 175, 55, 0.8); }
+#board[data-board-theme="urushi"] .hint-white { background: rgba(212, 175, 55, 0.55); }
+
+/* 黒石: 漆黒の深い艶 + 金の蒔絵縁 */
+#board[data-board-theme="urushi"] .stone.black {
+  background: radial-gradient(circle at 33% 27%, #3d0d0d 0%, #080000 70%);
+  border: 1.5px solid rgba(212, 175, 55, 0.8);
+  box-shadow:
+    inset 0 -5px 10px rgba(0, 0, 0, 0.75),
+    0 0 0 1px rgba(155, 110, 15, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.8),
+    0 0 16px rgba(210, 160, 30, 0.3);
+}
+
+/* 白石: 象牙〜飴色。漆器の上に置かれた骨牌のような質感 */
+#board[data-board-theme="urushi"] .stone.white {
+  background: radial-gradient(circle at 33% 27%, #fef9f0 0%, #d4a060 65%, #a06828 100%);
+  border: 1px solid rgba(180, 130, 40, 0.6);
+  box-shadow:
+    inset 0 -5px 10px rgba(120, 60, 5, 0.3),
+    0 4px 10px rgba(0, 0, 0, 0.55),
+    0 0 12px rgba(210, 160, 50, 0.22);
 }
 
 /* クラシックテーマ: 平成のHTML感。石はベタ塗り・立体感なし・反射光なし */

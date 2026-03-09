@@ -28,6 +28,7 @@ const BOARD_THEMES = {
   blue:    { '--board-bg': '#0d2137', '--cell-bg': '#1a3a5c', '--cell-hover-bg': '#234a70' },
   dark:    { '--board-bg': '#5a0090', '--cell-bg': '#08000f', '--cell-hover-bg': '#180028' },
   classic: { '--board-bg': '#000000', '--cell-bg': '#2e7a3e', '--cell-hover-bg': '#3a9050' },
+  urushi:  { '--board-bg': '#8b1a0a', '--cell-bg': '#120605', '--cell-hover-bg': '#1e0c09' },
 };
 
 // ===== BOARD DIRECTIONS =====
