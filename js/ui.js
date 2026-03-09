@@ -539,8 +539,8 @@ function runSolverForPosition(snapBoard, snapPlayer, snapEmpty, snapGameOver, so
     solverState.pending = false;
     solverState.score   = score; // 確定スコアを保存（以降の _evalLabel に使用）
     updateEndgameEl(`最善手を読み切り: ${result}　(${lineStr})`);
-    // 最善手マーカー（青い点）をボード上に表示する（トグルで非表示も可）
-    if (showBestMoveDot && bestPos >= 0) {
+    // 最善手マーカー（青い点）をボード上に表示する（CSS クラスで表示/非表示を制御）
+    if (bestPos >= 0) {
       const bx = bestPos & 7, by = bestPos >> 3;
       const bestCell = boardElement.querySelector(`[data-pos="${bx},${by}"]`);
       if (bestCell) {
@@ -770,12 +770,13 @@ function toggleOpenings() {
 }
 
 // 読み切りの最善手（青い点）の表示/非表示を切り替える
+// CSS クラスで制御するためソルバーの再実行は不要
 function toggleBestMoveDot() {
   showBestMoveDot = !showBestMoveDot;
   localStorage.setItem(STORAGE_KEYS.SHOW_BEST_DOT, showBestMoveDot);
   const btn = document.getElementById('best-dot-toggle-btn');
   if (btn) btn.classList.toggle('active', showBestMoveDot);
-  drawBoard();
+  boardElement.classList.toggle('hide-best-dot', !showBestMoveDot);
 }
 
 // ===== INITIALIZATION =====
@@ -805,10 +806,11 @@ updateScoreGraph();
   if (btn) btn.classList.toggle('active', showOpenings);
 })();
 
-// 読み切り青点ボタンの初期状態を設定する
+// 読み切り青点ボタン・ボード要素の初期状態を設定する
 (function() {
   const btn = document.getElementById('best-dot-toggle-btn');
   if (btn) btn.classList.toggle('active', showBestMoveDot);
+  boardElement.classList.toggle('hide-best-dot', !showBestMoveDot);
 })();
 
 // パネルの開閉状態を localStorage に保持する

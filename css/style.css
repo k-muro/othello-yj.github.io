@@ -144,6 +144,9 @@ hr {
   box-shadow: 0 0 2px rgba(2, 103, 255, 0.8);
 }
 
+/* 読み切り青点の非表示制御 */
+#board.hide-best-dot .best-move-dot { display: none; }
+
 /* 着手順番号（石の上に重ねる） */
 .stone-num {
   position: absolute;
