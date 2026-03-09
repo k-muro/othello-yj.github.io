@@ -222,8 +222,9 @@ hr {
   box-shadow: inset 0 0 14px rgba(180, 60, 255, 0.35);
 }
 
-/* ヒント点: 黒番は紫の光点に */
-#board[data-board-theme="dark"] .hint-black { background: rgba(200, 100, 255, 0.6); }
+/* ヒント点: 黒番は薄い白点、白番は紫の光点 */
+#board[data-board-theme="dark"] .hint-black { background: rgba(190, 100, 255, 0.35); }
+#board[data-board-theme="dark"] .hint-white { background: rgba(200, 100, 255, 0.6); }
 
 /* 評価値: 暗い背景で読めるよう白いアウトライン */
 #board[data-board-theme="dark"] .move-eval,
