@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   panel:           id => `othello-panel-${id}`,
   SHOW_OPENINGS:   'othello-show-openings',
   BOARD_THEME:     'othello-board-theme',
+  SHOW_BEST_DOT:   'othello-show-best-dot',
 };
 
 // ===== NUMERIC CONSTANTS =====

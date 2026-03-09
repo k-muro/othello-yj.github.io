@@ -58,7 +58,8 @@ const endgameEl    = document.getElementById("endgame");
 
 let savedBranches       = []; // 分岐ツリー（セッション内のみ、最大5手順）
 let _branchPaddingCache = new Map(); // bi -> paddingLeft（フリッカー防止用）
-let showOpenings = localStorage.getItem(STORAGE_KEYS.SHOW_OPENINGS) === 'true';
+let showOpenings    = localStorage.getItem(STORAGE_KEYS.SHOW_OPENINGS) === 'true';
+let showBestMoveDot = localStorage.getItem(STORAGE_KEYS.SHOW_BEST_DOT) !== 'false'; // デフォルト表示
 
 // URL コピー完了メッセージの非表示タイマー
 let _urlCopyTimer = null;
@@ -538,8 +539,8 @@ function runSolverForPosition(snapBoard, snapPlayer, snapEmpty, snapGameOver, so
     solverState.pending = false;
     solverState.score   = score; // 確定スコアを保存（以降の _evalLabel に使用）
     updateEndgameEl(`最善手を読み切り: ${result}　(${lineStr})`);
-    // 最善手マーカー（青い点）をボード上に表示する
-    if (bestPos >= 0) {
+    // 最善手マーカー（青い点）をボード上に表示する（トグルで非表示も可）
+    if (showBestMoveDot && bestPos >= 0) {
       const bx = bestPos & 7, by = bestPos >> 3;
       const bestCell = boardElement.querySelector(`[data-pos="${bx},${by}"]`);
       if (bestCell) {
@@ -768,6 +769,15 @@ function toggleOpenings() {
   drawBoard();
 }
 
+// 読み切りの最善手（青い点）の表示/非表示を切り替える
+function toggleBestMoveDot() {
+  showBestMoveDot = !showBestMoveDot;
+  localStorage.setItem(STORAGE_KEYS.SHOW_BEST_DOT, showBestMoveDot);
+  const btn = document.getElementById('best-dot-toggle-btn');
+  if (btn) btn.classList.toggle('active', showBestMoveDot);
+  drawBoard();
+}
+
 // ===== INITIALIZATION =====
 
 initBoard();
@@ -793,6 +803,12 @@ updateScoreGraph();
 (function() {
   const btn = document.getElementById('opening-guide-btn');
   if (btn) btn.classList.toggle('active', showOpenings);
+})();
+
+// 読み切り青点ボタンの初期状態を設定する
+(function() {
+  const btn = document.getElementById('best-dot-toggle-btn');
+  if (btn) btn.classList.toggle('active', showBestMoveDot);
 })();
 
 // パネルの開閉状態を localStorage に保持する
