@@ -22,9 +22,9 @@
   <div class="app-card">
 
     <div class="d-flex justify-content-between align-items-center mb-2">
-      <div id="header-spacer"  style="width:88px"></div>
-      <h1 class="mb-0"><a href="https://othello-yj.wplaceoki.com/" style="color:inherit;text-decoration:none;">Yajuオセロ盤面検討ツール</a></h1>
-      <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" style="width:88px" onclick="toggleTheme()"></button>
+      <div id="header-spacer"></div>
+      <h1 class="mb-0"><a href="https://othello-yj.wplaceoki.com/" class="header-title-link">Yajuオセロ盤面検討ツール</a></h1>
+      <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleTheme()"></button>
     </div>
 
     <div id="board"></div>
@@ -37,7 +37,7 @@
           <div class="stat-label" id="sc-black-name">黒</div>
         </div>
         <div class="stat-card stat-card-remaining">
-  <div style="height:24px;"></div>
+          <div class="stat-spacer"></div>
           <div class="stat-num" id="sc-empty">60</div>
           <div class="stat-label">残</div>
         </div>
@@ -48,50 +48,50 @@
         </div>
       </div>
       <div class="balance-bar-wrap">
-        <div class="balance-bar" id="balance-bar" style="width:50%"></div>
+        <div class="balance-bar" id="balance-bar"></div>
       </div>
     </div>
 
     <p id="info" class="mb-2"></p>
-    <p id="opening-name" class="mb-1 text-secondary small" ></p>
+    <p id="opening-name" class="mb-1 text-secondary small"></p>
 
 <div class="d-flex flex-wrap justify-content-center gap-1 mb-2 nav-control-group">
-  <button id="btn-first" class="btn btn-outline-secondary btn-sm" onclick="goToFirst()">⏮ 最初</button>
+  <button id="btn-first"  class="btn btn-outline-secondary btn-sm" onclick="goToFirst()">⏮ 最初</button>
   <button id="btn-undo10" class="btn btn-outline-secondary btn-sm" onclick="undo10()">◀◀ 10手戻</button>
-  <button id="btn-undo" class="btn btn-outline-secondary btn-sm" onclick="undo()">◀ 戻る</button>
+  <button id="btn-undo"   class="btn btn-outline-secondary btn-sm" onclick="undo()">◀ 戻る</button>
   <button id="branch-btn" class="btn btn-outline-secondary btn-sm" onclick="goToBranchPoint()" disabled>分岐点へ</button>
-  <button id="btn-redo" class="btn btn-outline-secondary btn-sm" onclick="redo()">▶ 進む</button>
+  <button id="btn-redo"   class="btn btn-outline-secondary btn-sm" onclick="redo()">▶ 進む</button>
   <button id="btn-redo10" class="btn btn-outline-secondary btn-sm" onclick="redo10()">10手進 ▶▶</button>
-  <button id="btn-last" class="btn btn-outline-secondary btn-sm" onclick="goToLast()">最後 ⏭</button>
+  <button id="btn-last"   class="btn btn-outline-secondary btn-sm" onclick="goToLast()">最後 ⏭</button>
 </div>
 
     <div class="d-flex align-items-center gap-2 my-3 collapse-toggle collapsed"
          role="button" data-bs-toggle="collapse" data-bs-target="#analysis-panel" aria-expanded="false">
       <span class="collapse-toggle-label">解析</span>
-      <div class="flex-grow-1" style="height:1px;background:var(--bs-border-color);"></div>
+      <div class="collapse-divider"></div>
     </div>
 
     <div class="collapse" id="analysis-panel">
     <div class="d-flex gap-2 mb-2">
-      <button id="move-eval-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2"
-              onclick="toggleMoveEvals()" style="font-size:0.75rem;">候補手の評価値</button>
-      <button id="mistake-analyze-btn" class="btn btn-outline-secondary btn-sm py-0 px-2"
-              onclick="toggleMistakeList()" style="font-size:0.75rem;">悪手を表示</button>
-      <button id="opening-guide-btn" class="btn btn-outline-secondary btn-sm py-0 px-2"
-              onclick="toggleOpenings()" style="font-size:0.75rem;">定石ガイド</button>
+      <button id="move-eval-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2 analysis-btn"
+              onclick="toggleMoveEvals()">候補手の評価値</button>
+      <button id="mistake-analyze-btn" class="btn btn-outline-secondary btn-sm py-0 px-2 analysis-btn"
+              onclick="toggleMistakeList()">悪手を表示</button>
+      <button id="opening-guide-btn" class="btn btn-outline-secondary btn-sm py-0 px-2 analysis-btn"
+              onclick="toggleOpenings()">定石ガイド</button>
     </div>
     <p id="endgame" class="mt-2 mb-0"></p>
 
     <div id="graph-area" class="mt-2">
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+      <div id="graph-header">
         <div class="text-secondary graph-caption" id="graph-caption-text">⚫石差の推移（+で黒有利 / −で白有利）</div>
-        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
-          <button id="graph-mode-btn" class="btn btn-outline-secondary btn-sm py-0 px-2"
-                  onclick="toggleGraphMode()" style="font-size:0.75rem;">予測石差</button>
-          <span id="ai-status" class="graph-caption" style="color:#f97316;">AI読み込み中…</span>
+        <div id="graph-controls">
+          <button id="graph-mode-btn" class="btn btn-outline-secondary btn-sm py-0 px-2 analysis-btn"
+                  onclick="toggleGraphMode()">予測石差</button>
+          <span id="ai-status" class="graph-caption">AI読み込み中…</span>
         </div>
       </div>
-      <div style="position:relative; height:90px;">
+      <div class="graph-canvas-wrap">
         <canvas id="score-graph"></canvas>
       </div>
       <div id="mistake-list" class="mt-1"></div>
@@ -101,7 +101,7 @@
     <div class="d-flex align-items-center gap-2 my-3 collapse-toggle collapsed"
          role="button" data-bs-toggle="collapse" data-bs-target="#branch-tree-panel" aria-expanded="false">
       <span class="collapse-toggle-label">分岐ツリー</span>
-      <div class="flex-grow-1" style="height:1px;background:var(--bs-border-color);"></div>
+      <div class="collapse-divider"></div>
     </div>
 
     <div class="collapse" id="branch-tree-panel">
@@ -116,21 +116,21 @@
     <div class="d-flex align-items-center gap-2 my-3 collapse-toggle collapsed"
          role="button" data-bs-toggle="collapse" data-bs-target="#settings-panel" aria-expanded="false">
       <span class="collapse-toggle-label">棋譜・設定</span>
-      <div class="flex-grow-1" style="height:1px;background:var(--bs-border-color);"></div>
+      <div class="collapse-divider"></div>
     </div>
 
     <div class="collapse" id="settings-panel">
-      <div id="kifu-area" class="mt-1 mx-auto" style="max-width:480px;">
+      <div id="kifu-area" class="mt-1 mx-auto">
         <div class="d-flex gap-2">
-          <input type="text" id="kifu-input" class="form-control form-control-sm" style="min-width:0; flex:1;" placeholder="棋譜を入力 (例: d3c4...)" onclick="this.select()">
+          <input type="text" id="kifu-input" class="form-control form-control-sm flex-input" placeholder="棋譜を入力 (例: d3c4...)" onclick="this.select()">
           <button class="btn btn-primary btn-sm text-nowrap" onclick="applyKifu()">棋譜を反映</button>
         </div>
       </div>
 
-      <div id="current-kifu-area" class="mt-2 mx-auto" style="max-width:480px;">
+      <div id="current-kifu-area" class="mt-2 mx-auto">
         <div class="d-flex align-items-center gap-2">
           <span class="text-secondary small text-nowrap">現在の棋譜:</span>
-          <input type="text" id="current-kifu" class="form-control form-control-sm" readonly style="min-width:0; flex:1;">
+          <input type="text" id="current-kifu" class="form-control form-control-sm flex-input" readonly>
           <button class="btn btn-outline-secondary btn-sm text-nowrap" onclick="copyCurrentKifu()">コピー</button>
         </div>
       </div>
@@ -143,7 +143,7 @@
       <div class="mt-2 d-flex justify-content-center align-items-center gap-2">
         <span class="text-secondary small text-nowrap">全読み開始:</span>
         <input type="number" id="solver-depth" class="form-control form-control-sm text-center"
-               min="6" max="24" value="20" style="width:70px;">
+               min="6" max="24" value="20">
         <span class="text-secondary small text-nowrap">手前</span>
         <button class="btn btn-outline-secondary btn-sm text-nowrap" id="confirm-depth-btn">確定</button>
       </div>
@@ -153,15 +153,15 @@
         <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('name-inputs').classList.toggle('d-none')">プレイヤー名設定</button>
 
         <span id="name-inputs" class="d-none d-flex align-items-center gap-2">
-          ⚫<input type="text" id="black-name-input" class="form-control form-control-sm" style="width:90px" placeholder="黒" oninput="updateNames()" onclick="this.select()">
+          ⚫<input type="text" id="black-name-input" class="form-control form-control-sm name-input" placeholder="黒" oninput="updateNames()" onclick="this.select()">
           <button class="btn btn-outline-secondary btn-sm px-1" onclick="swapNames()" title="名前を入れ替え">⇄</button>
-          ⚪<input type="text" id="white-name-input" class="form-control form-control-sm" style="width:90px" placeholder="白" oninput="updateNames()" onclick="this.select()">
+          ⚪<input type="text" id="white-name-input" class="form-control form-control-sm name-input" placeholder="白" oninput="updateNames()" onclick="this.select()">
         </span><button id="stone-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleStones()">野獣先輩モード</button>
         <button id="num-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleMoveNumbers()">着手順を表示</button>
       </div>
     </div>
 
-    <p class="text-secondary mt-3 mb-0" style="font-size:0.72rem;">™&amp;© Othello, Co. and MegaHouse</p>
+    <p class="text-secondary mt-3 mb-0 copyright">™&amp;© Othello, Co. and MegaHouse</p>
 
   </div>
 </div>
@@ -228,6 +228,7 @@ window._aiLoadTimer = setTimeout(function() {
 </script>
 <script src="js/ai.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/constants.js"></script>
 <script src="js/game.js"></script>
 <script src="js/solver.js"></script>
 <script src="js/analysis.js"></script>

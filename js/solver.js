@@ -2,31 +2,31 @@
 
 let solverDepth = parseInt(localStorage.getItem(STORAGE_KEYS.SOLVER_DEPTH) || String(DEFAULT_SOLVER_DEPTH));
 
-// ソルバーの状態をひとまとめに管理
+// ソルバーの実行状態をひとまとめに管理するオブジェクト
 const solverState = {
-  cancelFlag: false, // 全読みキャンセル用フラグ
+  cancelFlag: false, // 全読みキャンセル用フラグ（drawBoard 時に true にして中断する）
   result:     '',    // 現局面の全読み結果テキスト
-  pending:    false, // ソルバーがまだ結果を出していない間 true
+  pending:    false, // ソルバーが結果を出す前は true（endgame 表示を保留するために使用）
   score:      null,  // 全読み確定スコア（黒視点）。null=未確定
 };
 
 // ===== BITBOARD CONSTANTS =====
+// ビット配置: bit(y*8+x) → 座標(x,y)  例: a1=bit0, h1=bit7, a8=bit56, h8=bit63
 
-// ビット配置: bit(y*8+x) → 座標(x,y)  a1=bit0, h1=bit7, a8=bit56, h8=bit63
 const BB_ALL   = 0xFFFFFFFFFFFFFFFFn;
-const BB_NOT_A = 0xFEFEFEFEFEFEFEFEn; // 列aを除く（左シフト後のh→aラップ防止）
-const BB_NOT_H = 0x7F7F7F7F7F7F7F7Fn; // 列hを除く（右シフト後のa→hラップ防止）
+const BB_NOT_A = 0xFEFEFEFEFEFEFEFEn; // a列を除くマスク（左シフト後のh→aラップ防止）
+const BB_NOT_H = 0x7F7F7F7F7F7F7F7Fn; // h列を除くマスク（右シフト後のa→hラップ防止）
 
-// 1bit(1n<<i) -> i の逆引きテーブル
+// 1bit(1n<<i) から i へ変換する逆引きテーブル
 const BB_POS = new Map();
 for (let i = 0; i < 64; i++) BB_POS.set(1n << BigInt(i), i);
 
-// 着手順の重みテーブル: コーナー優先、X/Cマス後回し
+// 着手順の重みテーブル: コーナー優先、X/Cマス後回し（alpha-beta の手順改善用）
 const BB_MOVE_WEIGHT = (() => {
   const w = new Array(64).fill(2);
-  [0, 7, 56, 63].forEach(i => w[i] = 10);          // コーナー
-  [9, 14, 49, 54].forEach(i => w[i] = -2);          // Xマス
-  [1,6,8,15,48,55,57,62].forEach(i => w[i] = -1);   // Cマス
+  [0, 7, 56, 63].forEach(i => w[i] = 10);         // コーナー
+  [9, 14, 49, 54].forEach(i => w[i] = -2);         // Xマス
+  [1,6,8,15,48,55,57,62].forEach(i => w[i] = -1);  // Cマス
   return w;
 })();
 
@@ -37,23 +37,23 @@ function bbMoves(player, opponent) {
   const empty = ~(player | opponent) & BB_ALL;
   let moves = 0n;
 
-  // 8方向のシフトとマスク
+  // 8方向ごとに「挟んだ相手石の先」が空マスなら合法手
   const dirs = [
-    {shift: 1n,  mask: BB_NOT_A}, // E (<<1)
-    {shift:-1n,  mask: BB_NOT_H}, // W (>>1)
-    {shift: 8n,  mask: BB_ALL},   // S (<<8)
-    {shift:-8n,  mask: BB_ALL},   // N (>>8)
-    {shift: 9n,  mask: BB_NOT_A}, // SE (<<9)
-    {shift:-9n,  mask: BB_NOT_H}, // NW (>>9)
-    {shift: 7n,  mask: BB_NOT_H}, // SW (<<7)
-    {shift:-7n,  mask: BB_NOT_A}, // NE (>>7)
+    { shift:  1n, mask: BB_NOT_A }, // E
+    { shift: -1n, mask: BB_NOT_H }, // W
+    { shift:  8n, mask: BB_ALL   }, // S
+    { shift: -8n, mask: BB_ALL   }, // N
+    { shift:  9n, mask: BB_NOT_A }, // SE
+    { shift: -9n, mask: BB_NOT_H }, // NW
+    { shift:  7n, mask: BB_NOT_H }, // SW
+    { shift: -7n, mask: BB_NOT_A }, // NE
   ];
 
-  for (const {shift, mask} of dirs) {
+  for (const { shift, mask } of dirs) {
     let t;
     if (shift > 0n) {
       t = ((player << shift) & mask) & opponent;
-      // 最大6枚まで挟みうるので6回伸ばす
+      // 最大6枚挟みうるので6回伸ばす
       t |= ((t << shift) & mask) & opponent;
       t |= ((t << shift) & mask) & opponent;
       t |= ((t << shift) & mask) & opponent;
@@ -90,9 +90,10 @@ function bbFlips(pos, player, opponent) {
   return f;
 }
 
-function bbPopcount(b) { let n=0; while(b){b&=b-1n;n++;} return n; }
+// ビットボード b のポップカウント（立っているビット数）を返す
+function bbPopcount(b) { let n = 0; while (b) { b &= b - 1n; n++; } return n; }
 
-// moves ビットボードから { pos, lsb, w } の配列を重み降順で返す
+// moves ビットボードから { pos, lsb, w } の配列を重み降順で返す（alpha-beta の手順改善用）
 function bbBuildMoveList(moves) {
   const moveList = [];
   let m = moves;
@@ -106,20 +107,20 @@ function bbBuildMoveList(moves) {
   return moveList;
 }
 
-// アルファベータ探索（内部再帰用・score のみ返す）
+// alpha-beta 探索（内部再帰用・スコアのみを返す）
 function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
   if (solverState.cancelFlag) throw 'solver_cancelled';
   const player   = blackToMove ? blackBB : whiteBB;
   const opponent = blackToMove ? whiteBB : blackBB;
   let moves = bbMoves(player, opponent);
   if (!moves) {
+    // 合法手なし → 相手も無ければ終局、あればパス
     if (!bbMoves(opponent, player))
       return bbPopcount(blackBB) - bbPopcount(whiteBB);
-    return bbSolve(blackBB, whiteBB, !blackToMove, alpha, beta); // パス
+    return bbSolve(blackBB, whiteBB, !blackToMove, alpha, beta);
   }
 
   const moveList = bbBuildMoveList(moves);
-
   let best = blackToMove ? -65 : 65;
   for (const { pos, lsb } of moveList) {
     const flips = bbFlips(pos, player, opponent);
@@ -137,12 +138,12 @@ function bbSolve(blackBB, whiteBB, blackToMove, alpha, beta) {
       if (score < best) best = score;
       if (best < beta)  beta  = best;
     }
-    if (alpha >= beta) break;
+    if (alpha >= beta) break; // カット
   }
   return best;
 }
 
-// トップレベルラッパー: 最善手の位置も返す
+// トップレベルラッパー: 最善手の位置と最善スコアも返す
 function bbSolveTop(blackBB, whiteBB, blackToMove) {
   const player   = blackToMove ? blackBB : whiteBB;
   const opponent = blackToMove ? whiteBB : blackBB;
@@ -152,7 +153,6 @@ function bbSolveTop(blackBB, whiteBB, blackToMove) {
   }
 
   const moveList = bbBuildMoveList(moves);
-
   let best = blackToMove ? -65 : 65, bestPos = moveList[0].pos;
   let alpha = -65, beta = 65;
   for (const { pos, lsb } of moveList) {
@@ -174,12 +174,12 @@ function bbSolveTop(blackBB, whiteBB, blackToMove) {
     if (alpha >= beta) break;
   }
 
-  // 最善スコアを辿って手順列を再構成（狭いウィンドウで軽量）
+  // 最善スコアを維持する手順列を再構成（狭いウィンドウで高速化）
   const line = bbExtractLine(blackBB, whiteBB, blackToMove, best);
   return { score: best, bestPos, line };
 }
 
-// 最善スコアを維持する手を辿り手順列を返す
+// 最善スコアを維持する手を辿り、最善手順列を返す
 function bbExtractLine(blackBB, whiteBB, blackToMove, targetScore) {
   const line = [];
   let bBB = blackBB, wBB = whiteBB, btm = blackToMove;
@@ -189,7 +189,7 @@ function bbExtractLine(blackBB, whiteBB, blackToMove, targetScore) {
     const mvs = bbMoves(pl, op);
     if (!mvs) {
       if (!bbMoves(op, pl)) break; // 終局
-      btm = !btm; // パス
+      btm = !btm;                  // パス
       continue;
     }
     let found = false;
@@ -219,35 +219,13 @@ function bbExtractLine(blackBB, whiteBB, blackToMove, targetScore) {
 // ===== EGAROUCID WASM INTEGRATION =====
 
 let egaroucidReady = false;
-let evalCache = [];
-let evalKifu = '';
+let evalCache = [];     // 初期局面から各手数まで評価値（黒視点の予測石差）
+let evalKifu  = '';     // evalCache を計算した棋譜キー（重複計算を防ぐ）
 let evalLevel = parseInt(localStorage.getItem(STORAGE_KEYS.EVAL_LEVEL) || '8');
 let showMoveEvals = localStorage.getItem(STORAGE_KEYS.SHOW_MOVE_EVALS) === 'true';
-let moveEvalGeneration = 0; // drawBoard のたびに更新し、古い評価タスクを破棄
+let moveEvalGeneration = 0; // drawBoard のたびに更新し、古い評価タスクを破棄するための世代番号
 
-// 任意の盤面 b で player が合法手を持つか調べる純粋ヘルパー（グローバル board を使わない）
-function hasAnyMove(b, pl) {
-  for (let y = 0; y < 8; y++)
-    for (let x = 0; x < 8; x++) {
-      if (b[y][x] !== 0) continue;
-      for (const [dx, dy] of DIRS) {
-        let nx = x+dx, ny = y+dy;
-        if (nx<0||nx>=8||ny<0||ny>=8||b[ny][nx]!==-pl) continue;
-        nx+=dx; ny+=dy;
-        while (nx>=0&&nx<8&&ny>=0&&ny<8&&b[ny][nx]===-pl){nx+=dx;ny+=dy;}
-        if (nx>=0&&nx<8&&ny>=0&&ny<8&&b[ny][nx]===pl) return true;
-      }
-    }
-  return false;
-}
-
-function setAiStatus(text, color) {
-  const el = document.getElementById('ai-status');
-  if (!el) return;
-  el.textContent = text;
-  el.style.color = color || '';
-}
-
+// Egaroucid WASM の初期化完了時に呼ばれるコールバック
 function onEgaroucidReady() {
   try {
     setAiStatus('AI初期化中…', '#f97316');
@@ -265,19 +243,19 @@ function onEgaroucidReady() {
     computeAllEvals();
     // 初期化完了時点で分岐先端にいれば悪手解析を起動
     if (currentMove > 0) {
-      const _atEnd = savedBranches.some(b =>
+      const atEnd = savedBranches.some(b =>
         b.moves.length === currentMove &&
         b.moves.every((m, i) => m.x === moveHistory[i].x && m.y === moveHistory[i].y)
       );
-      if (_atEnd) computeMistakes();
+      if (atEnd) computeMistakes();
     }
-  } catch(e) {
+  } catch (e) {
     setAiStatus('AI読み込み失敗', '#dc3545');
     console.error('Egaroucid init failed:', e);
   }
 }
 
-// 盤面 b を WASM 形式の Int32Array に変換し、HEAP に書き込んで ptr を返す
+// 盤面 b を WASM 形式の Int32Array に変換し HEAP に書き込んで ptr を返す
 // 呼び出し元は使用後に必ず _free(ptr) を呼ぶこと
 function encodeBoard(b) {
   const res = new Int32Array(64);
@@ -299,17 +277,16 @@ function decodeWasmResult(val) {
   return { mx, my, score_raw };
 }
 
-// 盤面を WASM に渡して評価値（黒視点の予測石差）を返す
+// 盤面を WASM に渡して評価値（黒視点の予測石差: +で黒有利 / −で白有利）を返す
 function evaluatePosition(b, player, level = evalLevel) {
-  // player: 1=黒, -1=白
-  // ゲーム終了（空マスなし）はそのまま石差を返す
   let black = 0, white = 0, empty = 0;
   for (let r = 0; r < 8; r++)
     for (let c = 0; c < 8; c++) {
-      if (b[r][c] === 1) black++;
+      if (b[r][c] ===  1) black++;
       else if (b[r][c] === -1) white++;
       else empty++;
     }
+  // ゲーム終了（空マスなし）はそのまま実石差を返す
   if (empty === 0) return black - white;
 
   const wasmPlayer = player === 1 ? 0 : 1;
@@ -318,25 +295,24 @@ function evaluatePosition(b, player, level = evalLevel) {
   _free(ptr);
 
   const { score_raw } = decodeWasmResult(val);
-
   // 黒視点に正規化（白番なら符号反転）
   return wasmPlayer === 0 ? score_raw : -score_raw;
 }
 
-// moveHistory を先頭から再生しながら各局面を評価
+// moveHistory を先頭から再生しながら各局面を評価してグラフ用キャッシュを更新する
 function computeAllEvals() {
   if (!egaroucidReady) return;
   const kifuKey = moveHistory.map(m => `${m.x},${m.y}`).join('|');
-  if (kifuKey === evalKifu && evalCache.length > 0) return;
+  if (kifuKey === evalKifu && evalCache.length > 0) return; // 同一棋譜はスキップ
   evalKifu = kifuKey;
   evalCache = [];
 
-  let b = createInitialBoard();
+  let b  = createInitialBoard();
   let cp = 1; // 手番 (1=黒, -1=白)
-  evalCache.push(evaluatePosition(b, cp));
+  evalCache.push(evaluatePosition(b, cp)); // 初期局面の評価値
 
   for (const m of moveHistory) {
-    b = applyBoardMove(b, m.x, m.y, m.player);
+    b  = applyBoardMove(b, m.x, m.y, m.player);
     cp = -m.player;
     evalCache.push(evaluatePosition(b, cp));
   }
@@ -344,10 +320,10 @@ function computeAllEvals() {
   updateScoreGraph();
 }
 
-// WASM に盤面を渡して最善手と評価値を取得（黒視点スコア）
-// level は残り手数に合わせて呼び出し側でスケール（20手=10, 24手=21）
+// WASM に盤面を渡して最善手と評価値を取得する（黒視点スコア）
+// level は残り手数に合わせて呼び出し側でスケールする（20手=10, 24手=21）
 function wasmBestMove(b, pl, level) {
-  const wp = pl === 1 ? 0 : 1;
+  const wp  = pl === 1 ? 0 : 1;
   const ptr = encodeBoard(b);
   const val = _ai_js(ptr, level ?? 10, wp);
   _free(ptr);
@@ -355,25 +331,24 @@ function wasmBestMove(b, pl, level) {
   return { mx, my, score: wp === 0 ? score_raw : -score_raw };
 }
 
-// 残り手数からsolveレベルを決める（10=20手, 21=22手相当 で線形に補間）
+// 残り手数から solve レベルを決める（20手=10 / 22手以上は線形補間で最大21）
 function solveLevel(empty) {
   return empty <= 20 ? 10 : Math.min(21, 10 + Math.ceil((empty - 20) / 2));
 }
 
 // WASM で終盤全読みし { score, bestPos, line } を返す
 function egaroucidSolveTop(boardIn, player, empty) {
-  // 最善手とスコアを取得
   const lv = solveLevel(empty ?? 20);
   const { mx, my } = wasmBestMove(boardIn, player, lv);
   const bestPos = my * 8 + mx;
 
-  // 両者最善手を辿って手順列を構築
+  // 両者最善手を辿って最善手順列を構築する
   const line = [];
   let b = boardIn.map(r => [...r]);
   let cp = player, passes = 0;
   for (;;) {
     if (!hasAnyMove(b, cp)) {
-      if (!hasAnyMove(b, -cp)) break;
+      if (!hasAnyMove(b, -cp)) break; // 終局
       cp = -cp;
       if (++passes > 1) break;
       continue;
@@ -381,27 +356,25 @@ function egaroucidSolveTop(boardIn, player, empty) {
     passes = 0;
     const { mx: lx, my: ly } = wasmBestMove(b, cp, lv);
     line.push({ x: lx, y: ly });
-    b = applyBoardMove(b, lx, ly, cp);
+    b  = applyBoardMove(b, lx, ly, cp);
     cp = -cp;
   }
 
-  // line を最後まで打ち切った盤面 b から実際の石数を数えてスコアを確定する。
+  // line を最後まで打ち切った盤面から実際の石数を数えてスコアを確定する。
   // wasmBestMove の返す score はヒューリスティック推定値でズレることがあるため使わない。
-  // countStones を使って石数を得る
   const { black: actB, white: actW, empty: actE } = countStones(b);
   let finalB = actB, finalW = actW;
   // 空マスは勝者に加算（日本ルール）
   if (finalB > finalW) finalB += actE;
   else if (finalW > finalB) finalW += actE;
-  const lineScore = finalB - finalW;
 
-  return { score: lineScore, bestPos, line };
+  return { score: finalB - finalW, bestPos, line };
 }
 
 // ===== EVALUATION DISPLAY HELPERS =====
 
 // スコアを7段階の色に変換（黒視点: +で黒寄り / −で白寄り）
-// 0 / ±1~5 / ±6~10 / ±11~
+// 0 / ±1〜5 / ±6〜10 / ±11〜 の4段階
 function evalScoreColor(score) {
   const a = Math.abs(score);
   const tier = a === 0 ? 0 : a <= 5 ? 1 : a <= 10 ? 2 : 3;
@@ -410,16 +383,16 @@ function evalScoreColor(score) {
   return score >= 0 ? blackPalette[tier] : whitePalette[tier];
 }
 
-// 指定マスに打った後の局面をEgaroucidで評価（黒視点の予測石差: +で黒有利 / −で白有利）
+// 指定マスに打った後の局面を Egaroucid で評価して黒視点スコアを返す
 function evaluateMove(x, y) {
   const b = applyBoardMove(board, x, y, currentPlayer);
   const { empty } = countStones(b);
   const level = empty < 12 ? empty : evalLevel;
-  return evaluatePosition(b, -currentPlayer, level); // 黒視点スコア
+  return evaluatePosition(b, -currentPlayer, level);
 }
 
 // 候補手の評価値を1手ずつ非同期で計算してDOMに書き込む
-// rAF で1フレーム描画を確実に挟んでから計算開始（iOS対応）
+// rAF で1フレーム描画を確実に挟んでから計算開始（iOS 対応）
 function scheduleMoveEvals(validMoves, gen, onComplete) {
   if (!showMoveEvals || !egaroucidReady || validMoves.length === 0) {
     if (onComplete) setTimeout(onComplete, 0);
@@ -427,11 +400,8 @@ function scheduleMoveEvals(validMoves, gen, onComplete) {
   }
   let idx = 0;
   function next() {
-    if (gen !== moveEvalGeneration) return; // キャンセル（onCompleteも呼ばない）
-    if (idx >= validMoves.length) {
-      if (onComplete) onComplete();
-      return;
-    }
+    if (gen !== moveEvalGeneration) return; // 世代が変わったらキャンセル（onComplete も呼ばない）
+    if (idx >= validMoves.length) { if (onComplete) onComplete(); return; }
     const [mx, my] = validMoves[idx++];
     const score = evaluateMove(mx, my);
     if (gen !== moveEvalGeneration) return;
@@ -450,6 +420,7 @@ function scheduleMoveEvals(validMoves, gen, onComplete) {
 
 // ===== EVAL LEVEL & MODE SETTINGS =====
 
+// 評価レベルを変更してグラフを再計算する
 function setEvalLevel(val) {
   const n = Math.min(15, Math.max(1, parseInt(val) || 5));
   evalLevel = n;
@@ -461,43 +432,11 @@ function setEvalLevel(val) {
   }
 }
 
+// 候補手の評価値表示を切り替える
 function toggleMoveEvals() {
   showMoveEvals = !showMoveEvals;
   localStorage.setItem(STORAGE_KEYS.SHOW_MOVE_EVALS, showMoveEvals);
   const btn = document.getElementById('move-eval-toggle');
   if (btn) btn.textContent = showMoveEvals ? '評価値を隠す' : '候補手の評価値';
   drawBoard();
-}
-
-// ===== ENDGAME DISPLAY =====
-
-function _evalLabel() {
-  const v = solverState.score !== null ? solverState.score
-          : (egaroucidReady && currentMove < evalCache.length) ? evalCache[currentMove]
-          : null;
-  if (v === null) return '';
-  const a = Math.abs(v), s = v >= 0 ? '+' : '';
-  if (v === 0) return '互角';
-  if (a < EVAL_ADVANTAGE_THRESHOLD) return v > 0 ? `黒有利(${s}${v})` : `白有利(${v})`;
-  return v > 0 ? `黒勝勢(${s}${v})` : `白勝勢(${v})`;
-}
-
-function formatSolverResult(score) {
-  if (score > 0)      return `黒が +${score} で勝ち`;
-  else if (score < 0) return `白が +${Math.abs(score)} で勝ち`;
-  else                return `引き分け`;
-}
-
-function updateEndgameEl(solverText) {
-  if (solverText !== undefined) solverState.result = solverText;
-  // ソルバーの結果が出るまで更新しない（緑枠を透明テキストで維持）
-  if (solverState.pending) return;
-  endgameEl.classList.remove('endgame-pending');
-  const label = _evalLabel();
-  const solving = solverState.result === '読み中…';
-  if (!solving && label && solverState.result) {
-    endgameEl.innerHTML = `${label}<br><span style="font-size:0.82em">${solverState.result}</span>`;
-  } else {
-    endgameEl.textContent = solving ? solverState.result : (solverState.result || label);
-  }
 }

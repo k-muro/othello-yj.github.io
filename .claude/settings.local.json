@@ -11,7 +11,8 @@
       "Bash(do echo:*)",
       "Bash(mkdir:*)",
       "Bash(git add:*)",
-      "Bash(npx prettier:*)"
+      "Bash(npx prettier:*)",
+      "Bash(grep:*)"
     ]
   }
 }

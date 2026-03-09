@@ -280,6 +280,7 @@ hr {
 
 .balance-bar {
   height: 100%;
+  width: 50%; /* JS が上書きする。初期値は等分。 */
   background: #1c1c1e;
   border-radius: 3px;
   transition: width 0.3s ease;
@@ -523,6 +524,56 @@ hr {
 .custom-stones .stat-card-white .stat-mini-stone::after {
   background: url('../assets/YJW.png') center/cover no-repeat;
 }
+
+/* ===== HEADER ===== */
+#header-spacer { width: 88px; }
+#theme-toggle  { width: 88px; }
+.header-title-link { color: inherit; text-decoration: none; }
+
+/* ===== STAT SPACER ===== */
+.stat-spacer { height: 24px; }
+
+/* ===== COLLAPSE DIVIDER ===== */
+.collapse-divider {
+  flex-grow: 1;
+  height: 1px;
+  background: var(--bs-border-color);
+}
+
+/* ===== ANALYSIS BUTTONS ===== */
+.analysis-btn { font-size: 0.75rem; }
+
+/* ===== GRAPH LAYOUT ===== */
+#graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  line-height: 1;
+}
+
+#graph-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+#ai-status { color: #f97316; }
+
+.graph-canvas-wrap { position: relative; height: 90px; }
+
+/* ===== KIFU & SETTINGS AREA ===== */
+#kifu-area,
+#current-kifu-area { max-width: 480px; }
+
+.flex-input  { min-width: 0; flex: 1; }
+#solver-depth { width: 70px; }
+.name-input   { width: 90px; }
+
+/* ===== COPYRIGHT ===== */
+.copyright { font-size: 0.72rem; }
 
 /* ===== RESPONSIVE ===== */
 
@@ -777,11 +828,6 @@ hr {
 
 #mistake-list:empty {
   display: none;
-}
-
-#graph-area > div:first-child {
-  margin-bottom: 2px;
-  line-height: 1;
 }
 
 #graph-area .graph-caption {
