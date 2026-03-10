@@ -837,6 +837,11 @@ hr {
 
 .copyright { font-size: 0.72rem; }
 
+/* ===== SKY THEME ===== */
+/* ヒント点: 明るい盤面でも見えるよう濃い紺色 */
+#board[data-board-theme="sky"] .hint-black { background: rgba(1, 60, 120, 0.85); }
+#board[data-board-theme="sky"] .hint-white { background: rgba(1, 60, 120, 0.35); }
+
 /* 使い方モーダルのセクション見出し */
 .usage-section-title {
   font-size: 0.82rem;
