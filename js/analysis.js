@@ -14,7 +14,7 @@ let scoreChart = null;
 function toggleMistakeList() {
   showMistakeList = !showMistakeList;
   const btn = document.getElementById('mistake-analyze-btn');
-  if (btn) btn.textContent = showMistakeList ? '悪手を隠す' : '悪手を表示';
+  if (btn) btn.textContent = showMistakeList ? '悪手を隠す' : '悪手表示';
   renderMistakeList();
   updateScoreGraph();
 }
