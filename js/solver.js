@@ -331,9 +331,13 @@ function wasmBestMove(b, pl, level) {
   return { mx, my, score: wp === 0 ? score_raw : -score_raw };
 }
 
-// 残り手数から solve レベルを決める（20手=10 / 22手以上は線形補間で最大21）
+// 残り手数から solve レベルを決める。
+// Egaroucid の level N は「残り N 手以下で完全読みに切り替える」に対応するため、
+// level < empty だと先頭の数手がヒューリスティックになり結果が不正確になる。
+// そのため level = max(empty, 21) を渡して常に完全読みを保証する。
+// （solverDepth が 21 超に設定されている場合はそのまま empty を使う）
 function solveLevel(empty) {
-  return empty <= 20 ? 10 : Math.min(21, 10 + Math.ceil((empty - 20) / 2));
+  return Math.max(empty, 21);
 }
 
 // WASM で終盤全読みし { score, bestPos, line } を返す
@@ -345,15 +349,13 @@ function egaroucidSolveTop(boardIn, player, empty) {
   // 両者最善手を辿って最善手順列を構築する
   const line = [];
   let b = boardIn.map(r => [...r]);
-  let cp = player, passes = 0;
+  let cp = player;
   for (;;) {
     if (!hasAnyMove(b, cp)) {
-      if (!hasAnyMove(b, -cp)) break; // 終局
-      cp = -cp;
-      if (++passes > 1) break;
+      if (!hasAnyMove(b, -cp)) break; // 両者とも合法手なし → 終局
+      cp = -cp;                        // パス：手番だけ交代して継続
       continue;
     }
-    passes = 0;
     const { mx: lx, my: ly } = wasmBestMove(b, cp, lv);
     line.push({ x: lx, y: ly });
     b  = applyBoardMove(b, lx, ly, cp);

@@ -536,9 +536,31 @@ function runSolverForPosition(snapBoard, snapPlayer, snapEmpty, snapGameOver, so
     if (solverGen !== moveEvalGeneration) return;
     const lineStr = line.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join(" ");
     const result  = formatSolverResult(score);
+
+    // ===== デバッグ: line を snapBoard から実際に再生して石数を確認 =====
+    // egaroucidSolveTop が返す score と実際の石数が一致するかを検証する。
+    // パスは自動スキップ。最終的な石数を「黒X-白Y」形式で末尾に付記する。
+    let dbBoard = snapBoard.map(r => [...r]);
+    let dbCp = snapPlayer;
+    for (const mv of line) {
+      // パスが必要なら先にスキップ（line にはパス手が含まれないため）
+      if (!hasAnyMove(dbBoard, dbCp)) {
+        if (!hasAnyMove(dbBoard, -dbCp)) break;
+        dbCp = -dbCp;
+      }
+      dbBoard = applyBoardMove(dbBoard, mv.x, mv.y, dbCp);
+      dbCp = -dbCp;
+    }
+    const { black: dbB, white: dbW, empty: dbE } = countStones(dbBoard);
+    let dbFinalB = dbB, dbFinalW = dbW;
+    if (dbFinalB > dbFinalW) dbFinalB += dbE;
+    else if (dbFinalW > dbFinalB) dbFinalW += dbE;
+    const debugStr = ` [再生結果: 黒${dbFinalB}-白${dbFinalW}]`;
+    // ===== デバッグここまで =====
+
     solverState.pending = false;
     solverState.score   = score; // 確定スコアを保存（以降の _evalLabel に使用）
-    updateEndgameEl(`最善手を読み切り: ${result}　(${lineStr})`);
+    updateEndgameEl(`最善手を読み切り: ${result}　(${lineStr})${debugStr}`);
     // 最善手マーカー（青い点）をボード上に表示する（CSS クラスで表示/非表示を制御）
     if (bestPos >= 0) {
       const bx = bestPos & 7, by = bestPos >> 3;
