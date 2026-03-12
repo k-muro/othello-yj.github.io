@@ -822,8 +822,68 @@ hr {
   border-radius: 50%;
 }
 
-.stat-card-black .stat-mini-stone { background: radial-gradient(circle at 35% 35%, #666, #111); box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+.stat-card-black .stat-mini-stone { background: radial-gradient(circle at 35% 35%, #666, #111); box-shadow: 0 2px 5px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(160, 160, 160, 0.771); }
 .stat-card-white .stat-mini-stone { background: radial-gradient(circle at 35% 35%, #fff, #ccc); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+/* ===== テーマ別ミニ石 ===== */
+/* wood */
+[data-board-theme="wood"] .stat-card-black .stat-mini-stone {
+  background: radial-gradient(circle at 38% 32%, #5a2e10, #1a0800);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(160,160,160,0.5);
+}
+[data-board-theme="wood"] .stat-card-white .stat-mini-stone {
+  background: radial-gradient(circle at 40% 35%, #fdf3dc, #c9a96e);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+/* dark */
+[data-board-theme="dark"] .stat-card-black .stat-mini-stone {
+  background: radial-gradient(circle at 40% 30%, #1a0430, #050008);
+  box-shadow: 0 0 8px rgba(90,20,200,0.8), 0 2px 5px rgba(0,0,0,0.6), 0 0 0 1.5px rgba(160,160,160,0.5);
+}
+[data-board-theme="dark"] .stat-card-white .stat-mini-stone {
+  background: radial-gradient(circle at 40% 30%, rgba(220,192,255,0.5), rgba(128,48,192,0.96) 60%, rgba(16,0,32,0.5));
+  box-shadow: 0 0 8px rgba(180,80,255,0.7), 0 2px 5px rgba(0,0,0,0.4);
+}
+/* urushi */
+[data-board-theme="urushi"] .stat-card-black .stat-mini-stone {
+  background: radial-gradient(circle at 33% 27%, #3d0d0d, #080000);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.6), 0 0 0 1.5px rgba(160,160,160,0.5);
+}
+[data-board-theme="urushi"] .stat-card-white .stat-mini-stone {
+  background: radial-gradient(circle at 33% 27%, #fef9f0, #d4a060 65%, #a06828);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+/* metal */
+[data-board-theme="metal"] .stat-card-black .stat-mini-stone {
+  background: conic-gradient(from 210deg at 50% 50%, #050505, #3f3f3f 36deg, #0d0d0d 78deg, #777 112deg, #111 180deg, #555 250deg, #050505 360deg);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.6), 0 0 0 1.5px rgba(160,160,160,0.5);
+}
+[data-board-theme="metal"] .stat-card-white .stat-mini-stone {
+  background: conic-gradient(from 200deg at 50% 50%, #c8c8c8, #f8f8f8 40deg, #aaa 90deg, #e8e8e8 160deg, #bbb 230deg, #f0f0f0 300deg, #c8c8c8 360deg);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+/* classic */
+[data-board-theme="classic"] .stat-card-black .stat-mini-stone {
+  background: #111;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(160,160,160,0.5);
+}
+[data-board-theme="classic"] .stat-card-white .stat-mini-stone {
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+/* retro */
+[data-board-theme="retro"] .stat-card-black .stat-mini-stone,
+[data-board-theme="retro"] .stat-card-white .stat-mini-stone {
+  border-radius: 0;
+}
+[data-board-theme="retro"] .stat-card-black .stat-mini-stone {
+  background: #111;
+  box-shadow: 0 0 0 2.5px rgba(180,180,180,0.9);
+}
+[data-board-theme="retro"] .stat-card-white .stat-mini-stone {
+  background: #ffffff;
+  box-shadow: 0 0 0 2.5px rgba(130,130,130,0.9);
+}
 
 .stat-num {
   font-size: 1.7rem;
@@ -886,6 +946,94 @@ hr {
 #board[data-board-theme="sky"] .board-label { color: rgba(0, 0, 0, 0.75); }
 #board[data-board-theme="sky"] .hint-black { background: rgba(1, 60, 120, 0.85); }
 #board[data-board-theme="sky"] .hint-white { background: rgba(1, 60, 120, 0.35); }
+
+/* ===== THEME: RETRO ===== */
+
+/* 格子線を4px幅に・角を直角に */
+#board[data-board-theme="retro"] { gap: 4px; border-radius: 0; }
+
+/* 星点を12x12pxの正方形に */
+#board[data-board-theme="retro"] .cell[data-pos="1,1"]::after,
+#board[data-board-theme="retro"] .cell[data-pos="1,5"]::after,
+#board[data-board-theme="retro"] .cell[data-pos="5,1"]::after,
+#board[data-board-theme="retro"] .cell[data-pos="5,5"]::after {
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
+  bottom: -2px;
+  right: -2px;
+}
+
+/* ラベル: ドットフォント・白 */
+#board[data-board-theme="retro"] .board-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  color: #ffffff;
+  text-shadow: none;
+}
+
+/* ヒント点 */
+#board[data-board-theme="retro"] .hint-black,
+#board[data-board-theme="retro"] .hint-white,
+#board[data-board-theme="retro"] .hint-ref-black,
+#board[data-board-theme="retro"] .hint-ref-white { border-radius: 0; }
+#board[data-board-theme="retro"] .hint-black { background: #555555; }
+#board[data-board-theme="retro"] .hint-white { background: #c0c0c0; }
+
+/* 石の共通: border-radius をなくしてピクセルアートの形を生かす */
+#board[data-board-theme="retro"] .stone {
+  background: transparent !important;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
+  border: none;
+}
+
+/* ピクセルアート黒石 */
+#board[data-board-theme="retro"] .stone.black::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 4px;
+  height: 4px;
+  background: transparent;
+  box-shadow:
+    20px 4px 0 #040100, 24px 4px 0 #040100, 28px 4px 0 #040100,
+    12px 8px 0 #040100, 16px 8px 0 #040100, 20px 8px 0 #040100, 24px 8px 0 #040100, 28px 8px 0 #040100, 32px 8px 0 #040100, 36px 8px 0 #040100,
+    8px 12px 0 #040100, 12px 12px 0 #040100, 16px 12px 0 #040100, 20px 12px 0 #040100, 24px 12px 0 #040100, 28px 12px 0 #040100, 32px 12px 0 #040100, 36px 12px 0 #040100, 40px 12px 0 #040100,
+    8px 16px 0 #040100, 12px 16px 0 #040100, 16px 16px 0 #040100, 20px 16px 0 #040100, 24px 16px 0 #040100, 28px 16px 0 #040100, 32px 16px 0 #040100, 36px 16px 0 #040100, 40px 16px 0 #040100,
+    4px 20px 0 #040100, 8px 20px 0 #040100, 12px 20px 0 #040100, 16px 20px 0 #040100, 20px 20px 0 #040100, 24px 20px 0 #040100, 28px 20px 0 #040100, 32px 20px 0 #040100, 36px 20px 0 #040100, 40px 20px 0 #040100, 44px 20px 0 #040100,
+    4px 24px 0 #040100, 8px 24px 0 #040100, 12px 24px 0 #040100, 16px 24px 0 #040100, 20px 24px 0 #040100, 24px 24px 0 #040100, 28px 24px 0 #040100, 32px 24px 0 #040100, 36px 24px 0 #040100, 40px 24px 0 #040100, 44px 24px 0 #040100,
+    4px 28px 0 #040100, 8px 28px 0 #040100, 12px 28px 0 #040100, 16px 28px 0 #040100, 20px 28px 0 #040100, 24px 28px 0 #040100, 28px 28px 0 #040100, 32px 28px 0 #040100, 36px 28px 0 #040100, 40px 28px 0 #040100, 44px 28px 0 #040100,
+    8px 32px 0 #040100, 12px 32px 0 #040100, 16px 32px 0 #040100, 20px 32px 0 #040100, 24px 32px 0 #040100, 28px 32px 0 #040100, 32px 32px 0 #040100, 36px 32px 0 #040100, 40px 32px 0 #040100,
+    8px 36px 0 #040100, 12px 36px 0 #040100, 16px 36px 0 #040100, 20px 36px 0 #040100, 24px 36px 0 #040100, 28px 36px 0 #040100, 32px 36px 0 #040100, 36px 36px 0 #040100, 40px 36px 0 #040100,
+    12px 40px 0 #040100, 16px 40px 0 #040100, 20px 40px 0 #040100, 24px 40px 0 #040100, 28px 40px 0 #040100, 32px 40px 0 #040100, 36px 40px 0 #040100,
+    20px 44px 0 #040100, 24px 44px 0 #040100, 28px 44px 0 #040100;
+}
+
+/* ピクセルアート白石（同形状・ライトグリーン色） */
+#board[data-board-theme="retro"] .stone.white::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 4px;
+  height: 4px;
+  background: transparent;
+  box-shadow:
+    20px 4px 0 #ffffff, 24px 4px 0 #ffffff, 28px 4px 0 #ffffff,
+    12px 8px 0 #ffffff, 16px 8px 0 #ffffff, 20px 8px 0 #ffffff, 24px 8px 0 #ffffff, 28px 8px 0 #ffffff, 32px 8px 0 #ffffff, 36px 8px 0 #ffffff,
+    8px 12px 0 #ffffff, 12px 12px 0 #ffffff, 16px 12px 0 #ffffff, 20px 12px 0 #ffffff, 24px 12px 0 #ffffff, 28px 12px 0 #ffffff, 32px 12px 0 #ffffff, 36px 12px 0 #ffffff, 40px 12px 0 #ffffff,
+    8px 16px 0 #ffffff, 12px 16px 0 #ffffff, 16px 16px 0 #ffffff, 20px 16px 0 #ffffff, 24px 16px 0 #ffffff, 28px 16px 0 #ffffff, 32px 16px 0 #ffffff, 36px 16px 0 #ffffff, 40px 16px 0 #ffffff,
+    4px 20px 0 #ffffff, 8px 20px 0 #ffffff, 12px 20px 0 #ffffff, 16px 20px 0 #ffffff, 20px 20px 0 #ffffff, 24px 20px 0 #ffffff, 28px 20px 0 #ffffff, 32px 20px 0 #ffffff, 36px 20px 0 #ffffff, 40px 20px 0 #ffffff, 44px 20px 0 #ffffff,
+    4px 24px 0 #ffffff, 8px 24px 0 #ffffff, 12px 24px 0 #ffffff, 16px 24px 0 #ffffff, 20px 24px 0 #ffffff, 24px 24px 0 #ffffff, 28px 24px 0 #ffffff, 32px 24px 0 #ffffff, 36px 24px 0 #ffffff, 40px 24px 0 #ffffff, 44px 24px 0 #ffffff,
+    4px 28px 0 #ffffff, 8px 28px 0 #ffffff, 12px 28px 0 #ffffff, 16px 28px 0 #ffffff, 20px 28px 0 #ffffff, 24px 28px 0 #ffffff, 28px 28px 0 #ffffff, 32px 28px 0 #ffffff, 36px 28px 0 #ffffff, 40px 28px 0 #ffffff, 44px 28px 0 #ffffff,
+    8px 32px 0 #ffffff, 12px 32px 0 #ffffff, 16px 32px 0 #ffffff, 20px 32px 0 #ffffff, 24px 32px 0 #ffffff, 28px 32px 0 #ffffff, 32px 32px 0 #ffffff, 36px 32px 0 #ffffff, 40px 32px 0 #ffffff,
+    8px 36px 0 #ffffff, 12px 36px 0 #ffffff, 16px 36px 0 #ffffff, 20px 36px 0 #ffffff, 24px 36px 0 #ffffff, 28px 36px 0 #ffffff, 32px 36px 0 #ffffff, 36px 36px 0 #ffffff, 40px 36px 0 #ffffff,
+    12px 40px 0 #ffffff, 16px 40px 0 #ffffff, 20px 40px 0 #ffffff, 24px 40px 0 #ffffff, 28px 40px 0 #ffffff, 32px 40px 0 #ffffff, 36px 40px 0 #ffffff,
+    20px 44px 0 #ffffff, 24px 44px 0 #ffffff, 28px 44px 0 #ffffff;
+}
 
 /* 使い方モーダルのセクション見出し */
 .usage-section-title {

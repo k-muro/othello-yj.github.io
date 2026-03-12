@@ -864,6 +864,8 @@ function setBoardTheme(name) {
   Object.entries(theme).forEach(([prop, val]) => boardEl.style.setProperty(prop, val));
   // テーマ名を属性として持たせ、CSS でテーマ別スタイルを適用できるようにする
   boardEl.dataset.boardTheme = name || 'green';
+  // ミニ石などボード外の要素でもテーマを参照できるよう body にも伝播する
+  document.body.dataset.boardTheme = name || 'green';
   localStorage.setItem(STORAGE_KEYS.BOARD_THEME, name);
   const sel = document.getElementById('board-theme-select');
   if (sel) sel.value = name;
