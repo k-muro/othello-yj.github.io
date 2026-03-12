@@ -74,7 +74,7 @@ hr {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   /* デフォルト（グリーンテーマ）は緑系の薄いミント */
   color: rgba(150, 205, 175, 0.82);
@@ -233,8 +233,8 @@ hr {
 #board[data-board-theme="dark"] .move-eval,
 #board[data-board-theme="blue"] .move-eval{
   text-shadow:
-    0 0 3px rgba(255,255,255,0.85),
-    0 0 3px rgba(255,255,255,0.85);
+    0 0 1px rgba(255, 255, 255, 0.606),
+    0 0 1px rgba(255,255,255,0.6);
 }
 
 /* デフォルトCSSのリセット: overflow:hidden を解除してグローが外に広がるようにする */
@@ -406,7 +406,7 @@ hr {
 
 /* 黒石: 深淵の闇 + 深海の青い発光 */
 #board[data-board-theme="blue"] .stone.black {
-  background: radial-gradient(circle at 38% 32%, #0e2a4a, #020810);
+  background: radial-gradient(circle at 38% 32%, #071525, #010408);
   box-shadow:
     inset 0 -4px 8px rgba(0, 50, 120, 0.5),
     0 0 10px rgba(20, 90, 180, 0.5),
@@ -483,7 +483,7 @@ hr {
 
 /* ラベル: 刻印されたような銀白色・工業的なボールドフォント */
 #board[data-board-theme="metal"] .board-label {
-  font-family: 'Rajdhani', sans-serif;
+  font-family: 'Zilla Slab', serif;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: rgba(195, 200, 212, 0.9);
@@ -766,7 +766,7 @@ hr {
 
 /* ラベル: 古いゲームボードらしい白抜き文字 */
 #board[data-board-theme="classic"] .board-label {
-  color: rgba(0, 0, 0, 0.75);
+  color: rgba(255, 255, 255, 0.85);
 }
 #board[data-board-theme="classic"] .stone::before { display: none; }
 #board[data-board-theme="classic"] .stone.black {
