@@ -315,57 +315,55 @@ hr {
 /* 黒石→ダークウォールナット、白石→アイボリーメープル */
 #board[data-board-theme="wood"] .stone.black {
   background:
-    /* 木目: 明るい細線 */
+    /* 黒檀風: 密で急角度の細い光沢線 */
     repeating-linear-gradient(
-      var(--grain-angle, 14deg),
+      calc(var(--grain-angle, 14deg) + 18deg),
       rgba(255,255,255,0.00) 0px,
+      rgba(255,255,255,0.08) 1px,
       rgba(255,255,255,0.00) 2px,
-      rgba(255,255,255,0.06) 3px,
-      rgba(255,255,255,0.00) 4px,
-      rgba(255,255,255,0.00) 8px,
-      rgba(255,255,255,0.03) 9px,
-      rgba(255,255,255,0.00) 10px
+      rgba(255,255,255,0.00) 5px,
+      rgba(255,255,255,0.04) 6px,
+      rgba(255,255,255,0.00) 7px
     ),
-    /* 木目: 暗い太線でリング感を出す */
+    /* 黒檀風: 細い暗い影線 */
     repeating-linear-gradient(
-      var(--grain-angle, 14deg),
+      calc(var(--grain-angle, 14deg) + 18deg),
       rgba(0,0,0,0.00) 0px,
-      rgba(0,0,0,0.00) 5px,
-      rgba(0,0,0,0.18) 6px,
+      rgba(0,0,0,0.22) 2px,
+      rgba(0,0,0,0.00) 3px,
       rgba(0,0,0,0.00) 7px,
-      rgba(0,0,0,0.00) 13px,
-      rgba(0,0,0,0.10) 14px,
-      rgba(0,0,0,0.00) 15px
+      rgba(0,0,0,0.12) 8px,
+      rgba(0,0,0,0.00) 9px
     ),
-    /* ベース: 中心に光が当たった艶感 */
-    radial-gradient(circle at 38% 32%, #5a2e10, #1a0800);
+    /* ベース */
+    radial-gradient(circle at 38% 32%, #44220c, #110401);
   box-shadow:
     inset 0 -4px 6px rgba(0,0,0,0.4),
     0 2px 5px rgba(0,0,0,0.45);
 }
 #board[data-board-theme="wood"] .stone.white {
   background:
-    /* 木目: 明るい細線 */
+    /* 楓風: 緩角度の広い光沢帯 */
     repeating-linear-gradient(
-      var(--grain-angle, 14deg),
+      calc(var(--grain-angle, 14deg) - 6deg),
       rgba(255,255,255,0.00) 0px,
-      rgba(255,255,255,0.00) 2px,
-      rgba(255,255,255,0.12) 3px,
-      rgba(255,255,255,0.00) 4px,
+      rgba(255,255,255,0.08) 2px,
+      rgba(255,255,255,0.04) 5px,
       rgba(255,255,255,0.00) 8px,
-      rgba(255,255,255,0.06) 9px,
-      rgba(255,255,255,0.00) 10px
+      rgba(255,255,255,0.00) 16px,
+      rgba(255,255,255,0.03) 18px,
+      rgba(255,255,255,0.00) 20px
     ),
-    /* 木目: 暗い太線でリング感を出す */
+    /* 楓風: 広い間隔の柔らかい木色線 */
     repeating-linear-gradient(
-      var(--grain-angle, 14deg),
+      calc(var(--grain-angle, 14deg) - 6deg),
       rgba(0,0,0,0.00) 0px,
-      rgba(0,0,0,0.00) 5px,
-      rgba(139,90,43,0.12) 6px,
-      rgba(0,0,0,0.00) 7px,
-      rgba(0,0,0,0.00) 13px,
-      rgba(139,90,43,0.07) 14px,
-      rgba(0,0,0,0.00) 15px
+      rgba(139,90,43,0.07) 3px,
+      rgba(139,90,43,0.03) 6px,
+      rgba(0,0,0,0.00) 9px,
+      rgba(0,0,0,0.00) 18px,
+      rgba(139,90,43,0.04) 20px,
+      rgba(0,0,0,0.00) 22px
     ),
     /* ベース */
     radial-gradient(circle at 40% 35%, #fdf3dc, #c9a96e);
@@ -828,11 +826,35 @@ hr {
 /* ===== テーマ別ミニ石 ===== */
 /* wood */
 [data-board-theme="wood"] .stat-card-black .stat-mini-stone {
-  background: radial-gradient(circle at 38% 32%, #5a2e10, #1a0800);
+  background:
+    /* 黒檀風: 密で急角度 */
+    repeating-linear-gradient(
+      32deg,
+      rgba(255,255,255,0.00) 0px, rgba(255,255,255,0.08) 1px, rgba(255,255,255,0.00) 2px,
+      rgba(255,255,255,0.00) 5px, rgba(255,255,255,0.04) 6px, rgba(255,255,255,0.00) 7px
+    ),
+    repeating-linear-gradient(
+      32deg,
+      rgba(0,0,0,0.00) 0px, rgba(0,0,0,0.22) 2px, rgba(0,0,0,0.00) 3px,
+      rgba(0,0,0,0.00) 7px, rgba(0,0,0,0.12) 8px, rgba(0,0,0,0.00) 9px
+    ),
+    radial-gradient(circle at 38% 32%, #44220c, #110401);
   box-shadow: 0 2px 5px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(160,160,160,0.5);
 }
 [data-board-theme="wood"] .stat-card-white .stat-mini-stone {
-  background: radial-gradient(circle at 40% 35%, #fdf3dc, #c9a96e);
+  background:
+    /* 楓風: 緩角度・広い間隔 */
+    repeating-linear-gradient(
+      8deg,
+      rgba(255,255,255,0.00) 0px, rgba(255,255,255,0.18) 2px, rgba(255,255,255,0.08) 5px, rgba(255,255,255,0.00) 8px,
+      rgba(255,255,255,0.00) 16px, rgba(255,255,255,0.08) 18px, rgba(255,255,255,0.00) 20px
+    ),
+    repeating-linear-gradient(
+      8deg,
+      rgba(0,0,0,0.00) 0px, rgba(139,90,43,0.16) 3px, rgba(139,90,43,0.08) 6px, rgba(0,0,0,0.00) 9px,
+      rgba(0,0,0,0.00) 18px, rgba(139,90,43,0.09) 20px, rgba(0,0,0,0.00) 22px
+    ),
+    radial-gradient(circle at 40% 35%, #fdf3dc, #c9a96e);
   box-shadow: 0 2px 4px rgba(0,0,0,0.25);
 }
 /* dark */
@@ -987,6 +1009,8 @@ hr {
   overflow: visible;
   box-shadow: none;
   border: none;
+  /* transform: translateZ(0);
+  image-rendering: pixelated; */
 }
 
 /* ピクセルアート黒石 */
@@ -999,17 +1023,17 @@ hr {
   height: 4px;
   background: transparent;
   box-shadow:
-    20px 4px 0 #040100, 24px 4px 0 #040100, 28px 4px 0 #040100,
-    12px 8px 0 #040100, 16px 8px 0 #040100, 20px 8px 0 #040100, 24px 8px 0 #040100, 28px 8px 0 #040100, 32px 8px 0 #040100, 36px 8px 0 #040100,
-    8px 12px 0 #040100, 12px 12px 0 #040100, 16px 12px 0 #040100, 20px 12px 0 #040100, 24px 12px 0 #040100, 28px 12px 0 #040100, 32px 12px 0 #040100, 36px 12px 0 #040100, 40px 12px 0 #040100,
-    8px 16px 0 #040100, 12px 16px 0 #040100, 16px 16px 0 #040100, 20px 16px 0 #040100, 24px 16px 0 #040100, 28px 16px 0 #040100, 32px 16px 0 #040100, 36px 16px 0 #040100, 40px 16px 0 #040100,
-    4px 20px 0 #040100, 8px 20px 0 #040100, 12px 20px 0 #040100, 16px 20px 0 #040100, 20px 20px 0 #040100, 24px 20px 0 #040100, 28px 20px 0 #040100, 32px 20px 0 #040100, 36px 20px 0 #040100, 40px 20px 0 #040100, 44px 20px 0 #040100,
-    4px 24px 0 #040100, 8px 24px 0 #040100, 12px 24px 0 #040100, 16px 24px 0 #040100, 20px 24px 0 #040100, 24px 24px 0 #040100, 28px 24px 0 #040100, 32px 24px 0 #040100, 36px 24px 0 #040100, 40px 24px 0 #040100, 44px 24px 0 #040100,
-    4px 28px 0 #040100, 8px 28px 0 #040100, 12px 28px 0 #040100, 16px 28px 0 #040100, 20px 28px 0 #040100, 24px 28px 0 #040100, 28px 28px 0 #040100, 32px 28px 0 #040100, 36px 28px 0 #040100, 40px 28px 0 #040100, 44px 28px 0 #040100,
-    8px 32px 0 #040100, 12px 32px 0 #040100, 16px 32px 0 #040100, 20px 32px 0 #040100, 24px 32px 0 #040100, 28px 32px 0 #040100, 32px 32px 0 #040100, 36px 32px 0 #040100, 40px 32px 0 #040100,
-    8px 36px 0 #040100, 12px 36px 0 #040100, 16px 36px 0 #040100, 20px 36px 0 #040100, 24px 36px 0 #040100, 28px 36px 0 #040100, 32px 36px 0 #040100, 36px 36px 0 #040100, 40px 36px 0 #040100,
-    12px 40px 0 #040100, 16px 40px 0 #040100, 20px 40px 0 #040100, 24px 40px 0 #040100, 28px 40px 0 #040100, 32px 40px 0 #040100, 36px 40px 0 #040100,
-    20px 44px 0 #040100, 24px 44px 0 #040100, 28px 44px 0 #040100;
+    20px 4px 0 0.5px #040100, 24px 4px 0 0.5px #040100, 28px 4px 0 0.5px #040100,
+    12px 8px 0 0.5px #040100, 16px 8px 0 0.5px #040100, 20px 8px 0 0.5px #040100, 24px 8px 0 0.5px #040100, 28px 8px 0 0.5px #040100, 32px 8px 0 0.5px #040100, 36px 8px 0 0.5px #040100,
+    8px 12px 0 0.5px #040100, 12px 12px 0 0.5px #040100, 16px 12px 0 0.5px #040100, 20px 12px 0 0.5px #040100, 24px 12px 0 0.5px #040100, 28px 12px 0 0.5px #040100, 32px 12px 0 0.5px #040100, 36px 12px 0 0.5px #040100, 40px 12px 0 0.5px #040100,
+    8px 16px 0 0.5px #040100, 12px 16px 0 0.5px #040100, 16px 16px 0 0.5px #040100, 20px 16px 0 0.5px #040100, 24px 16px 0 0.5px #040100, 28px 16px 0 0.5px #040100, 32px 16px 0 0.5px #040100, 36px 16px 0 0.5px #040100, 40px 16px 0 0.5px #040100,
+    4px 20px 0 0.5px #040100, 8px 20px 0 0.5px #040100, 12px 20px 0 0.5px #040100, 16px 20px 0 0.5px #040100, 20px 20px 0 0.5px #040100, 24px 20px 0 0.5px #040100, 28px 20px 0 0.5px #040100, 32px 20px 0 0.5px #040100, 36px 20px 0 0.5px #040100, 40px 20px 0 0.5px #040100, 44px 20px 0 0.5px #040100,
+    4px 24px 0 0.5px #040100, 8px 24px 0 0.5px #040100, 12px 24px 0 0.5px #040100, 16px 24px 0 0.5px #040100, 20px 24px 0 0.5px #040100, 24px 24px 0 0.5px #040100, 28px 24px 0 0.5px #040100, 32px 24px 0 0.5px #040100, 36px 24px 0 0.5px #040100, 40px 24px 0 0.5px #040100, 44px 24px 0 0.5px #040100,
+    4px 28px 0 0.5px #040100, 8px 28px 0 0.5px #040100, 12px 28px 0 0.5px #040100, 16px 28px 0 0.5px #040100, 20px 28px 0 0.5px #040100, 24px 28px 0 0.5px #040100, 28px 28px 0 0.5px #040100, 32px 28px 0 0.5px #040100, 36px 28px 0 0.5px #040100, 40px 28px 0 0.5px #040100, 44px 28px 0 0.5px #040100,
+    8px 32px 0 0.5px #040100, 12px 32px 0 0.5px #040100, 16px 32px 0 0.5px #040100, 20px 32px 0 0.5px #040100, 24px 32px 0 0.5px #040100, 28px 32px 0 0.5px #040100, 32px 32px 0 0.5px #040100, 36px 32px 0 0.5px #040100, 40px 32px 0 0.5px #040100,
+    8px 36px 0 0.5px #040100, 12px 36px 0 0.5px #040100, 16px 36px 0 0.5px #040100, 20px 36px 0 0.5px #040100, 24px 36px 0 0.5px #040100, 28px 36px 0 0.5px #040100, 32px 36px 0 0.5px #040100, 36px 36px 0 0.5px #040100, 40px 36px 0 0.5px #040100,
+    12px 40px 0 0.5px #040100, 16px 40px 0 0.5px #040100, 20px 40px 0 0.5px #040100, 24px 40px 0 0.5px #040100, 28px 40px 0 0.5px #040100, 32px 40px 0 0.5px #040100, 36px 40px 0 0.5px #040100,
+    20px 44px 0 0.5px #040100, 24px 44px 0 0.5px #040100, 28px 44px 0 0.5px #040100;
 }
 
 /* ピクセルアート白石（同形状・ライトグリーン色） */
@@ -1022,17 +1046,17 @@ hr {
   height: 4px;
   background: transparent;
   box-shadow:
-    20px 4px 0 #ffffff, 24px 4px 0 #ffffff, 28px 4px 0 #ffffff,
-    12px 8px 0 #ffffff, 16px 8px 0 #ffffff, 20px 8px 0 #ffffff, 24px 8px 0 #ffffff, 28px 8px 0 #ffffff, 32px 8px 0 #ffffff, 36px 8px 0 #ffffff,
-    8px 12px 0 #ffffff, 12px 12px 0 #ffffff, 16px 12px 0 #ffffff, 20px 12px 0 #ffffff, 24px 12px 0 #ffffff, 28px 12px 0 #ffffff, 32px 12px 0 #ffffff, 36px 12px 0 #ffffff, 40px 12px 0 #ffffff,
-    8px 16px 0 #ffffff, 12px 16px 0 #ffffff, 16px 16px 0 #ffffff, 20px 16px 0 #ffffff, 24px 16px 0 #ffffff, 28px 16px 0 #ffffff, 32px 16px 0 #ffffff, 36px 16px 0 #ffffff, 40px 16px 0 #ffffff,
-    4px 20px 0 #ffffff, 8px 20px 0 #ffffff, 12px 20px 0 #ffffff, 16px 20px 0 #ffffff, 20px 20px 0 #ffffff, 24px 20px 0 #ffffff, 28px 20px 0 #ffffff, 32px 20px 0 #ffffff, 36px 20px 0 #ffffff, 40px 20px 0 #ffffff, 44px 20px 0 #ffffff,
-    4px 24px 0 #ffffff, 8px 24px 0 #ffffff, 12px 24px 0 #ffffff, 16px 24px 0 #ffffff, 20px 24px 0 #ffffff, 24px 24px 0 #ffffff, 28px 24px 0 #ffffff, 32px 24px 0 #ffffff, 36px 24px 0 #ffffff, 40px 24px 0 #ffffff, 44px 24px 0 #ffffff,
-    4px 28px 0 #ffffff, 8px 28px 0 #ffffff, 12px 28px 0 #ffffff, 16px 28px 0 #ffffff, 20px 28px 0 #ffffff, 24px 28px 0 #ffffff, 28px 28px 0 #ffffff, 32px 28px 0 #ffffff, 36px 28px 0 #ffffff, 40px 28px 0 #ffffff, 44px 28px 0 #ffffff,
-    8px 32px 0 #ffffff, 12px 32px 0 #ffffff, 16px 32px 0 #ffffff, 20px 32px 0 #ffffff, 24px 32px 0 #ffffff, 28px 32px 0 #ffffff, 32px 32px 0 #ffffff, 36px 32px 0 #ffffff, 40px 32px 0 #ffffff,
-    8px 36px 0 #ffffff, 12px 36px 0 #ffffff, 16px 36px 0 #ffffff, 20px 36px 0 #ffffff, 24px 36px 0 #ffffff, 28px 36px 0 #ffffff, 32px 36px 0 #ffffff, 36px 36px 0 #ffffff, 40px 36px 0 #ffffff,
-    12px 40px 0 #ffffff, 16px 40px 0 #ffffff, 20px 40px 0 #ffffff, 24px 40px 0 #ffffff, 28px 40px 0 #ffffff, 32px 40px 0 #ffffff, 36px 40px 0 #ffffff,
-    20px 44px 0 #ffffff, 24px 44px 0 #ffffff, 28px 44px 0 #ffffff;
+    20px 4px 0 0.5px #ffffff, 24px 4px 0 0.5px #ffffff, 28px 4px 0 0.5px #ffffff,
+    12px 8px 0 0.5px #ffffff, 16px 8px 0 0.5px #ffffff, 20px 8px 0 0.5px #ffffff, 24px 8px 0 0.5px #ffffff, 28px 8px 0 0.5px #ffffff, 32px 8px 0 0.5px #ffffff, 36px 8px 0 0.5px #ffffff,
+    8px 12px 0 0.5px #ffffff, 12px 12px 0 0.5px #ffffff, 16px 12px 0 0.5px #ffffff, 20px 12px 0 0.5px #ffffff, 24px 12px 0 0.5px #ffffff, 28px 12px 0 0.5px #ffffff, 32px 12px 0 0.5px #ffffff, 36px 12px 0 0.5px #ffffff, 40px 12px 0 0.5px #ffffff,
+    8px 16px 0 0.5px #ffffff, 12px 16px 0 0.5px #ffffff, 16px 16px 0 0.5px #ffffff, 20px 16px 0 0.5px #ffffff, 24px 16px 0 0.5px #ffffff, 28px 16px 0 0.5px #ffffff, 32px 16px 0 0.5px #ffffff, 36px 16px 0 0.5px #ffffff, 40px 16px 0 0.5px #ffffff,
+    4px 20px 0 0.5px #ffffff, 8px 20px 0 0.5px #ffffff, 12px 20px 0 0.5px #ffffff, 16px 20px 0 0.5px #ffffff, 20px 20px 0 0.5px #ffffff, 24px 20px 0 0.5px #ffffff, 28px 20px 0 0.5px #ffffff, 32px 20px 0 0.5px #ffffff, 36px 20px 0 0.5px #ffffff, 40px 20px 0 0.5px #ffffff, 44px 20px 0 0.5px #ffffff,
+    4px 24px 0 0.5px #ffffff, 8px 24px 0 0.5px #ffffff, 12px 24px 0 0.5px #ffffff, 16px 24px 0 0.5px #ffffff, 20px 24px 0 0.5px #ffffff, 24px 24px 0 0.5px #ffffff, 28px 24px 0 0.5px #ffffff, 32px 24px 0 0.5px #ffffff, 36px 24px 0 0.5px #ffffff, 40px 24px 0 0.5px #ffffff, 44px 24px 0 0.5px #ffffff,
+    4px 28px 0 0.5px #ffffff, 8px 28px 0 0.5px #ffffff, 12px 28px 0 0.5px #ffffff, 16px 28px 0 0.5px #ffffff, 20px 28px 0 0.5px #ffffff, 24px 28px 0 0.5px #ffffff, 28px 28px 0 0.5px #ffffff, 32px 28px 0 0.5px #ffffff, 36px 28px 0 0.5px #ffffff, 40px 28px 0 0.5px #ffffff, 44px 28px 0 0.5px #ffffff,
+    8px 32px 0 0.5px #ffffff, 12px 32px 0 0.5px #ffffff, 16px 32px 0 0.5px #ffffff, 20px 32px 0 0.5px #ffffff, 24px 32px 0 0.5px #ffffff, 28px 32px 0 0.5px #ffffff, 32px 32px 0 0.5px #ffffff, 36px 32px 0 0.5px #ffffff, 40px 32px 0 0.5px #ffffff,
+    8px 36px 0 0.5px #ffffff, 12px 36px 0 0.5px #ffffff, 16px 36px 0 0.5px #ffffff, 20px 36px 0 0.5px #ffffff, 24px 36px 0 0.5px #ffffff, 28px 36px 0 0.5px #ffffff, 32px 36px 0 0.5px #ffffff, 36px 36px 0 0.5px #ffffff, 40px 36px 0 0.5px #ffffff,
+    12px 40px 0 0.5px #ffffff, 16px 40px 0 0.5px #ffffff, 20px 40px 0 0.5px #ffffff, 24px 40px 0 0.5px #ffffff, 28px 40px 0 0.5px #ffffff, 32px 40px 0 0.5px #ffffff, 36px 40px 0 0.5px #ffffff,
+    20px 44px 0 0.5px #ffffff, 24px 44px 0 0.5px #ffffff, 28px 44px 0 0.5px #ffffff;
 }
 
 /* 使い方モーダルのセクション見出し */
