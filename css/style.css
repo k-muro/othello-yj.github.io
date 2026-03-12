@@ -23,7 +23,7 @@
 
 /* ===== BASE ===== */
 body {
-  font-family: 'M PLUS 1', sans-serif;
+  font-family: system-ui, sans-serif;
   font-weight: 400;
   min-height: 100vh;
   background: var(--body-bg);
@@ -158,7 +158,7 @@ hr {
   line-height: 1;
   pointer-events: none;
   z-index: 1;
-  font-family: 'M PLUS 1', sans-serif;
+  font-family: system-ui, sans-serif;
 }
 
 .stone-num-by-black { color: #000; text-shadow: 0 0 3px #fff, 0 0 3px #fff; }
@@ -174,7 +174,7 @@ hr {
   line-height: 1;
   pointer-events: none;
   z-index: 2;
-  font-family: 'M PLUS 1', sans-serif;
+  font-family: system-ui, sans-serif;
   text-shadow: none;
 }
 
@@ -202,7 +202,7 @@ hr {
 
 /* ラベル: 魔力が滲む紫の光・ドラマチックなローマン体 */
 #board[data-board-theme="dark"] .board-label {
-  font-family: 'Cinzel', serif;
+  font-family: Georgia, 'Times New Roman', serif;
   font-weight: 700;
   color: rgba(190, 110, 255, 0.85);
   text-shadow: 0 0 8px rgba(160, 60, 255, 0.6);
@@ -451,7 +451,7 @@ hr {
 
 /* ラベル: 深海の水面から差し込む青い光・幾何学的な未来的フォント */
 #board[data-board-theme="blue"] .board-label {
-  font-family: 'Exo 2', sans-serif;
+  font-family: 'Segoe UI', Arial, sans-serif;
   font-weight: 500;
   letter-spacing: 0.06em;
   color: rgba(110, 195, 240, 0.85);
@@ -501,7 +501,7 @@ hr {
 
 /* ラベル: 蒔絵の金箔のような輝き・格調あるローマン体 */
 #board[data-board-theme="urushi"] .board-label {
-  font-family: 'Cinzel', serif;
+  font-family: Georgia, 'Times New Roman', serif;
   font-weight: 400;
   letter-spacing: 0.04em;
   color: rgba(212, 175, 55, 0.9);
@@ -556,7 +556,7 @@ hr {
 
 /* ラベル: 刻印されたような銀白色・工業的なボールドフォント */
 #board[data-board-theme="metal"] .board-label {
-  font-family: 'Zilla Slab', serif;
+  font-family: Georgia, serif;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: rgba(195, 200, 212, 0.9);
