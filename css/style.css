@@ -965,7 +965,7 @@ hr {
 
 /* ===== SKY THEME ===== */
 /* ヒント点: 明るい盤面でも見えるよう濃い紺色 */
-#board[data-board-theme="sky"] .board-label { color: rgba(0, 0, 0, 0.75); }
+#board[data-board-theme="sky"] .board-label { color: rgba(255, 255, 255, 0.85); }
 #board[data-board-theme="sky"] .hint-black { background: rgba(1, 60, 120, 0.85); }
 #board[data-board-theme="sky"] .hint-white { background: rgba(1, 60, 120, 0.35); }
 

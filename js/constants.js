@@ -31,7 +31,7 @@ const BOARD_THEMES = {
   classic: { '--board-bg': '#000000', '--cell-bg': '#2e7a3e', '--cell-hover-bg': '#3a9050' },
   urushi:  { '--board-bg': '#120605', '--cell-bg': '#b02010', '--cell-hover-bg': '#cc2a14' },
   metal:   { '--board-bg': '#1c1c1c', '--cell-bg': '#a0a0a0', '--cell-hover-bg': '#bcbcbc' },
-  sky:     { '--board-bg': '#046eab', '--cell-bg': '#5aa6c9ff', '--cell-hover-bg': '#b3e5fc' },
+  sky:     { '--board-bg': '#023d60', '--cell-bg': '#5aa6c9ff', '--cell-hover-bg': '#b3e5fc' },
   retro:   { '--board-bg': '#1a1a1a', '--cell-bg': '#888888', '--cell-hover-bg': '#a0a0a0' },
 };
 
