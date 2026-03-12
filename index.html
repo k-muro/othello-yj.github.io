@@ -40,7 +40,8 @@
       <h1 class="mb-0"><a href="https://othello-yj.wplaceoki.com/" class="header-title-link">Yajuオセロ盤面検討ツール</a></h1>
       <div class="d-flex gap-1">
         <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#usage-modal" title="使い方">?</button>
-        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#kb-help-modal" title="キーボードショートカット">⌨</button>
+        <button class="btn btn-outline-secondary btn-sm d-none d-sm-inline-flex" data-bs-toggle="modal" data-bs-target="#kb-help-modal" title="キーボードショートカット">⌨</button>
+        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#board-theme-modal" title="ボードテーマ">🎨</button>
         <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleTheme()"></button>
       </div>
     </div>
@@ -218,18 +219,6 @@
 
       <!-- 表示設定 -->
       <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mt-3">
-        <select id="board-theme-select" class="form-select form-select-sm w-auto" onchange="setBoardTheme(this.value)">
-          <option value="green">グリーン</option>
-          <option value="classic">クラシック</option>
-          <option value="sky">スカイ</option>
-          <option value="sunset">サンセット</option>
-          <option value="wood">ウッド</option>
-          <option value="blue">ダークブルー</option>
-          <option value="dark">ダーク</option>
-          <option value="urushi">漆</option>
-          <option value="metal">メタリック</option>
-          <option value="retro">レトロ</option>
-        </select>
         <button id="num-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleMoveNumbers()">着手順を表示</button>
         <button id="stone-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleStones()">野獣先輩モード</button>
       </div>
@@ -287,6 +276,14 @@ function updateToggleBtn(theme) {
 updateToggleBtn(document.documentElement.getAttribute('data-bs-theme'));
 window.addEventListener('resize', () => {
   updateToggleBtn(document.documentElement.getAttribute('data-bs-theme'));
+});
+
+// テーマモーダルを開いたとき、現在のテーマカードをハイライト
+document.getElementById('board-theme-modal').addEventListener('show.bs.modal', function() {
+  const current = document.getElementById('board').dataset.boardTheme || 'green';
+  document.querySelectorAll('.board-theme-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.theme === current);
+  });
 });
 
 function toggleStones() {
@@ -364,6 +361,62 @@ window._aiLoadTimer = setTimeout(function() {
         <h6 class="usage-section-title">URL 共有</h6>
         <p>「URL」ボタンで現在の局面・プレイヤー名を含む共有リンクをコピーできます。</p>
 
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ボードテーマ選択モーダル -->
+<div class="modal fade" id="board-theme-modal" tabindex="-1" aria-labelledby="board-theme-modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h6 class="modal-title mb-0" id="board-theme-modal-title">🎨 ボードテーマ</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+      </div>
+      <div class="modal-body py-3">
+        <div class="board-theme-grid">
+          <button class="board-theme-card" data-theme="green"   data-bs-dismiss="modal" onclick="setBoardTheme('green')">
+            <div class="board-theme-swatch" style="background:#2d6a4f; box-shadow:0 0 0 3px #1b3a2d;"></div>
+            <span>グリーン</span>
+          </button>
+          <button class="board-theme-card" data-theme="classic" data-bs-dismiss="modal" onclick="setBoardTheme('classic')">
+            <div class="board-theme-swatch" style="background:#2e7a3e; box-shadow:0 0 0 3px #000000;"></div>
+            <span>クラシック</span>
+          </button>
+          <button class="board-theme-card" data-theme="sky"     data-bs-dismiss="modal" onclick="setBoardTheme('sky')">
+            <div class="board-theme-swatch" style="background:#5aa6c9; box-shadow:0 0 0 3px #034da2;"></div>
+            <span>スカイ</span>
+          </button>
+          <button class="board-theme-card" data-theme="rose"    data-bs-dismiss="modal" onclick="setBoardTheme('rose')">
+            <div class="board-theme-swatch" style="background:#c95a5a; box-shadow:0 0 0 3px #6d0e0e;"></div>
+            <span>ローズ</span>
+          </button>
+          <button class="board-theme-card" data-theme="wood"    data-bs-dismiss="modal" onclick="setBoardTheme('wood')">
+            <div class="board-theme-swatch" style="background:#8b6343; box-shadow:0 0 0 3px #613506;"></div>
+            <span>ウッド</span>
+          </button>
+          <button class="board-theme-card" data-theme="blue"    data-bs-dismiss="modal" onclick="setBoardTheme('blue')">
+            <div class="board-theme-swatch" style="background:#2e6aaa; box-shadow:0 0 0 3px #060e18;"></div>
+            <span>ダークブルー</span>
+          </button>
+          <button class="board-theme-card" data-theme="dark"    data-bs-dismiss="modal" onclick="setBoardTheme('dark')">
+            <div class="board-theme-swatch" style="background:#08000f; box-shadow:0 0 0 3px #5a0090;"></div>
+            <span>ダーク</span>
+          </button>
+          <button class="board-theme-card" data-theme="urushi"  data-bs-dismiss="modal" onclick="setBoardTheme('urushi')">
+            <div class="board-theme-swatch" style="background:#b02010; box-shadow:0 0 0 3px #120605;"></div>
+            <span>漆</span>
+          </button>
+          <button class="board-theme-card" data-theme="metal"   data-bs-dismiss="modal" onclick="setBoardTheme('metal')">
+            <div class="board-theme-swatch" style="background:#a0a0a0; box-shadow:0 0 0 3px #1c1c1c;"></div>
+            <span>メタリック</span>
+          </button>
+          <button class="board-theme-card" data-theme="retro"   data-bs-dismiss="modal" onclick="setBoardTheme('retro')">
+            <div class="board-theme-swatch" style="background:#888888; box-shadow:0 0 0 3px #1a1a1a;"></div>
+            <span>レトロ</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

@@ -963,17 +963,45 @@ hr {
 
 .copyright { font-size: 0.72rem; }
 
+/* ===== BOARD THEME MODAL ===== */
+.board-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.board-theme-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.board-theme-card:hover { background: rgba(128,128,128,0.12); }
+.board-theme-card.active { border-color: var(--bs-primary); }
+.board-theme-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+}
+
 /* ===== SKY THEME ===== */
 /* ヒント点: 明るい盤面でも見えるよう濃い紺色 */
 #board[data-board-theme="sky"] .board-label { color: rgba(255, 255, 255, 0.85); }
 #board[data-board-theme="sky"] .hint-black { background: rgba(1, 60, 120, 0.85); }
 #board[data-board-theme="sky"] .hint-white { background: rgba(1, 60, 120, 0.35); }
 
-/* ===== SUNSET THEME ===== */
-/* スカイのオレンジ色版。明るいセルに合わせてラベルは白、ヒントは濃いオレンジ */
-#board[data-board-theme="sunset"] .board-label { color: rgba(255, 255, 255, 0.85); }
-#board[data-board-theme="sunset"] .hint-black { background: rgba(100, 40, 0, 0.85); }
-#board[data-board-theme="sunset"] .hint-white { background: rgba(100, 40, 0, 0.35); }
+/* ===== ROSE THEME ===== */
+/* スカイの薄赤色版。明るいセルに合わせてラベルは白、ヒントは濃い赤 */
+#board[data-board-theme="rose"] .board-label { color: rgba(255, 255, 255, 0.85); }
+#board[data-board-theme="rose"] .hint-black { background: rgba(100, 10, 10, 0.85); }
+#board[data-board-theme="rose"] .hint-white { background: rgba(100, 10, 10, 0.35); }
 
 /* ===== THEME: RETRO ===== */
 

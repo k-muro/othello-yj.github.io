@@ -867,8 +867,6 @@ function setBoardTheme(name) {
   // ミニ石などボード外の要素でもテーマを参照できるよう body にも伝播する
   document.body.dataset.boardTheme = name || 'green';
   localStorage.setItem(STORAGE_KEYS.BOARD_THEME, name);
-  const sel = document.getElementById('board-theme-select');
-  if (sel) sel.value = name;
 }
 
 // 起動時: 保存済みテーマを適用
