@@ -969,6 +969,12 @@ hr {
 #board[data-board-theme="sky"] .hint-black { background: rgba(1, 60, 120, 0.85); }
 #board[data-board-theme="sky"] .hint-white { background: rgba(1, 60, 120, 0.35); }
 
+/* ===== SUNSET THEME ===== */
+/* スカイのオレンジ色版。明るいセルに合わせてラベルは白、ヒントは濃いオレンジ */
+#board[data-board-theme="sunset"] .board-label { color: rgba(255, 255, 255, 0.85); }
+#board[data-board-theme="sunset"] .hint-black { background: rgba(100, 40, 0, 0.85); }
+#board[data-board-theme="sunset"] .hint-white { background: rgba(100, 40, 0, 0.35); }
+
 /* ===== THEME: RETRO ===== */
 
 /* 格子線を4px幅に・角を直角に */
