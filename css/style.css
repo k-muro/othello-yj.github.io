@@ -1411,6 +1411,9 @@ hr {
   .board-label { font-size: 10px; }
   .stone       { width: 28px; height: 28px; }
   .hint        { width: 9px; height: 9px; }
+  /* レトロ: ピクセルアート(46px)を石サイズ(28px)に合わせて縮小 */
+  #board[data-board-theme="retro"] .stone.black::before,
+  #board[data-board-theme="retro"] .stone.white::before { transform: scale(0.609); transform-origin: 0 0; }
   .stone-num   { font-size: 11px; }
   .move-eval   { font-size: 8px; bottom: 2px; right: 2px; }
 
@@ -1473,5 +1476,8 @@ hr {
 
   .stone     { width: 24px; height: 24px; }
   .hint      { width: 8px; height: 8px; }
+  /* レトロ: ピクセルアート(46px)を石サイズ(24px)に合わせて縮小 */
+  #board[data-board-theme="retro"] .stone.black::before,
+  #board[data-board-theme="retro"] .stone.white::before { transform: scale(0.522); transform-origin: 0 0; }
   .stone-num { font-size: 9px; }
 }
