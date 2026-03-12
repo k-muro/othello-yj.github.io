@@ -15,6 +15,7 @@ function toggleMistakeList() {
   showMistakeList = !showMistakeList;
   const btn = document.getElementById('mistake-analyze-btn');
   if (btn) btn.textContent = showMistakeList ? '悪手を隠す' : '悪手表示';
+  if (showMistakeList) computeMistakes(); // ONにした瞬間に解析開始
   renderMistakeList();
   updateScoreGraph();
 }
@@ -23,6 +24,7 @@ function toggleMistakeList() {
 // 1回の setTimeout で1手ずつ処理し UI をブロックしない
 function computeMistakes() {
   if (!egaroucidReady) return;
+  if (!showMistakeList) return;
   const kifuKey = moveHistory.map(m => `${m.x},${m.y}`).join('|');
   if (kifuKey === mistakeCacheKifu && mistakeCache.length > 0) return; // 同一棋譜はスキップ
   // 別の分岐で計算済みなら即座に適用
