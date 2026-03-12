@@ -274,6 +274,79 @@ hr {
 }
 
 /* ===== THEME: WOOD ===== */
+/* 木目角度: ((x*37 + y*53) % 170 + 5)deg を全64マス分プリコンパイル */
+/* y=0 */
+#board[data-board-theme="wood"] .cell[data-pos="0,0"] .stone { --grain-angle:   5deg; }
+#board[data-board-theme="wood"] .cell[data-pos="1,0"] .stone { --grain-angle:  42deg; }
+#board[data-board-theme="wood"] .cell[data-pos="2,0"] .stone { --grain-angle:  79deg; }
+#board[data-board-theme="wood"] .cell[data-pos="3,0"] .stone { --grain-angle: 116deg; }
+#board[data-board-theme="wood"] .cell[data-pos="4,0"] .stone { --grain-angle: 153deg; }
+#board[data-board-theme="wood"] .cell[data-pos="5,0"] .stone { --grain-angle:  20deg; }
+#board[data-board-theme="wood"] .cell[data-pos="6,0"] .stone { --grain-angle:  57deg; }
+#board[data-board-theme="wood"] .cell[data-pos="7,0"] .stone { --grain-angle:  94deg; }
+/* y=1 */
+#board[data-board-theme="wood"] .cell[data-pos="0,1"] .stone { --grain-angle:  58deg; }
+#board[data-board-theme="wood"] .cell[data-pos="1,1"] .stone { --grain-angle:  95deg; }
+#board[data-board-theme="wood"] .cell[data-pos="2,1"] .stone { --grain-angle: 132deg; }
+#board[data-board-theme="wood"] .cell[data-pos="3,1"] .stone { --grain-angle: 169deg; }
+#board[data-board-theme="wood"] .cell[data-pos="4,1"] .stone { --grain-angle:  36deg; }
+#board[data-board-theme="wood"] .cell[data-pos="5,1"] .stone { --grain-angle:  73deg; }
+#board[data-board-theme="wood"] .cell[data-pos="6,1"] .stone { --grain-angle: 110deg; }
+#board[data-board-theme="wood"] .cell[data-pos="7,1"] .stone { --grain-angle: 147deg; }
+/* y=2 */
+#board[data-board-theme="wood"] .cell[data-pos="0,2"] .stone { --grain-angle: 111deg; }
+#board[data-board-theme="wood"] .cell[data-pos="1,2"] .stone { --grain-angle: 148deg; }
+#board[data-board-theme="wood"] .cell[data-pos="2,2"] .stone { --grain-angle:  15deg; }
+#board[data-board-theme="wood"] .cell[data-pos="3,2"] .stone { --grain-angle:  52deg; }
+#board[data-board-theme="wood"] .cell[data-pos="4,2"] .stone { --grain-angle:  89deg; }
+#board[data-board-theme="wood"] .cell[data-pos="5,2"] .stone { --grain-angle: 126deg; }
+#board[data-board-theme="wood"] .cell[data-pos="6,2"] .stone { --grain-angle: 163deg; }
+#board[data-board-theme="wood"] .cell[data-pos="7,2"] .stone { --grain-angle:  30deg; }
+/* y=3 */
+#board[data-board-theme="wood"] .cell[data-pos="0,3"] .stone { --grain-angle: 164deg; }
+#board[data-board-theme="wood"] .cell[data-pos="1,3"] .stone { --grain-angle:  31deg; }
+#board[data-board-theme="wood"] .cell[data-pos="2,3"] .stone { --grain-angle:  68deg; }
+#board[data-board-theme="wood"] .cell[data-pos="3,3"] .stone { --grain-angle: 105deg; }
+#board[data-board-theme="wood"] .cell[data-pos="4,3"] .stone { --grain-angle: 142deg; }
+#board[data-board-theme="wood"] .cell[data-pos="5,3"] .stone { --grain-angle:   9deg; }
+#board[data-board-theme="wood"] .cell[data-pos="6,3"] .stone { --grain-angle:  46deg; }
+#board[data-board-theme="wood"] .cell[data-pos="7,3"] .stone { --grain-angle:  83deg; }
+/* y=4 */
+#board[data-board-theme="wood"] .cell[data-pos="0,4"] .stone { --grain-angle:  47deg; }
+#board[data-board-theme="wood"] .cell[data-pos="1,4"] .stone { --grain-angle:  84deg; }
+#board[data-board-theme="wood"] .cell[data-pos="2,4"] .stone { --grain-angle: 121deg; }
+#board[data-board-theme="wood"] .cell[data-pos="3,4"] .stone { --grain-angle: 158deg; }
+#board[data-board-theme="wood"] .cell[data-pos="4,4"] .stone { --grain-angle:  25deg; }
+#board[data-board-theme="wood"] .cell[data-pos="5,4"] .stone { --grain-angle:  62deg; }
+#board[data-board-theme="wood"] .cell[data-pos="6,4"] .stone { --grain-angle:  99deg; }
+#board[data-board-theme="wood"] .cell[data-pos="7,4"] .stone { --grain-angle: 136deg; }
+/* y=5 */
+#board[data-board-theme="wood"] .cell[data-pos="0,5"] .stone { --grain-angle: 100deg; }
+#board[data-board-theme="wood"] .cell[data-pos="1,5"] .stone { --grain-angle: 137deg; }
+#board[data-board-theme="wood"] .cell[data-pos="2,5"] .stone { --grain-angle: 174deg; }
+#board[data-board-theme="wood"] .cell[data-pos="3,5"] .stone { --grain-angle:  41deg; }
+#board[data-board-theme="wood"] .cell[data-pos="4,5"] .stone { --grain-angle:  78deg; }
+#board[data-board-theme="wood"] .cell[data-pos="5,5"] .stone { --grain-angle: 115deg; }
+#board[data-board-theme="wood"] .cell[data-pos="6,5"] .stone { --grain-angle: 152deg; }
+#board[data-board-theme="wood"] .cell[data-pos="7,5"] .stone { --grain-angle:  19deg; }
+/* y=6 */
+#board[data-board-theme="wood"] .cell[data-pos="0,6"] .stone { --grain-angle: 153deg; }
+#board[data-board-theme="wood"] .cell[data-pos="1,6"] .stone { --grain-angle:  20deg; }
+#board[data-board-theme="wood"] .cell[data-pos="2,6"] .stone { --grain-angle:  57deg; }
+#board[data-board-theme="wood"] .cell[data-pos="3,6"] .stone { --grain-angle:  94deg; }
+#board[data-board-theme="wood"] .cell[data-pos="4,6"] .stone { --grain-angle: 131deg; }
+#board[data-board-theme="wood"] .cell[data-pos="5,6"] .stone { --grain-angle: 168deg; }
+#board[data-board-theme="wood"] .cell[data-pos="6,6"] .stone { --grain-angle:  35deg; }
+#board[data-board-theme="wood"] .cell[data-pos="7,6"] .stone { --grain-angle:  72deg; }
+/* y=7 */
+#board[data-board-theme="wood"] .cell[data-pos="0,7"] .stone { --grain-angle:  36deg; }
+#board[data-board-theme="wood"] .cell[data-pos="1,7"] .stone { --grain-angle:  73deg; }
+#board[data-board-theme="wood"] .cell[data-pos="2,7"] .stone { --grain-angle: 110deg; }
+#board[data-board-theme="wood"] .cell[data-pos="3,7"] .stone { --grain-angle: 147deg; }
+#board[data-board-theme="wood"] .cell[data-pos="4,7"] .stone { --grain-angle:  14deg; }
+#board[data-board-theme="wood"] .cell[data-pos="5,7"] .stone { --grain-angle:  51deg; }
+#board[data-board-theme="wood"] .cell[data-pos="6,7"] .stone { --grain-angle:  88deg; }
+#board[data-board-theme="wood"] .cell[data-pos="7,7"] .stone { --grain-angle: 125deg; }
 /* ウッドテーマ: background-attachment:fixed でビューポート基準のグラデーションを共有し、
    全セルにまたがる統一した木目を表現（格子線・外周はフラットな木色のまま）*/
 
@@ -1290,6 +1363,10 @@ hr {
 .name-input   { width: 90px; }
 
 /* ===== DARK THEME ===== */
+/* ウッド・レトロはダークモードで背景と同化しやすいためアウトラインでフチ取り */
+[data-bs-theme="dark"] #board[data-board-theme="wood"],[data-bs-theme="dark"] #board[data-board-theme="classic"] { outline: 2px solid rgba(160, 160, 160, 0.5); }
+[data-bs-theme="dark"] #board[data-board-theme="retro"] { outline: 2px solid rgba(160, 160, 160, 0.5); }
+
 [data-bs-theme="dark"] body              { background: #0d1117; }
 [data-bs-theme="dark"] .app-card        { background: #161b22; border-color: #30363d; }
 [data-bs-theme="dark"] .board-label     { color: #c9d1d9; }
