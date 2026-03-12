@@ -231,7 +231,6 @@ hr {
 
 /* 評価値: 暗い背景で読めるよう白いアウトライン */
 #board[data-board-theme="dark"] .move-eval,
-#board[data-board-theme="urushi"] .move-eval ,
 #board[data-board-theme="blue"] .move-eval{
   text-shadow:
     0 0 3px rgba(255,255,255,0.85),
@@ -244,16 +243,16 @@ hr {
 }
 #board[data-board-theme="dark"] .stone::before { display: none; }
 
-/* 黒石: 深紫の闇 + 多重グロー */
+/* 黒石: 深い暗紫 + 重厚なグロー */
 #board[data-board-theme="dark"] .stone.black {
-  background: radial-gradient(circle at 40% 30%, #2a0a3a, #0a0010);
+  background: radial-gradient(circle at 40% 30%, #1a0430, #050008);
   box-shadow:
-    inset 0 -4px 8px rgba(140, 0, 255, 0.4),
-    0 0 8px  rgba(180, 80, 255, 1),
-    0 0 20px rgba(140, 0, 255, 0.9),
-    0 0 45px rgba(100, 0, 200, 0.65),
-    0 0 80px rgba(80, 0, 160, 0.35);
-  filter: drop-shadow(0 0 6px rgba(160, 60, 255, 1));
+    inset 0 -4px 8px rgba(80, 0, 180, 0.5),
+    0 0 8px  rgba(100, 20, 200, 0.9),
+    0 0 20px rgba(70, 0, 160, 0.8),
+    0 0 45px rgba(50, 0, 120, 0.55),
+    0 0 80px rgba(30, 0, 80, 0.3);
+  filter: drop-shadow(0 0 6px rgba(90, 20, 200, 0.9));
 }
 
 /* 白石: 霊体カラー（淡紫→紫→漆黒の虚無） */
@@ -315,13 +314,61 @@ hr {
 
 /* 黒石→ダークウォールナット、白石→アイボリーメープル */
 #board[data-board-theme="wood"] .stone.black {
-  background: radial-gradient(circle at 40% 35%, #5c3318, #1a0900);
+  background:
+    /* 木目: 明るい細線 */
+    repeating-linear-gradient(
+      var(--grain-angle, 14deg),
+      rgba(255,255,255,0.00) 0px,
+      rgba(255,255,255,0.00) 2px,
+      rgba(255,255,255,0.06) 3px,
+      rgba(255,255,255,0.00) 4px,
+      rgba(255,255,255,0.00) 8px,
+      rgba(255,255,255,0.03) 9px,
+      rgba(255,255,255,0.00) 10px
+    ),
+    /* 木目: 暗い太線でリング感を出す */
+    repeating-linear-gradient(
+      var(--grain-angle, 14deg),
+      rgba(0,0,0,0.00) 0px,
+      rgba(0,0,0,0.00) 5px,
+      rgba(0,0,0,0.18) 6px,
+      rgba(0,0,0,0.00) 7px,
+      rgba(0,0,0,0.00) 13px,
+      rgba(0,0,0,0.10) 14px,
+      rgba(0,0,0,0.00) 15px
+    ),
+    /* ベース: 中心に光が当たった艶感 */
+    radial-gradient(circle at 38% 32%, #5a2e10, #1a0800);
   box-shadow:
     inset 0 -4px 6px rgba(0,0,0,0.4),
     0 2px 5px rgba(0,0,0,0.45);
 }
 #board[data-board-theme="wood"] .stone.white {
-  background: radial-gradient(circle at 40% 35%, #fdf3dc, #c9a96e);
+  background:
+    /* 木目: 明るい細線 */
+    repeating-linear-gradient(
+      var(--grain-angle, 14deg),
+      rgba(255,255,255,0.00) 0px,
+      rgba(255,255,255,0.00) 2px,
+      rgba(255,255,255,0.12) 3px,
+      rgba(255,255,255,0.00) 4px,
+      rgba(255,255,255,0.00) 8px,
+      rgba(255,255,255,0.06) 9px,
+      rgba(255,255,255,0.00) 10px
+    ),
+    /* 木目: 暗い太線でリング感を出す */
+    repeating-linear-gradient(
+      var(--grain-angle, 14deg),
+      rgba(0,0,0,0.00) 0px,
+      rgba(0,0,0,0.00) 5px,
+      rgba(139,90,43,0.12) 6px,
+      rgba(0,0,0,0.00) 7px,
+      rgba(0,0,0,0.00) 13px,
+      rgba(139,90,43,0.07) 14px,
+      rgba(0,0,0,0.00) 15px
+    ),
+    /* ベース */
+    radial-gradient(circle at 40% 35%, #fdf3dc, #c9a96e);
   border: 1px solid rgba(140, 85, 20, 0.35);
   box-shadow:
     inset 0 -4px 6px rgba(0,0,0,0.15),
@@ -418,12 +465,9 @@ hr {
 /* 黒石: 漆黒の深い艶 + 金の蒔絵縁 */
 #board[data-board-theme="urushi"] .stone.black {
   background: radial-gradient(circle at 33% 27%, #3d0d0d 0%, #080000 70%);
-  border: 1.5px solid rgba(212, 175, 55, 0.8);
   box-shadow:
     inset 0 -5px 10px rgba(0, 0, 0, 0.75),
-    0 0 0 1px rgba(155, 110, 15, 0.4),
-    0 4px 12px rgba(0, 0, 0, 0.8),
-    0 0 16px rgba(210, 160, 30, 0.3);
+    0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* 白石: 象牙〜飴色。漆器の上に置かれた骨牌のような質感 */
@@ -450,28 +494,28 @@ hr {
     0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 
-/* 盤面: ダークグラデーション + クロームの多重リング */
+/* 盤面: スチールグレーグラデーション + クロームの多重リング */
 #board[data-board-theme="metal"] {
   position: relative;
   border-radius: 8px;
   overflow: hidden;
-  /* ギャップ（格子線）を暗くしてセルとのコントラストを確保 */
+  /* ギャップ（格子線）を暗いグレーに */
   background: linear-gradient(
     180deg,
-    #252525 0%,
-    #141414 18%,
-    #1e1e1e 36%,
-    #111111 52%,
-    #0a0a0a 76%,
-    #181818 100%
+    #2e2e2e 0%,
+    #222222 18%,
+    #282828 36%,
+    #1e1e1e 52%,
+    #181818 76%,
+    #252525 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.78),
-    0 0 0 2px rgba(190,190,190,0.42),
-    0 0 0 4px rgba(36,36,36,0.98),
-    0 0 0 7px rgba(10,10,10,1),
-    0 0 0 8px rgba(255,255,255,0.14),
-    0 18px 40px rgba(0,0,0,0.72);
+    0 0 0 1px rgba(255,255,255,0.82),
+    0 0 0 2px rgba(200,200,200,0.50),
+    0 0 0 4px rgba(90,90,90,0.95),
+    0 0 0 7px rgba(50,50,50,1),
+    0 0 0 8px rgba(255,255,255,0.18),
+    0 18px 40px rgba(0,0,0,0.55);
 }
 
 /* 盤面全体に"金属反射"を重ねる */
@@ -724,7 +768,7 @@ hr {
 
 /* ラベル: 古いゲームボードらしい白抜き文字 */
 #board[data-board-theme="classic"] .board-label {
-  color: rgba(230, 245, 230, 0.9);
+  color: rgba(0, 0, 0, 0.75);
 }
 #board[data-board-theme="classic"] .stone::before { display: none; }
 #board[data-board-theme="classic"] .stone.black {
@@ -839,6 +883,7 @@ hr {
 
 /* ===== SKY THEME ===== */
 /* ヒント点: 明るい盤面でも見えるよう濃い紺色 */
+#board[data-board-theme="sky"] .board-label { color: rgba(0, 0, 0, 0.75); }
 #board[data-board-theme="sky"] .hint-black { background: rgba(1, 60, 120, 0.85); }
 #board[data-board-theme="sky"] .hint-white { background: rgba(1, 60, 120, 0.35); }
 

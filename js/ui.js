@@ -435,6 +435,10 @@ function renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap) {
         // 石を描画する
         const stone = document.createElement("div");
         stone.className = "stone " + (board[y][x] === 1 ? "black" : "white");
+        // ウッドテーマの石に位置依存の木目角度を設定する（毎回同じ角度になるよう位置から算出）
+        if (boardElement.dataset.boardTheme === 'wood') {
+          stone.style.setProperty('--grain-angle', ((x * 37 + y * 53) % 170 + 5) + 'deg');
+        }
         cell.appendChild(stone);
         // 着手順番号を石の上に重ねる
         if (showMoveNumbers) {
