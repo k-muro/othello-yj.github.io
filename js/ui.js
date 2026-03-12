@@ -857,13 +857,12 @@ updateScoreGraph();
 // 盤面テーマを切り替える（#board のインラインCSS変数を直接書き換え）
 function setBoardTheme(name) {
   const boardEl = document.getElementById('board');
-  const theme = BOARD_THEMES[name] || BOARD_THEMES.green;
-  Object.entries(theme).forEach(([prop, val]) => boardEl.style.setProperty(prop, val));
+  const themeName = BOARD_THEMES[name] ? name : 'green'; // 未知のテーマはgreenにフォールバック
   // テーマ名を属性として持たせ、CSS でテーマ別スタイルを適用できるようにする
-  boardEl.dataset.boardTheme = name || 'green';
+  boardEl.dataset.boardTheme = themeName;
   // ミニ石などボード外の要素でもテーマを参照できるよう body にも伝播する
-  document.body.dataset.boardTheme = name || 'green';
-  localStorage.setItem(STORAGE_KEYS.BOARD_THEME, name);
+  document.body.dataset.boardTheme = themeName;
+  localStorage.setItem(STORAGE_KEYS.BOARD_THEME, themeName);
 }
 
 // 起動時: 保存済みテーマを適用

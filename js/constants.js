@@ -22,18 +22,10 @@ const MIN_LOSS_FOR_MISTAKE     = 6;   // 悪手と判定する最善手との差
 const BLUNDER_THRESHOLD        = 12;  // ブランダー（×）と判定する差の閾値
 
 // ===== BOARD THEMES =====
-// 盤面カラーテーマの定義（#board のインラインCSS変数として直接適用）
+// 有効なテーマ名の一覧（色定義は css/style.css の #board[data-board-theme] セレクタで管理）
 const BOARD_THEMES = {
-  green:   { '--board-bg': '#1b3a2d', '--cell-bg': '#2d6a4f', '--cell-hover-bg': '#3a7d5e' },
-  wood:    { '--board-bg': '#391e01ff', '--cell-bg': '#68401fff', '--cell-hover-bg': '#9b7253' },
-  blue:    { '--board-bg': '#060e18', '--cell-bg': '#2e6aaa', '--cell-hover-bg': '#3a7ec4' },
-  dark:    { '--board-bg': '#5a0090', '--cell-bg': '#08000f', '--cell-hover-bg': '#180028' },
-  classic: { '--board-bg': '#000000', '--cell-bg': '#2e7a3e', '--cell-hover-bg': '#3a9050' },
-  urushi:  { '--board-bg': '#120605', '--cell-bg': '#b02010', '--cell-hover-bg': '#cc2a14' },
-  metal:   { '--board-bg': '#1c1c1c', '--cell-bg': '#a0a0a0', '--cell-hover-bg': '#bcbcbc' },
-  sky:     { '--board-bg': '#034da2ff', '--cell-bg': '#5aa6c9ff', '--cell-hover-bg': '#b3e5fc' },
-  rose:  { '--board-bg': '#6d0e0eff', '--cell-bg': '#c95a5a', '--cell-hover-bg': '#e07070' },
-  retro:   { '--board-bg': '#1a1a1a', '--cell-bg': '#888888', '--cell-hover-bg': '#a0a0a0' },
+  green: true, wood: true, blue: true, dark: true, classic: true,
+  urushi: true, metal: true, sky: true, rose: true, retro: true,
 };
 
 // ===== BOARD DIRECTIONS =====

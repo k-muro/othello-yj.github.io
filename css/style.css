@@ -21,6 +21,20 @@
   --tree-active-color: #22c55e;
 }
 
+/* ===== BOARD THEME COLORS ===== */
+/* data-board-theme 属性が付いた瞬間（インラインスクリプト実行直後）に適用される */
+/* JS の setBoardTheme() によるインラインスタイル不要・フラッシュ防止 */
+#board[data-board-theme="green"]   { --board-bg: #1b3a2d;   --cell-bg: #2d6a4f;   --cell-hover-bg: #3a7d5e; }
+#board[data-board-theme="wood"]    { --board-bg: #391e01;   --cell-bg: #68401f;   --cell-hover-bg: #9b7253; }
+#board[data-board-theme="blue"]    { --board-bg: #060e18;   --cell-bg: #2e6aaa;   --cell-hover-bg: #3a7ec4; }
+#board[data-board-theme="dark"]    { --board-bg: #5a0090;   --cell-bg: #08000f;   --cell-hover-bg: #180028; }
+#board[data-board-theme="classic"] { --board-bg: #000000;   --cell-bg: #2e7a3e;   --cell-hover-bg: #3a9050; }
+#board[data-board-theme="urushi"]  { --board-bg: #120605;   --cell-bg: #b02010;   --cell-hover-bg: #cc2a14; }
+#board[data-board-theme="metal"]   { --board-bg: #1c1c1c;   --cell-bg: #a0a0a0;   --cell-hover-bg: #bcbcbc; }
+#board[data-board-theme="sky"]     { --board-bg: #034da2;   --cell-bg: #5aa6c9;   --cell-hover-bg: #b3e5fc; }
+#board[data-board-theme="rose"]    { --board-bg: #6d0e0e;   --cell-bg: #c95a5a;   --cell-hover-bg: #e07070; }
+#board[data-board-theme="retro"]   { --board-bg: #1a1a1a;   --cell-bg: #888888;   --cell-hover-bg: #a0a0a0; }
+
 /* ===== BASE ===== */
 body {
   font-family: 'M PLUS 1', sans-serif;
