@@ -1050,6 +1050,33 @@ hr {
 
 .copyright { font-size: 0.72rem; }
 
+/* ===== BOARD EDIT MODE ===== */
+.board-edit-toolbar {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(128, 128, 128, 0.1);
+  border: 1px solid var(--bs-border-color);
+}
+
+/* 編集モード中の盤面: カーソルをクロスヘアに */
+#board.board-edit-mode .cell { cursor: crosshair; }
+#custom-board-warning { color: #e6a817; }
+
+/* 石の種類選択・手番ボタン */
+.board-edit-stone-btn {
+  border: 2px solid var(--bs-border-color);
+  background: none;
+  color: inherit;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: border-color 0.12s, background 0.12s;
+}
+.board-edit-stone-btn:hover  { background: rgba(128,128,128,0.15); }
+.board-edit-stone-btn.active { border-color: var(--bs-primary); background: rgba(var(--bs-primary-rgb), 0.12); }
+
 /* ===== BOARD THEME MODAL ===== */
 .board-theme-grid {
   display: grid;

@@ -45,6 +45,33 @@ function movesToKifuString(moves) {
   return moves.map(m => String.fromCharCode(97 + m.x) + (m.y + 1)).join('');
 }
 
+// 盤面を16進32文字にエンコードする（黒ビットボード16文字 + 白ビットボード16文字）
+// ビット配置: bit(y*8+x) が座標(x,y) に対応
+function encodeBoardPos(b) {
+  let bB = 0n, wB = 0n;
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++) {
+      const bit = BigInt(y * 8 + x);
+      if (b[y][x] ===  1) bB |= (1n << bit);
+      if (b[y][x] === -1) wB |= (1n << bit);
+    }
+  return bB.toString(16).padStart(16, '0') + wB.toString(16).padStart(16, '0');
+}
+
+// 16進32文字の盤面エンコードを2次元配列に戻す
+function decodeBoardPos(s) {
+  const bB = BigInt('0x' + s.slice(0, 16));
+  const wB = BigInt('0x' + s.slice(16, 32));
+  const b = Array.from({ length: 8 }, () => Array(8).fill(0));
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++) {
+      const bit = BigInt(y * 8 + x);
+      if (bB & (1n << bit)) b[y][x] =  1;
+      if (wB & (1n << bit)) b[y][x] = -1;
+    }
+  return b;
+}
+
 // 盤面 b の黒・白・空マス数を {black, white, empty} で返す
 function countStones(b) {
   let black = 0, white = 0;

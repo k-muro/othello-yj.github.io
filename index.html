@@ -41,6 +41,7 @@
       <div class="d-flex gap-1">
         <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#usage-modal" title="使い方">?</button>
         <button class="btn btn-outline-secondary btn-sm d-none d-sm-inline-flex" data-bs-toggle="modal" data-bs-target="#kb-help-modal" title="キーボードショートカット">⌨</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="enterBoardEditMode()" title="盤面を直接入力">✏</button>
         <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#board-theme-modal" title="ボードテーマ">🎨</button>
         <button id="theme-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleTheme()"></button>
       </div>
@@ -134,7 +135,24 @@
     </div>
 
     <p id="info" class="mb-2"></p>
+    <p id="custom-board-warning" class="mb-1 small" style="display:none;">⚠ 直接入力した盤面のため、AIの評価値は参考程度にご利用ください</p>
     <p id="opening-name" class="mb-1 text-secondary small"></p>
+
+<!-- 盤面編集ツールバー（編集モード中のみ表示） -->
+<div id="board-edit-toolbar" class="board-edit-toolbar" style="display:none;">
+  <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
+    <span class="text-secondary small">置く石:</span>
+    <button id="edit-btn-black" class="btn btn-sm board-edit-stone-btn active" onclick="setEditStone(1)">⚫</button>
+    <button id="edit-btn-white" class="btn btn-sm board-edit-stone-btn" onclick="setEditStone(-1)">⚪</button>
+    <button id="edit-btn-erase" class="btn btn-sm board-edit-stone-btn" onclick="setEditStone(0)">消</button>
+    <span class="text-secondary small ms-2">手番:</span>
+    <button id="edit-turn-black" class="btn btn-sm board-edit-stone-btn active" onclick="setEditTurn(1)">⚫</button>
+    <button id="edit-turn-white" class="btn btn-sm board-edit-stone-btn" onclick="setEditTurn(-1)">⚪</button>
+    <button class="btn btn-outline-danger btn-sm ms-2" onclick="clearEditBoard()">全消し</button>
+    <button class="btn btn-success btn-sm" onclick="confirmBoardEdit()">確定</button>
+    <button class="btn btn-outline-secondary btn-sm" onclick="cancelBoardEdit()">キャンセル</button>
+  </div>
+</div>
 
 <div class="d-flex flex-wrap justify-content-center gap-1 mb-2 nav-control-group">
   <button id="btn-first"  class="btn btn-outline-secondary btn-sm" onclick="goToFirst()">⏮ 最初</button>
@@ -215,6 +233,11 @@
         <button class="btn btn-outline-secondary btn-sm text-nowrap" onclick="copyCurrentKifu()">コピー</button>
         <button class="btn btn-outline-secondary btn-sm text-nowrap" id="copy-url-btn" onclick="copyShareURL()">URL</button>
         <span id="url-copy-msg" class="small text-success" style="display:none;">コピーしました</span>
+      </div>
+
+      <!-- 盤面編集 -->
+      <div class="d-flex justify-content-center mt-2">
+        <button class="btn btn-outline-secondary btn-sm" onclick="enterBoardEditMode()">盤面を直接入力</button>
       </div>
 
       <!-- 表示設定 -->
@@ -338,28 +361,33 @@ window._aiLoadTimer = setTimeout(function() {
       </div>
       <div class="modal-body py-2 small">
 
-        <h6 class="usage-section-title">棋譜の入力</h6>
-        <p>「棋譜・設定」欄の入力欄に棋譜（例: <code>d3c4e3...</code>）を貼り付けて「棋譜を反映」を押すと盤面が再現されます。URL の <code>?kifu=...</code> パラメータでも共有できます。</p>
+        <h6 class="usage-section-title">① 局面を用意する</h6>
+        <p><strong>棋譜から:</strong> 「棋譜・設定」の入力欄に棋譜（例: <code>f5d6c5...</code>）を貼り付けて「棋譜を反映」。</p>
+        <p class="mb-0"><strong>盤面を直接入力 (✏):</strong> ヘッダーの ✏ ボタンで編集モードに入り、石を自由に配置して「確定」。</p>
+        <ul class="mt-1 mb-0">
+          <li>クリック: 選択色を置く／既存石は黒⇔白トグル</li>
+          <li>右クリック・長押し: 石を消す</li>
+        </ul>
 
-        <h6 class="usage-section-title">手順の移動</h6>
-        <p>「戻る／進む」ボタンで1手ずつ、「10手戻／進」で10手ずつ移動できます。グラフをクリックするとその手数に直接ジャンプします。</p>
+        <h6 class="usage-section-title">② 手順を移動する</h6>
+        <p>「戻る／進む」で1手ずつ、「10手戻／進」で10手ずつ移動。グラフをクリックするとその手数に直接ジャンプします。</p>
 
-        <h6 class="usage-section-title">解析パネル</h6>
+        <h6 class="usage-section-title">③ 解析する</h6>
         <table class="table table-sm table-borderless mb-1">
           <tbody>
-            <tr><td class="text-nowrap fw-medium">候補手の評価値</td><td>各合法手に評価スコアを表示します（AI読み込み後に有効）。</td></tr>
-            <tr><td class="text-nowrap fw-medium">悪手を表示</td><td>棋譜中の悪手・ブランダーを自動検出してリスト表示します。</td></tr>
-            <tr><td class="text-nowrap fw-medium">定石ガイド</td><td>定石の分岐を色付きドットで盤面に表示します。</td></tr>
-            <tr><td class="text-nowrap fw-medium">読み切り点</td><td>全読み完了後、最善手に青い点を表示します。</td></tr>
+            <tr><td class="text-nowrap fw-medium">候補手評価</td><td>各合法手にAIスコアを表示します。</td></tr>
+            <tr><td class="text-nowrap fw-medium">悪手表示</td><td>棋譜中の悪手・ブランダーを自動検出してリスト表示します。</td></tr>
+            <tr><td class="text-nowrap fw-medium">定石</td><td>定石の分岐を色付きドットで盤面に表示します。</td></tr>
+            <tr><td class="text-nowrap fw-medium">読み切り点</td><td>終盤の全読み完了後、最善手に青い点を表示します。</td></tr>
           </tbody>
         </table>
-        <p>終盤（残り手数が設定値以下）になると自動で全読みを実行し、結果と最善手順を表示します。</p>
+        <p>終盤（残り手数が設定値以下）になると自動で全読みを実行します。</p>
 
-        <h6 class="usage-section-title">分岐ツリー</h6>
-        <p>「この手順を保存」で最大5手順を登録できます。参照棋譜を読み込むと分岐点や手順の差を視覚的に比較でき、「分岐点へ」ボタンで参照棋譜との相違点に一発移動できます。</p>
+        <h6 class="usage-section-title">④ 共有する</h6>
+        <p>「URL」ボタンで現在の局面・プレイヤー名を含む共有リンクをコピーできます。棋譜入力・直接入力のどちらの局面でも共有できます。</p>
 
-        <h6 class="usage-section-title">URL 共有</h6>
-        <p>「URL」ボタンで現在の局面・プレイヤー名を含む共有リンクをコピーできます。</p>
+        <h6 class="usage-section-title">分岐ツリー（上級）</h6>
+        <p>「この手順を保存」で最大5手順を登録できます。参照棋譜を読み込むと分岐点や手順の差を視覚的に比較でき、「分岐点へ」ボタンで相違点に一発移動できます。</p>
 
       </div>
     </div>

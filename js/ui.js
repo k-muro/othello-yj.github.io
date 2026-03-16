@@ -405,6 +405,112 @@ function triggerMistakeAnalysisIfNeeded() {
   if (atBranchEnd) setTimeout(computeMistakes, 0);
 }
 
+// ===== BOARD EDIT MODE =====
+
+let boardEditMode    = false;  // 編集モード中かどうか
+let editStone        = 1;      // 1=黒 / -1=白 / 0=消しゴム
+let editTurn         = 1;      // 確定後の手番（1=黒 / -1=白）
+let editBoard        = null;   // 編集中の盤面スナップショット
+let customBoardStart = null;   // { board, turn } — 編集確定した開始局面（null=標準開始）
+
+// 編集モードに入る
+function enterBoardEditMode() {
+  boardEditMode = true;
+  editBoard     = board.map(r => [...r]); // 現在の盤面をコピー
+  editStone     = 1;
+  editTurn      = 1;
+  _updateEditToolbar();
+  document.getElementById('board-edit-toolbar').style.display = '';
+  document.getElementById('board').classList.add('board-edit-mode');
+  drawBoard();
+}
+
+// 置く石の種類を切り替える（1=黒 / -1=白 / 0=消しゴム）
+function setEditStone(v) {
+  editStone = v;
+  _updateEditToolbar();
+}
+
+// 確定後の手番を切り替える
+function setEditTurn(v) {
+  editTurn = v;
+  _updateEditToolbar();
+}
+
+// ツールバーのアクティブ状態を更新する
+function _updateEditToolbar() {
+  document.getElementById('edit-btn-black').classList.toggle('active', editStone ===  1);
+  document.getElementById('edit-btn-white').classList.toggle('active', editStone === -1);
+  document.getElementById('edit-btn-erase').classList.toggle('active', editStone ===  0);
+  document.getElementById('edit-turn-black').classList.toggle('active', editTurn ===  1);
+  document.getElementById('edit-turn-white').classList.toggle('active', editTurn === -1);
+}
+
+// 編集モード中にセル(x,y)をクリックしたときの処理
+function handleEditCellClick(x, y) {
+  if (editStone === 0) {
+    editBoard[y][x] = 0; // 消しゴム
+  } else if (editBoard[y][x] !== 0) {
+    editBoard[y][x] = -editBoard[y][x]; // 既存の石は黒⇔白トグル
+  } else {
+    editBoard[y][x] = editStone; // 空マスには選択中の色を置く
+  }
+  drawBoard();
+}
+
+// 編集モード中にセル(x,y)を右クリックしたときの処理（石を消す）
+function handleEditCellRightClick(x, y) {
+  editBoard[y][x] = 0;
+  drawBoard();
+}
+
+// 編集モード中に盤面を全消しする
+function clearEditBoard() {
+  for (let y = 0; y < 8; y++) editBoard[y].fill(0);
+  drawBoard();
+}
+
+// 編集内容を確定して通常モードに戻る
+function confirmBoardEdit() {
+  // 編集後の盤面をグローバル board に反映
+  for (let y = 0; y < 8; y++)
+    for (let x = 0; x < 8; x++)
+      board[y][x] = editBoard[y][x];
+
+  // 履歴・手数・関連状態をリセットして編集局面を開始局面とする
+  moveHistory   = [];
+  currentMove   = 0;
+  currentPlayer = editTurn;
+  referenceKifu = [];
+  savedBranches = [];
+  evalCache           = [];
+  solverState.result  = '';
+  solverState.score   = null;
+  solverState.pending = false;
+  mistakeCache        = [];
+  mistakeCacheKifu    = '';
+  document.getElementById('kifu-input').value = '';
+  // 編集開始局面として記録（URL共有で pos= として使用）
+  customBoardStart = { board: editBoard.map(r => [...r]), turn: editTurn };
+
+  _exitEditMode();
+  drawBoard();
+}
+
+// 編集をキャンセルして元の盤面に戻る
+function cancelBoardEdit() {
+  _exitEditMode();
+  drawBoard();
+}
+
+// 編集モードを終了する（内部用）
+function _exitEditMode() {
+  boardEditMode = false;
+  editBoard     = null;
+  document.getElementById('board-edit-toolbar').style.display = 'none';
+  document.getElementById('board').classList.remove('board-edit-mode');
+}
+
 // ===== BOARD RENDERING =====
 
 // ボードのグリッド・石・ヒント・着手順番号を描画する
@@ -428,13 +534,27 @@ function renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap) {
       const cell = document.createElement("div");
       cell.className  = "cell";
       cell.dataset.pos = `${x},${y}`;
-      cell.onclick    = () => playMove(x, y);
-      if (lastMove && lastMove.x === x && lastMove.y === y) cell.classList.add("last-move");
+      cell.onclick    = boardEditMode ? () => handleEditCellClick(x, y) : () => playMove(x, y);
+      if (boardEditMode) {
+        // PC: 右クリックで消しゴム
+        cell.oncontextmenu = (e) => { e.preventDefault(); handleEditCellRightClick(x, y); };
+        // モバイル: 長押し(500ms)で消しゴム
+        let _lpTimer = null;
+        cell.addEventListener('touchstart', (e) => {
+          _lpTimer = setTimeout(() => { e.preventDefault(); handleEditCellRightClick(x, y); _lpTimer = null; }, 500);
+        }, { passive: false });
+        cell.addEventListener('touchend',  () => { clearTimeout(_lpTimer); _lpTimer = null; });
+        cell.addEventListener('touchmove', () => { clearTimeout(_lpTimer); _lpTimer = null; });
+      }
+      if (!boardEditMode && lastMove && lastMove.x === x && lastMove.y === y) cell.classList.add("last-move");
 
-      if (board[y][x] !== 0) {
+      // 編集モードでは editBoard を表示、通常モードは board を表示
+      const cellVal = boardEditMode ? editBoard[y][x] : board[y][x];
+
+      if (cellVal !== 0) {
         // 石を描画する
         const stone = document.createElement("div");
-        stone.className = "stone " + (board[y][x] === 1 ? "black" : "white");
+        stone.className = "stone " + (cellVal === 1 ? "black" : "white");
 
         cell.appendChild(stone);
         // 着手順番号を石の上に重ねる
@@ -447,7 +567,7 @@ function renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap) {
             cell.appendChild(numEl);
           }
         }
-      } else if (validSet.has(`${x},${y}`)) {
+      } else if (!boardEditMode && validSet.has(`${x},${y}`)) {
         // 合法手ヒントを描画する（参照棋譜の次手は色を変える）
         const hint     = document.createElement("div");
         const isNextRef = `${x},${y}` === nextRefKey;
@@ -595,6 +715,10 @@ function drawBoard() {
 
   renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap);
 
+  // 直接入力した盤面の場合は評価値の信頼性に関する警告を表示する
+  const warningEl = document.getElementById('custom-board-warning');
+  if (warningEl) warningEl.style.display = customBoardStart ? '' : 'none';
+
   const empty = updateStoneDisplay();
 
   // ソルバー状態をリセットして評価待ち表示にする
@@ -714,6 +838,7 @@ function setSolverDepth(val) {
 // 棋譜入力フィールドの内容を盤面に反映する
 function applyKifu() {
   const kifu = document.getElementById("kifu-input").value.trim().toLowerCase();
+  customBoardStart = null; // 標準開始局面に戻る
   referenceKifu = [];
   for (let i = 0; i + 1 < kifu.length; i += 2)
     referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
@@ -731,14 +856,45 @@ function loadFromURL() {
   whiteName = pWhite || "白";
   if (pBlack) document.getElementById("black-name-input").value = pBlack;
   if (pWhite) document.getElementById("white-name-input").value = pWhite;
+
+  const pos  = params.get("pos");
   const kifu = params.get("kifu");
-  if (!kifu) return;
-  document.getElementById("kifu-input").value = kifu;
-  referenceKifu = [];
-  for (let i = 0; i + 1 < kifu.length; i += 2)
-    referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
-  kifuToMoves(kifu);
-  saveReferenceKifu();
+
+  if (pos && /^[0-9a-f]{32}$/.test(pos)) {
+    // 編集盤面からの復元
+    const turn = params.get("turn") === "w" ? -1 : 1;
+    const decoded = decodeBoardPos(pos);
+    for (let y = 0; y < 8; y++)
+      for (let x = 0; x < 8; x++)
+        board[y][x] = decoded[y][x];
+    customBoardStart = { board: decoded.map(r => [...r]), turn };
+    moveHistory  = [];
+    currentMove  = 0;
+    currentPlayer = turn;
+    evalCache    = [];
+    // 続きの手順があれば盤面に適用する（initBoard() を呼ばずに直接着手）
+    if (kifu) {
+      document.getElementById("kifu-input").value = kifu;
+      for (let i = 0; i + 1 < kifu.length; i += 2) {
+        const { x, y } = coordToXY(kifu.substring(i, i + 2));
+        if (getFlips(x, y, currentPlayer).length === 0) break;
+        moveHistory.push({ x, y, player: currentPlayer });
+        applyMoveToBoard(x, y, currentPlayer);
+        applyPassIfNeeded();
+        currentMove++;
+      }
+      referenceKifu = moveHistory.map(m => ({ x: m.x, y: m.y }));
+      saveReferenceKifu();
+    }
+  } else if (kifu) {
+    // 通常棋譜
+    document.getElementById("kifu-input").value = kifu;
+    referenceKifu = [];
+    for (let i = 0; i + 1 < kifu.length; i += 2)
+      referenceKifu.push(coordToXY(kifu.substring(i, i + 2)));
+    kifuToMoves(kifu);
+    saveReferenceKifu();
+  }
 }
 
 // 現在の棋譜をクリップボードにコピーする
@@ -752,7 +908,14 @@ function copyShareURL() {
   const black = document.getElementById("black-name-input").value.trim();
   const white = document.getElementById("white-name-input").value.trim();
   const params = new URLSearchParams();
-  if (kifu)  params.set("kifu", kifu);
+  if (customBoardStart) {
+    // 編集盤面: pos= で開始局面をエンコード、その後の手順は kifu= で追記
+    params.set("pos",  encodeBoardPos(customBoardStart.board));
+    params.set("turn", customBoardStart.turn === 1 ? "b" : "w");
+    if (kifu) params.set("kifu", kifu);
+  } else {
+    if (kifu) params.set("kifu", kifu);
+  }
   if (black) params.set("black", black);
   if (white) params.set("white", white);
   const url = window.location.origin + window.location.pathname +
