@@ -151,10 +151,16 @@ function applyPassIfNeeded() {
     currentPlayer *= -1;
 }
 
-// グローバル board を初期盤面に戻し、手番を黒に設定する
+// グローバル board を起点盤面に戻し、手番を設定する
+// カスタム盤面が設定されている場合はその盤面・手番を使う
 function resetBoardState() {
-  board = createInitialBoard();
-  currentPlayer = 1;
+  if (typeof customBoardStart !== 'undefined' && customBoardStart) {
+    board = customBoardStart.board.map(r => [...r]);
+    currentPlayer = customBoardStart.turn;
+  } else {
+    board = createInitialBoard();
+    currentPlayer = 1;
+  }
 }
 
 // ゲーム全体をリセットする（盤面・手順・手番すべて初期化）
