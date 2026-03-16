@@ -307,9 +307,10 @@ function computeAllEvals() {
   evalKifu = kifuKey;
   evalCache = [];
 
-  let b  = createInitialBoard();
-  let cp = 1; // 手番 (1=黒, -1=白)
-  evalCache.push(evaluatePosition(b, cp)); // 初期局面の評価値
+  // カスタム盤面が設定されている場合はその盤面・手番を起点にする
+  let b  = customBoardStart ? customBoardStart.board.map(r => [...r]) : createInitialBoard();
+  let cp = customBoardStart ? customBoardStart.turn : 1;
+  evalCache.push(evaluatePosition(b, cp)); // 起点局面の評価値
 
   for (const m of moveHistory) {
     b  = applyBoardMove(b, m.x, m.y, m.player);

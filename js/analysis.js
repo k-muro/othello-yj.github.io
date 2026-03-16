@@ -38,8 +38,9 @@ function computeMistakes() {
   mistakeCache     = [];
   const gen = ++mistakeGeneration;
 
-  let boardState = createInitialBoard();
-  let cp = 1;
+  // カスタム盤面が設定されている場合はその盤面・手番を起点にする
+  let boardState = customBoardStart ? customBoardStart.board.map(r => [...r]) : createInitialBoard();
+  let cp = customBoardStart ? customBoardStart.turn : 1;
   let idx = 0;
   let validMoves = null; // 現在局面の合法手リスト
   let scores     = [];   // 現在局面の各合法手評価値リスト
@@ -192,8 +193,11 @@ function buildGraphData(useAI) {
     };
   }
   // 石差モード or AI 未準備: 実石数差を計算
-  let b = createInitialBoard();
-  const labels = ['開始'], diffs = [0];
+  // カスタム盤面が設定されている場合はその盤面を起点にする
+  const _stoneStart = customBoardStart ? customBoardStart.board : createInitialBoard();
+  let b = _stoneStart.map(r => [...r]);
+  const { black: _sb, white: _sw } = countStones(_stoneStart);
+  const labels = ['開始'], diffs = [_sb - _sw];
   for (const m of moveHistory) {
     b = applyBoardMove(b, m.x, m.y, m.player);
     const { black, white } = countStones(b);
