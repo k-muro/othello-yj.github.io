@@ -847,11 +847,12 @@ function applyKifu() {
   drawBoard();
 }
 
-// URL パラメータ（kifu / black / white）を読み込んで盤面を初期化する
+// URL パラメータ（kifu / black(b) / white(w)）を読み込んで盤面を初期化する
+// b / w は black / white の短縮形。両方指定された場合は b / w を優先する
 function loadFromURL() {
   const params = new URLSearchParams(window.location.search);
-  const pBlack = params.get("black");
-  const pWhite = params.get("white");
+  const pBlack = params.get("b") ?? params.get("black");
+  const pWhite = params.get("w") ?? params.get("white");
   blackName = pBlack || "黒";
   whiteName = pWhite || "白";
   if (pBlack) document.getElementById("black-name-input").value = pBlack;
