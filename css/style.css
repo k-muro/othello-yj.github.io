@@ -34,6 +34,31 @@
 #board[data-board-theme="sky"]     { --board-bg: #034da2;   --cell-bg: #5aa6c9;   --cell-hover-bg: #b3e5fc; }
 #board[data-board-theme="rose"]    { --board-bg: #6d0e0e;   --cell-bg: #c95a5a;   --cell-hover-bg: #e07070; }
 #board[data-board-theme="retro"]   { --board-bg: #1a1a1a;   --cell-bg: #888888;   --cell-hover-bg: #a0a0a0; }
+#board[data-board-theme="cyber"]   { --board-bg: #960096;   --cell-bg: #006868;   --cell-hover-bg: #006868; }
+
+/* サイバー: ホバー時にシアンの内側グロー */
+#board[data-board-theme="cyber"] .cell:hover {
+  background: var(--cell-hover-bg);
+  box-shadow: inset 0 0 18px rgba(0, 255, 255, 0.45);
+}
+
+/* サイバー: 石のオーバーフローを解除して外側グローを許可 */
+#board[data-board-theme="cyber"] .stone {
+  overflow: visible;
+}
+#board[data-board-theme="cyber"] .stone::before { display: none; }
+
+/* 黒石: 深いシアン黒 + シアンの外周グロー */
+#board[data-board-theme="cyber"] .stone.black {
+  background: radial-gradient(circle at 40% 30%, #001f1f, #000a0a);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.8), 0 0 2px #00ffff;
+}
+
+/* 白石: シアンがかった白 + 明るいグロー */
+#board[data-board-theme="cyber"] .stone.white {
+  background: radial-gradient(circle at 40% 30%, #ffffff, #a0f0f0);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 1.0), 0 0 3px #00ffff;
+}
 
 /* ===== BASE ===== */
 body {
