@@ -241,6 +241,8 @@ function onEgaroucidReady() {
     clearTimeout(window._aiLoadTimer);
     setAiStatus('AI準備完了', '#1a7f37');
     computeAllEvals();
+    // 評価値表示が有効なら現局面の候補手評価を即座に開始する
+    if (showMoveEvals) drawBoard();
     // 初期化完了時点で分岐先端にいれば悪手解析を起動
     if (currentMove > 0) {
       const atEnd = savedBranches.some(b =>
