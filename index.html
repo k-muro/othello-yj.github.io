@@ -302,10 +302,13 @@ window.addEventListener('resize', () => {
 });
 
 // テーマモーダルを開いたとき、現在のテーマカードをハイライト
-document.getElementById('board-theme-modal').addEventListener('show.bs.modal', function() {
-  const current = document.getElementById('board').dataset.boardTheme || 'green';
-  document.querySelectorAll('.board-theme-card').forEach(card => {
-    card.classList.toggle('active', card.dataset.theme === current);
+// モーダル要素はこのスクリプトより後に定義されるため DOMContentLoaded 後に登録する
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('board-theme-modal').addEventListener('show.bs.modal', function() {
+    const current = document.getElementById('board').dataset.boardTheme || 'green';
+    document.querySelectorAll('.board-theme-card').forEach(card => {
+      card.classList.toggle('active', card.dataset.theme === current);
+    });
   });
 });
 
