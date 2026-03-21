@@ -847,8 +847,9 @@ function applyKifu() {
   drawBoard();
 }
 
-// URL パラメータ（kifu / black(b) / white(w)）を読み込んで盤面を初期化する
+// URL パラメータ（kifu / k / black(b) / white(w)）を読み込んで盤面を初期化する
 // b / w は black / white の短縮形。両方指定された場合は b / w を優先する
+// k はエンコード済み棋譜。kifu より k を優先する
 function loadFromURL() {
   const params = new URLSearchParams(window.location.search);
   const pBlack = params.get("b") ?? params.get("black");
@@ -859,7 +860,9 @@ function loadFromURL() {
   if (pWhite) document.getElementById("white-name-input").value = pWhite;
 
   const pos  = params.get("pos");
-  const kifu = params.get("kifu");
+  // k= はエンコード済み棋譜。デコードして kifu 形式に変換する。kifu= より優先
+  const rawK = params.get("k");
+  const kifu = rawK ? decodeGame(rawK) : params.get("kifu");
 
   if (pos && /^[0-9a-f]{32}$/.test(pos)) {
     // 編集盤面からの復元
