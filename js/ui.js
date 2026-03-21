@@ -413,8 +413,15 @@ let editTurn         = 1;      // 確定後の手番（1=黒 / -1=白）
 let editBoard        = null;   // 編集中の盤面スナップショット
 let customBoardStart = null;   // { board, turn } — 編集確定した開始局面（null=標準開始）
 
-// 編集モードに入る
+// 編集モードをトグルする（✏ボタンから呼ばれる）
+// 既に編集モードなら終了。編集データがある場合は確認ダイアログを表示する
 function enterBoardEditMode() {
+  if (boardEditMode) {
+    const hasData = editBoard && editBoard.some(row => row.some(v => v !== 0));
+    if (hasData && !confirm('編集中のデータを破棄して編集モードを終了しますか？')) return;
+    cancelBoardEdit();
+    return;
+  }
   boardEditMode = true;
   editBoard     = board.map(r => [...r]); // 現在の盤面をコピー
   editStone     = 1;
