@@ -302,6 +302,50 @@ function coordToXY(coord) {
   return { x: coord.charCodeAt(0) - 97, y: parseInt(coord[1]) - 1 };
 }
 
+// 棋譜文字列の妥当性を検証する（副作用なし）
+// 問題がなければ null を返す。問題があれば {coord, moveNum, reason} を返す
+//   coord   : 問題のある座標文字列（例 "z9"）。文字数エラー時は null
+//   moveNum : 問題のある手番（1-based）。文字数エラー時は null
+//   reason  : エラーの説明（日本語）
+function validateKifu(kifu) {
+  // 文字数チェック（2文字ペアが前提）
+  if (kifu.length % 2 !== 0) {
+    return { coord: null, moveNum: null, reason: '文字数が奇数です' };
+  }
+
+  // 純粋な盤面シミュレーションで各手を検証
+  let b      = createInitialBoard();
+  let player = 1; // 黒から開始
+
+  for (let i = 0; i < kifu.length; i += 2) {
+    const coord   = kifu.substring(i, i + 2);
+    const moveNum = i / 2 + 1;
+
+    // フォーマットチェック: a〜h の列 + 1〜8 の行
+    if (!/^[a-h][1-8]$/.test(coord)) {
+      return { coord, moveNum, reason: '形式が不正です' };
+    }
+
+    const x     = coord.charCodeAt(0) - 97; // 'a'=0 … 'h'=7
+    const y     = parseInt(coord[1]) - 1;   // '1'=0 … '8'=7
+    const flips = getFlipsOnBoard(b, x, y, player);
+
+    // 着手可能チェック
+    if (flips.length === 0) {
+      return { coord, moveNum, reason: '着手不可です' };
+    }
+
+    // 盤面を進めてパス処理
+    b = applyBoardMove(b, x, y, player);
+    const next = -player;
+    if (hasAnyMove(b, next))       { player = next; }
+    else if (!hasAnyMove(b, player)) { break; } // 終局
+    // else: パス（player のまま継続）
+  }
+
+  return null; // エラーなし
+}
+
 // 棋譜文字列を解析して盤面を構築する（initBoard → 逐次着手）
 function kifuToMoves(kifu) {
   initBoard();

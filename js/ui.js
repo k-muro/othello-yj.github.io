@@ -842,9 +842,32 @@ function setSolverDepth(val) {
   drawBoard();
 }
 
+// 棋譜入力フィールドの feedback 要素にメッセージを表示する
+// type: 'error' | 'success' | '' (非表示)
+function _showKifuFeedback(type, message) {
+  const el = document.getElementById('kifu-feedback');
+  el.textContent = message;
+  el.className   = type === 'error'   ? 'small text-danger mt-1'
+                 : type === 'success' ? 'small text-success mt-1'
+                 : '';
+}
+
 // 棋譜入力フィールドの内容を盤面に反映する
 function applyKifu() {
-  const kifu = document.getElementById("kifu-input").value.trim().toLowerCase();
+  const kifu  = document.getElementById("kifu-input").value.trim().toLowerCase();
+  const error = validateKifu(kifu);
+
+  if (error) {
+    // バリデーション失敗: エラー内容を表示して処理を中断
+    const where = error.moveNum != null
+      ? `${error.moveNum}手目 "${error.coord}": `
+      : '';
+    _showKifuFeedback('error', `⚠ ${where}${error.reason}`);
+    return;
+  }
+
+  // バリデーション成功: 盤面に反映
+  _showKifuFeedback('success', `✓ ${kifu.length / 2}手を反映しました`);
   customBoardStart = null; // 標準開始局面に戻る
   referenceKifu = [];
   for (let i = 0; i + 1 < kifu.length; i += 2)
