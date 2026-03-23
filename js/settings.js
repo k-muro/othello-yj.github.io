@@ -297,7 +297,7 @@ document.addEventListener('keydown', function(e) {
   switch (e.key) {
     case 'ArrowLeft':
       e.preventDefault();
-      e.shiftKey ? undo10() : undo();
+      e.shiftKey ? undo10() : undoVsAI();
       break;
     case 'ArrowRight':
       e.preventDefault();

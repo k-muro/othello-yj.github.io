@@ -341,6 +341,9 @@ function drawBoard() {
   scheduleMoveEvals(validMoves, currentEvalGen, () =>
     runSolverForPosition(snapBoard, snapPlayer, snapEmpty, snapGameOver, solverGen)
   );
+
+  // AI対局モード: AI の手番なら着手をスケジュールする（game-ai.js で定義）
+  if (typeof scheduleAIMoveIfNeeded === 'function') scheduleAIMoveIfNeeded();
 }
 
 // ===== NAV BUTTONS =====
