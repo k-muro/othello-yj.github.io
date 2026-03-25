@@ -49,6 +49,7 @@ const info         = document.getElementById("info");
 const scBlack      = document.getElementById("sc-black");
 const scWhite      = document.getElementById("sc-white");
 const scEmpty      = document.getElementById("sc-empty");
+const scMove       = document.getElementById("sc-move");
 const scBlackName  = document.getElementById("sc-black-name");
 const scWhiteName  = document.getElementById("sc-white-name");
 const balanceBar   = document.getElementById("balance-bar");
@@ -178,6 +179,7 @@ function updateStoneDisplay() {
   scBlack.textContent     = black;
   scWhite.textContent     = white;
   scEmpty.textContent     = empty;
+  scMove.textContent      = currentMove;
   scBlackName.textContent = blackName;
   scWhiteName.textContent = whiteName;
   const total = black + white;

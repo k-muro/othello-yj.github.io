@@ -40,6 +40,20 @@
 </head>
 <body class="text-center py-4">
 
+<!-- SVG フィルター定義（非表示）: 石板テーマのテクスチャ生成に使用 -->
+<svg height="0" aria-hidden="true" style="position:absolute;overflow:hidden">
+  <defs>
+    <!-- x/y/width/height=0/0/1/1 でフィルター出力を要素境界内にクリップし gap への滲み出しを防ぐ -->
+    <filter id="slate-tex" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
+      <feTurbulence type="fractalNoise" baseFrequency=".0371 .0713" numOctaves="4" result="noise"/>
+      <feDiffuseLighting in="noise" lighting-color="white" surfaceScale="2" result="light">
+        <feDistantLight azimuth="90" elevation="50"/>
+      </feDiffuseLighting>
+      <feBlend in="SourceGraphic" in2="light" mode="multiply"/>
+    </filter>
+  </defs>
+</svg>
+
 <div class="container">
   <div class="app-card">
 
@@ -127,7 +141,7 @@
           <div class="stat-label" id="sc-black-name">黒</div>
         </div>
         <div class="stat-card stat-card-remaining">
-          <div class="stat-spacer"></div>
+          <div class="stat-num-sub"><span id="sc-move">0</span>手目</div>
           <div class="stat-num" id="sc-empty">60</div>
           <div class="stat-label">残</div>
         </div>
@@ -476,6 +490,10 @@ window._aiLoadTimer = setTimeout(function() {
           <button class="board-theme-card" data-theme="cyber"   data-bs-dismiss="modal" onclick="setBoardTheme('cyber')">
             <div class="board-theme-swatch" style="background:#006868; box-shadow:0 0 0 3px #960096;"></div>
             <span>サイバー</span>
+          </button>
+          <button class="board-theme-card" data-theme="slate"   data-bs-dismiss="modal" onclick="setBoardTheme('slate')">
+            <div class="board-theme-swatch" style="background:#c4bba4; box-shadow:0 0 0 3px #1a1410;"></div>
+            <span>石板</span>
           </button>
         </div>
       </div>
