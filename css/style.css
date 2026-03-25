@@ -26,8 +26,7 @@
 /* JS の setBoardTheme() によるインラインスタイル不要・フラッシュ防止 */
 #board[data-board-theme="green"]   { --board-bg: #1b3a2d;   --cell-bg: #2d6a4f;   --cell-hover-bg: #3a7d5e; }
 #board[data-board-theme="wood"]    { --board-bg: #391e01;   --cell-bg: #68401f;   --cell-hover-bg: #9b7253; }
-#board[data-board-theme="blue"]    { --board-bg: #060e18;   --cell-bg: #2e6aaa;   --cell-hover-bg: #3a7ec4; }
-#board[data-board-theme="dark"]    { --board-bg: #5a0090;   --cell-bg: #08000f;   --cell-hover-bg: #180028; }
+#board[data-board-theme="darkblue"]    { --board-bg: #060e18;   --cell-bg: #2e6aaa;   --cell-hover-bg: #3a7ec4; }
 #board[data-board-theme="classic"] { --board-bg: #000000;   --cell-bg: #2e7a3e;   --cell-hover-bg: #3a9050; }
 #board[data-board-theme="urushi"]  { --board-bg: #120605;   --cell-bg: #b02010;   --cell-hover-bg: #cc2a14; }
 #board[data-board-theme="metal"]   { --board-bg: #1c1c1c;   --cell-bg: #a0a0a0;   --cell-hover-bg: #bcbcbc; }
@@ -243,87 +242,11 @@ hr {
   border: 1px solid rgba(0,0,0,0.15);
 }
 
-/* ===== THEME: DARK ===== */
-/* ダークテーマ: 中二病スタイル全体 */
-
-/* ラベル: 魔力が滲む紫の光・ドラマチックなローマン体 */
-#board[data-board-theme="dark"] .board-label {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 700;
-  color: rgba(190, 110, 255, 0.85);
-  text-shadow: 0 0 8px rgba(160, 60, 255, 0.6);
-}
-
-/* 盤面外周: 紫→深紅の多重グロー */
-#board[data-board-theme="dark"] {
-  box-shadow:
-    0 0 0 1px rgba(160, 40, 255, 0.5),
-    0 0 16px rgba(130, 20, 230, 0.7),
-    0 0 40px rgba(100, 0, 180, 0.45),
-    0 0 80px rgba(120, 0, 100, 0.25),
-    0 0 130px rgba(80, 0, 60, 0.15);
-  border-radius: 6px;
-}
-
-/* セル: 暗黒の虚空。ホバーで魔力が滲む */
-#board[data-board-theme="dark"] .cell:hover {
-  background: var(--cell-hover-bg);
-  box-shadow: inset 0 0 14px rgba(180, 60, 255, 0.35);
-}
-/* last-move の orange 枠をホバー時も保持する（ホバー box-shadow に上書きされるため明示的に併記） */
-#board[data-board-theme="dark"] .cell.last-move {
-  box-shadow: inset 0 0 0 4px var(--last-move-shadow); /* 石のグローに埋もれないよう 4px に拡大 */
-}
-#board[data-board-theme="dark"] .cell.last-move:hover {
-  box-shadow: inset 0 0 0 4px var(--last-move-shadow), inset 0 0 14px rgba(180, 60, 255, 0.35);
-}
-
-/* ヒント点: 黒番は薄い白点、白番は紫の光点 */
-#board[data-board-theme="dark"] .hint-black { background: rgba(190, 100, 255, 0.35); }
-#board[data-board-theme="dark"] .hint-white { background: rgba(200, 100, 255, 0.6); }
-
 /* 評価値: 暗い背景で読めるよう白いアウトライン */
-#board[data-board-theme="dark"] .move-eval,
-#board[data-board-theme="blue"] .move-eval{
+#board[data-board-theme="darkblue"] .move-eval {
   text-shadow:
     0 0 1px rgba(255, 255, 255, 0.606),
     0 0 1px rgba(255,255,255,0.6);
-}
-
-/* デフォルトCSSのリセット: overflow:hidden を解除してグローが外に広がるようにする */
-#board[data-board-theme="dark"] .stone {
-  overflow: visible;
-}
-#board[data-board-theme="dark"] .stone::before { display: none; }
-
-/* 黒石: 深い暗紫 + 重厚なグロー */
-#board[data-board-theme="dark"] .stone.black {
-  background: radial-gradient(circle at 40% 30%, #1a0430, #050008);
-  box-shadow:
-    inset 0 -4px 8px rgba(80, 0, 180, 0.5),
-    0 0 8px  rgba(100, 20, 200, 0.9),
-    0 0 20px rgba(70, 0, 160, 0.8),
-    0 0 45px rgba(50, 0, 120, 0.55),
-    0 0 80px rgba(30, 0, 80, 0.3);
-  filter: drop-shadow(0 0 6px rgba(90, 20, 200, 0.9));
-}
-
-/* 白石: 霊体カラー（淡紫→紫→漆黒の虚無） */
-#board[data-board-theme="dark"] .stone.white {
-  border: 1px solid rgba(210, 170, 255, 0.4);
-  background: radial-gradient(
-    circle at 40% 30%,
-    rgba(220,192,255,0.31) 0%,
-    rgba(128,48,192,0.96) 50%,
-    rgba(16,0,32,0.31) 100%
-  );
-  box-shadow:
-    inset 0 -4px 10px rgba(60, 0, 130, 0.5),
-    0 0 8px  rgba(220, 180, 255, 0.9),
-    0 0 20px rgba(180, 80, 255, 0.8),
-    0 0 45px rgba(130, 30, 255, 0.5),
-    0 0 80px rgba(100, 0, 220, 0.25);
-  filter: drop-shadow(0 0 5px rgba(210, 150, 255, 0.9));
 }
 
 /* ===== THEME: WOOD ===== */
@@ -503,7 +426,7 @@ hr {
 /* ブルーテーマ: 深海イメージ */
 
 /* ラベル: 深海の水面から差し込む青い光・幾何学的な未来的フォント */
-#board[data-board-theme="blue"] .board-label {
+#board[data-board-theme="darkblue"] .board-label {
   font-family: 'Segoe UI', Arial, sans-serif;
   font-weight: 500;
   letter-spacing: 0.06em;
@@ -512,26 +435,39 @@ hr {
 }
 
 /* 盤面全体に深海の青いグロー */
-#board[data-board-theme="blue"] {
+#board[data-board-theme="darkblue"] {
   box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 48px rgba(20, 90, 200, 0.35);
 }
 
 /* セル: 上からの光と底の闇をインセットシャドウで表現 */
-#board[data-board-theme="blue"] .cell {
+#board[data-board-theme="darkblue"] .cell {
   background: var(--cell-bg);
   box-shadow:
     inset 0 3px 8px  rgba(120, 210, 255, 0.13),
     inset 0 -4px 10px rgba(0, 10, 40, 0.55);
 }
-#board[data-board-theme="blue"] .cell:hover {
+#board[data-board-theme="darkblue"] .cell:hover {
   background: var(--cell-hover-bg);
   box-shadow:
     inset 0 3px 8px  rgba(140, 230, 255, 0.2),
     inset 0 -4px 10px rgba(0, 10, 40, 0.35);
 }
+/* last-move の orange 枠を .cell / .cell:hover の box-shadow に上書きされないよう明示的に指定 */
+#board[data-board-theme="darkblue"] .cell.last-move {
+  box-shadow:
+    inset 0 0 0 4px var(--last-move-shadow),
+    inset 0 3px 8px  rgba(120, 210, 255, 0.13),
+    inset 0 -4px 10px rgba(0, 10, 40, 0.55);
+}
+#board[data-board-theme="darkblue"] .cell.last-move:hover {
+  box-shadow:
+    inset 0 0 0 4px var(--last-move-shadow),
+    inset 0 3px 8px  rgba(140, 230, 255, 0.2),
+    inset 0 -4px 10px rgba(0, 10, 40, 0.35);
+}
 
 /* 黒石: 深淵の闇 + 深海の青い発光 */
-#board[data-board-theme="blue"] .stone.black {
+#board[data-board-theme="darkblue"] .stone.black {
   background: radial-gradient(circle at 38% 32%, #071525, #010408);
   box-shadow:
     inset 0 -4px 8px rgba(0, 50, 120, 0.5),
@@ -540,7 +476,7 @@ hr {
 }
 
 /* 白石: 深海の生物発光（淡いシアン〜白） */
-#board[data-board-theme="blue"] .stone.white {
+#board[data-board-theme="darkblue"] .stone.white {
   background: radial-gradient(circle at 38% 32%, #e8f8ff, #80d0f0);
   border: 1px solid rgba(80, 180, 230, 0.5);
   box-shadow:
@@ -580,6 +516,13 @@ hr {
 #board[data-board-theme="urushi"] .cell:hover {
   background: var(--cell-hover-bg);
   box-shadow: inset 0 0 16px rgba(210, 70, 25, 0.4);
+}
+/* last-move の orange 枠を .cell / .cell:hover の box-shadow に上書きされないよう明示的に指定 */
+#board[data-board-theme="urushi"] .cell.last-move {
+  box-shadow: inset 0 0 0 4px var(--last-move-shadow), inset 0 3px 12px rgba(180, 50, 15, 0.1);
+}
+#board[data-board-theme="urushi"] .cell.last-move:hover {
+  box-shadow: inset 0 0 0 4px var(--last-move-shadow), inset 0 0 16px rgba(210, 70, 25, 0.4);
 }
 
 /* ヒント点: 金色の光点 */
@@ -744,6 +687,23 @@ hr {
     inset 0 -1px 0 rgba(0,0,0,0.22),
     inset 1px 0 0 rgba(255,255,255,0.04),
     inset -1px 0 0 rgba(0,0,0,0.06);
+}
+
+/* last-move の orange 枠を .cell / .cell:hover の box-shadow に上書きされないよう明示的に指定 */
+#board[data-board-theme="metal"] .cell.last-move {
+  box-shadow:
+    inset 0 0 0 4px var(--last-move-shadow),
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    inset 0 -1px 0 rgba(0,0,0,0.22),
+    inset 1px 0 0 rgba(255,255,255,0.04),
+    inset -1px 0 0 rgba(0,0,0,0.06);
+}
+#board[data-board-theme="metal"] .cell.last-move:hover {
+  box-shadow:
+    inset 0 0 0 4px var(--last-move-shadow),
+    inset 0 1px 0 rgba(255,255,255,0.52),
+    inset 0 -1px 0 rgba(0,0,0,0.22),
+    0 0 8px rgba(255,255,255,0.08);
 }
 
 /* ホバー時は"磨かれた面に光が走る"感じ */
@@ -982,15 +942,6 @@ hr {
     ),
     radial-gradient(circle at 40% 35%, #fdf3dc, #c9a96e);
   box-shadow: 0 2px 4px rgba(0,0,0,0.25);
-}
-/* dark */
-[data-board-theme="dark"] .stat-card-black .stat-mini-stone {
-  background: radial-gradient(circle at 40% 30%, #1a0430, #050008);
-  box-shadow: 0 0 8px rgba(90,20,200,0.8), 0 2px 5px rgba(0,0,0,0.6), 0 0 0 1.5px rgba(160,160,160,0.5);
-}
-[data-board-theme="dark"] .stat-card-white .stat-mini-stone {
-  background: radial-gradient(circle at 40% 30%, rgba(220,192,255,0.5), rgba(128,48,192,0.96) 60%, rgba(16,0,32,0.5));
-  box-shadow: 0 0 8px rgba(180,80,255,0.7), 0 2px 5px rgba(0,0,0,0.4);
 }
 /* urushi */
 [data-board-theme="urushi"] .stat-card-black .stat-mini-stone {
