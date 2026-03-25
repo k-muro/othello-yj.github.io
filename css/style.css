@@ -66,60 +66,60 @@
   box-shadow: 0 0 10px rgba(0, 255, 255, 1.0), 0 0 3px #00ffff;
 }
 
-/* ===== THEME: SLATE ===== */
+/* ===== THEME: STONE ===== */
 /* feTurbulence を #board::before に一度だけ適用し、64マス連続した自然なテクスチャを実現 */
 /* gap: 0 にして格子線はセルの border で代替（border は z-index: 1 のセル上に描画される） */
 /* --board-bg がラベル・枠エリアの色。inset = padding(4px) + --label-size でセルエリアのみテクスチャを適用 */
-#board[data-board-theme="slate"] { --board-bg: #463c33; --cell-bg: #c1b699; --cell-hover-bg: #d4cbb4; gap: 0; position: relative; }
+#board[data-board-theme="stone"] { --board-bg: #463c33; --cell-bg: #c1b699; --cell-hover-bg: #d4cbb4; gap: 0; position: relative; }
 
 /* 64マス分のみを覆う石目テクスチャ */
 /* inset = padding(4px) + label-size。CSS変数で画面サイズに自動追従 */
-#board[data-board-theme="slate"]::before {
+#board[data-board-theme="stone"]::before {
   content: '';
   position: absolute;
   inset: calc(4px + var(--label-size));
   background: var(--cell-bg);
-  filter: url(#slate-tex);
+  filter: url(#stone-tex);
   z-index: 0;
 }
 
 /* セル: 透明にしてテクスチャを透過、border で格子線を描画 */
-#board[data-board-theme="slate"] .cell {
+#board[data-board-theme="stone"] .cell {
   background: transparent;
   border: 1.5px solid rgba(20, 15, 10, 0.65);
   position: relative;
   z-index: 1;
 }
-#board[data-board-theme="slate"] .cell:hover { background: rgba(255, 255, 255, 0.10); }
+#board[data-board-theme="stone"] .cell:hover { background: rgba(255, 255, 255, 0.10); }
 
 /* ラベルも ::before より前面に */
-#board[data-board-theme="slate"] .board-label {
+#board[data-board-theme="stone"] .board-label {
   position: relative;
   z-index: 1;
   color: rgba(255, 255, 255, 0.85);
 }
 
 /* ヒント点: 明るい盤面に合わせて濃いめ */
-#board[data-board-theme="slate"] .hint-black { background: rgba(25, 18, 15, 0.75); }
-#board[data-board-theme="slate"] .hint-white { background: rgba(25, 18, 15, 0.30); }
+#board[data-board-theme="stone"] .hint-black { background: rgba(25, 18, 15, 0.75); }
+#board[data-board-theme="stone"] .hint-white { background: rgba(25, 18, 15, 0.30); }
 
 
 /* 星点: 格子線と同色 */
-#board[data-board-theme="slate"] .cell[data-pos="1,1"]::after,
-#board[data-board-theme="slate"] .cell[data-pos="1,5"]::after,
-#board[data-board-theme="slate"] .cell[data-pos="5,1"]::after,
-#board[data-board-theme="slate"] .cell[data-pos="5,5"]::after {
+#board[data-board-theme="stone"] .cell[data-pos="1,1"]::after,
+#board[data-board-theme="stone"] .cell[data-pos="1,5"]::after,
+#board[data-board-theme="stone"] .cell[data-pos="5,1"]::after,
+#board[data-board-theme="stone"] .cell[data-pos="5,5"]::after {
   background: lab(4.63% 1.11 2.84 / 0.65);
 }
 
 /* 黒石: 黒曜石（藍がかった深黒） */
-#board[data-board-theme="slate"] .stone.black {
+#board[data-board-theme="stone"] .stone.black {
   background: radial-gradient(circle at 36% 30%, #1c1a24, #060508);
   box-shadow: 0 2px 5px rgba(0,0,0,0.65), 0 0 2px rgba(50,40,70,0.4);
 }
 
 /* 白石: 陶器（わずかに青みを帯びたオフホワイト） */
-#board[data-board-theme="slate"] .stone.white {
+#board[data-board-theme="stone"] .stone.white {
   background: radial-gradient(circle at 36% 30%, #f4f2f6, #d0ced6);
   box-shadow: 0 2px 5px rgba(0,0,0,0.38), inset 0 1px 1px rgba(255,255,255,0.8);
 }
@@ -1445,6 +1445,14 @@ hr {
 .collapse-toggle-label                           { font-weight: 600; }
 .collapse-toggle-label::after                    { content: " ▴"; }
 .collapse-toggle.collapsed .collapse-toggle-label::after { content: " ▾"; }
+
+/* 棋譜・設定パネル内の横並び行（flex-wrap で折り返し対応） */
+.settings-row-compact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
 
 /* トグルと区切り線の間のセパレーター */
 .collapse-divider {
