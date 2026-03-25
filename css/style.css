@@ -69,14 +69,15 @@
 /* ===== THEME: SLATE ===== */
 /* feTurbulence を #board::before に一度だけ適用し、64マス連続した自然なテクスチャを実現 */
 /* gap: 0 にして格子線はセルの border で代替（border は z-index: 1 のセル上に描画される） */
-/* --board-bg がラベル・枠エリアの色。padding(4px) + label-size(18px) = 22px inset でセルエリアのみテクスチャを適用 */
+/* --board-bg がラベル・枠エリアの色。inset = padding(4px) + --label-size でセルエリアのみテクスチャを適用 */
 #board[data-board-theme="slate"] { --board-bg: #463c33; --cell-bg: #c1b699; --cell-hover-bg: #d4cbb4; gap: 0; position: relative; }
 
 /* 64マス分のみを覆う石目テクスチャ */
+/* inset = padding(4px) + label-size。CSS変数で画面サイズに自動追従 */
 #board[data-board-theme="slate"]::before {
   content: '';
   position: absolute;
-  inset: 22px;
+  inset: calc(4px + var(--label-size));
   background: var(--cell-bg);
   filter: url(#slate-tex);
   z-index: 0;
