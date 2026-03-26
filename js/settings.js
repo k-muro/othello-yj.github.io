@@ -238,7 +238,8 @@ loadFromURL();
 // 保存済みの設定を UI に反映する
 document.getElementById('solver-depth').value = solverDepth;
 if (showMoveNumbers) document.getElementById('num-toggle').textContent       = '着手順を隠す';
-if (showMoveEvals)   document.getElementById('move-eval-toggle').textContent = '評価値を隠す';
+if (showMoveEvals)   document.getElementById('move-eval-toggle').classList.add('active');
+if (showNakawari)    document.getElementById('nakawari-toggle').classList.add('active');
 
 // 確定ボタン: iOS ではクリック前に blur でキーボード入力を確定する
 document.getElementById('confirm-depth-btn').addEventListener('click', function() {
@@ -313,6 +314,7 @@ document.addEventListener('keydown', function(e) {
       break;
     case 'b': case 'B': goToBranchPoint(); break;
     case 'e': case 'E': toggleMoveEvals();  break;
+    case 'n': case 'N': toggleNakawari();   break;
     case 'm': case 'M': toggleMistakeList(); break;
     case 'o': case 'O': toggleOpenings();   break;
     case 'd': case 'D': toggleTheme();      break;

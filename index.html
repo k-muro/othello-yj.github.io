@@ -204,9 +204,11 @@
     <div class="collapse" id="analysis-panel">
     <div class="d-flex gap-2 mb-2">
       <button id="move-eval-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2 analysis-btn"
-              onclick="toggleMoveEvals()">候補手評価</button>
+              onclick="toggleMoveEvals()">評価値</button>
+      <button id="nakawari-toggle" class="btn btn-outline-secondary btn-sm py-0 px-2 analysis-btn"
+              onclick="toggleNakawari()">中割り</button>
       <button id="mistake-analyze-btn" class="btn btn-outline-secondary btn-sm py-0 px-2 analysis-btn"
-              onclick="toggleMistakeList()">悪手表示</button>
+              onclick="toggleMistakeList()">悪手</button>
       <button id="opening-guide-btn" class="btn btn-outline-secondary btn-sm py-0 px-2 analysis-btn"
               onclick="toggleOpenings()">定石</button>
       <button id="best-dot-toggle-btn" class="btn btn-outline-secondary btn-sm py-0 px-2 analysis-btn active"
@@ -267,25 +269,33 @@
         <span id="url-copy-msg" class="small text-success" style="display:none;">コピーしました</span>
       </div>
 
-      <!-- プレイヤー名 + AI対局 -->
+      <!-- プレイヤー名 -->
       <div id="name-area" class="settings-row-compact mt-2">
-        ⚫<input type="text" id="black-name-input" class="form-control form-control-sm name-input" placeholder="黒" oninput="updateNames()" onclick="this.select()">
+        <span>⚫</span><input type="text" id="black-name-input" class="form-control form-control-sm name-input" placeholder="黒" oninput="updateNames()" onclick="this.select()">
         <button class="btn btn-outline-secondary btn-sm px-1" onclick="swapNames()" title="名前を入れ替え">⇄</button>
-        ⚪<input type="text" id="white-name-input" class="form-control form-control-sm name-input" placeholder="白" oninput="updateNames()" onclick="this.select()">
-        <span class="text-secondary small text-nowrap">AI対局:</span>
-        <button class="btn btn-outline-secondary btn-sm text-nowrap" onclick="startAIGame(1)">⚫ 黒</button>
-        <button class="btn btn-outline-secondary btn-sm text-nowrap" onclick="startAIGame(-1)">⚪ 白</button>
+        <span>⚪</span><input type="text" id="white-name-input" class="form-control form-control-sm name-input" placeholder="白" oninput="updateNames()" onclick="this.select()">
       </div>
 
-      <!-- 表示設定 + 全読み設定 -->
-      <div class="settings-row-compact mt-2 mb-1">
+      <!-- AI対局 -->
+      <div class="settings-row-compact mt-2">
+        <span class="text-secondary small">AI対局:</span>
+        <button class="btn btn-outline-secondary btn-sm" onclick="startAIGame(1)">⚫ 黒で対局</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="startAIGame(-1)">⚪ 白で対局</button>
+      </div>
+
+      <!-- 表示設定 -->
+      <div class="settings-row-compact mt-2">
         <button id="num-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleMoveNumbers()">着手順を表示</button>
         <button id="stone-toggle" class="btn btn-outline-secondary btn-sm" onclick="toggleStones()">野獣先輩モード</button>
-        <span class="text-secondary small text-nowrap">全読み:</span>
+      </div>
+
+      <!-- 全読み設定 -->
+      <div class="settings-row-compact mt-2 mb-1">
+        <span class="text-secondary small">全読み開始:</span>
         <input type="number" id="solver-depth" class="form-control form-control-sm text-center"
                min="6" max="24" value="20">
-        <span class="text-secondary small text-nowrap">手前</span>
-        <button class="btn btn-outline-secondary btn-sm text-nowrap" id="confirm-depth-btn">確定</button>
+        <span class="text-secondary small">手前</span>
+        <button class="btn btn-outline-secondary btn-sm" id="confirm-depth-btn">確定</button>
       </div>
       <div id="depth-warning" class="text-center small mt-1" style="display:none;"></div>
 

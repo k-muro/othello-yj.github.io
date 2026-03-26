@@ -44,6 +44,21 @@ function updateEndgameEl(solverText) {
 
 // ===== DOM REFERENCES =====
 
+// drawBoard の世代番号。非同期の二次更新フェーズが古い呼び出しのものかを判定するために使う。
+let _drawGeneration = 0;
+
+// 中割りドットの表示フラグ
+let showNakawari = localStorage.getItem(STORAGE_KEYS.SHOW_NAKAWARI) === 'true';
+
+// 中割りドット表示を切り替える
+function toggleNakawari() {
+  showNakawari = !showNakawari;
+  localStorage.setItem(STORAGE_KEYS.SHOW_NAKAWARI, showNakawari);
+  const btn = document.getElementById('nakawari-toggle');
+  if (btn) btn.classList.toggle('active', showNakawari);
+  drawBoard();
+}
+
 const boardElement = document.getElementById("board");
 const info         = document.getElementById("info");
 const scBlack      = document.getElementById("sc-black");
@@ -83,7 +98,11 @@ function updateKifuInput() {
 // ===== BOARD RENDERING =====
 
 // ボードのグリッド・石・ヒント・着手順番号を描画する
+// DocumentFragment にまとめて構築し、最後に1回だけ DOM へ追加することで
+// 中間の レイアウト再計算を防いでメインスレッドのブロッキングを軽減する
 function renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap) {
+  const frag = document.createDocumentFragment();
+
   const makeLabel = (text) => {
     const lbl = document.createElement("div");
     lbl.className   = "board-label";
@@ -92,12 +111,12 @@ function renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap) {
   };
 
   // 上段: コーナー + a-h + コーナー
-  boardElement.appendChild(document.createElement("div"));
-  for (let x = 0; x < 8; x++) boardElement.appendChild(makeLabel(String.fromCharCode(97 + x)));
-  boardElement.appendChild(document.createElement("div"));
+  frag.appendChild(document.createElement("div"));
+  for (let x = 0; x < 8; x++) frag.appendChild(makeLabel(String.fromCharCode(97 + x)));
+  frag.appendChild(document.createElement("div"));
 
   for (let y = 0; y < 8; y++) {
-    boardElement.appendChild(makeLabel(y + 1)); // 左ラベル
+    frag.appendChild(makeLabel(y + 1)); // 左ラベル
 
     for (let x = 0; x < 8; x++) {
       const cell = document.createElement("div");
@@ -158,17 +177,26 @@ function renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap) {
             cell.appendChild(dotRow);
           }
         }
+        // 中割りバッジを追加する（評価値表示 ON 時のみ）
+        if (showNakawari && isNakawari(board, x, y, currentPlayer)) {
+          const badge = document.createElement('div');
+          badge.className = 'nakawari-badge';
+          cell.appendChild(badge);
+        }
       }
-      boardElement.appendChild(cell);
+      frag.appendChild(cell);
     }
 
-    boardElement.appendChild(makeLabel(y + 1)); // 右ラベル
+    frag.appendChild(makeLabel(y + 1)); // 右ラベル
   }
 
   // 下段: コーナー + a-h + コーナー
-  boardElement.appendChild(document.createElement("div"));
-  for (let x = 0; x < 8; x++) boardElement.appendChild(makeLabel(String.fromCharCode(97 + x)));
-  boardElement.appendChild(document.createElement("div"));
+  frag.appendChild(document.createElement("div"));
+  for (let x = 0; x < 8; x++) frag.appendChild(makeLabel(String.fromCharCode(97 + x)));
+  frag.appendChild(document.createElement("div"));
+
+  // 全セルを構築し終えてから1回だけ DOM へ追加する
+  boardElement.appendChild(frag);
 }
 
 // ===== SCORE DISPLAY =====
@@ -291,6 +319,10 @@ function runSolverForPosition(snapBoard, snapPlayer, snapEmpty, snapGameOver, so
 // ===== MAIN DRAW FUNCTION =====
 
 // 現在の盤面状態に合わせて全 UI を更新する
+// ─ フェーズ1（同期）: ボードグリッド・石数・ゲーム状態など即時表示が必要な部分
+// ─ フェーズ2（非同期 setTimeout 0）: computeAllEvals など重い処理。
+//   setTimeout(0) は次の rAF より先に実行されるため、scheduleMoveEvals が
+//   開始する前に evalCache が最新状態になることが保証される。
 function drawBoard() {
   if (_skipDraw) return;
 
@@ -303,6 +335,8 @@ function drawBoard() {
   const nextRefKey     = computeNextRefKey();
   const moveNumMap     = buildMoveNumMap();
   const currentEvalGen = ++moveEvalGeneration;
+
+  // ─ フェーズ1: 即時描画（ユーザーが最初に目にする部分）─────────────────
 
   renderBoardGrid(validSet, lastMove, nextRefKey, moveNumMap);
 
@@ -323,19 +357,26 @@ function drawBoard() {
   const whiteMoves = getValidMoves(-1);
   updateGameStatusDisplay(blackMoves, whiteMoves);
   updateBranchButton();
+  updateNavButtons();
 
   // 全読みが必要な局面かどうかを先に判定する
   const snapGameOver  = blackMoves.length === 0 && whiteMoves.length === 0;
   solverState.pending = !snapGameOver && empty <= solverDepth;
 
-  computeAllEvals();
-  updateScoreGraph();
-  updateNavButtons();
-  renderBranchTree();
-  updateOpeningDisplay();
-  triggerMistakeAnalysisIfNeeded();
+  // ─ フェーズ2: 重い二次更新（描画後に非同期実行してメインスレッドのブロックを回避）
 
-  // 評価値表示が終わったら全読みを起動する（盤面スナップショットをクロージャで渡す）
+  const drawGen = ++_drawGeneration;
+  setTimeout(() => {
+    if (drawGen !== _drawGeneration) return; // より新しい drawBoard が呼ばれていたらスキップ
+    computeAllEvals();
+    updateScoreGraph();
+    renderBranchTree();
+    updateOpeningDisplay();
+    triggerMistakeAnalysisIfNeeded();
+  }, 0);
+
+  // ─ 評価値表示が終わったら全読みを起動する（盤面スナップショットをクロージャで渡す）
+
   const snapBoard  = board.map(r => [...r]);
   const snapPlayer = currentPlayer;
   const snapEmpty  = empty;

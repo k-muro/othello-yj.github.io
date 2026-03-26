@@ -442,6 +442,6 @@ function toggleMoveEvals() {
   showMoveEvals = !showMoveEvals;
   localStorage.setItem(STORAGE_KEYS.SHOW_MOVE_EVALS, showMoveEvals);
   const btn = document.getElementById('move-eval-toggle');
-  if (btn) btn.textContent = showMoveEvals ? '評価値を隠す' : '候補手評価';
+  if (btn) btn.classList.toggle('active', showMoveEvals);
   drawBoard();
 }

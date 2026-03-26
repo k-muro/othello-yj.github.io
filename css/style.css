@@ -281,6 +281,19 @@ hr {
   text-shadow: none;
 }
 
+/* 中割りドット（マスの左下に表示、評価値 ON 時のみ描画） */
+.nakawari-badge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ef4444b3;
+  pointer-events: none;
+  z-index: 2;
+}
+
 /* ===== STONES ===== */
 .stone {
   width: var(--stone-size);
@@ -586,6 +599,7 @@ hr {
 /* ヒント点: 金色の光点 */
 #board[data-board-theme="urushi"] .hint-black { background: rgba(212, 175, 55, 0.8); }
 #board[data-board-theme="urushi"] .hint-white { background: rgba(212, 175, 55, 0.55); }
+#board[data-board-theme="urushi"] .nakawari-badge { background: rgba(212, 175, 55, 0.85); }
 
 /* 黒石: 漆黒の深い艶 + 金の蒔絵縁 */
 #board[data-board-theme="urushi"] .stone.black {
@@ -1174,6 +1188,7 @@ hr {
 #board[data-board-theme="rose"] .board-label { color: rgba(255, 255, 255, 0.85); }
 #board[data-board-theme="rose"] .hint-black { background: rgba(100, 10, 10, 0.85); }
 #board[data-board-theme="rose"] .hint-white { background: rgba(100, 10, 10, 0.35); }
+#board[data-board-theme="rose"] .nakawari-badge { background: rgba(212, 175, 55, 0.85); }
 
 /* ===== THEME: RETRO ===== */
 
@@ -1470,9 +1485,11 @@ hr {
 .name-input   { width: 90px; }
 
 /* ===== DARK THEME ===== */
-/* ウッド・レトロはダークモードで背景と同化しやすいためアウトラインでフチ取り */
-[data-bs-theme="dark"] #board[data-board-theme="wood"],[data-bs-theme="dark"] #board[data-board-theme="classic"] { outline: 2px solid rgba(160, 160, 160, 0.5); }
-[data-bs-theme="dark"] #board[data-board-theme="retro"] { outline: 2px solid rgba(160, 160, 160, 0.5); }
+/* 明るい背景のテーマはダークモードで背景と同化しやすいためアウトラインでフチ取り */
+[data-bs-theme="dark"] #board[data-board-theme="wood"],
+[data-bs-theme="dark"] #board[data-board-theme="classic"],
+[data-bs-theme="dark"] #board[data-board-theme="retro"],
+[data-bs-theme="dark"] #board[data-board-theme="stone"]  { outline: 2px solid rgba(160, 160, 160, 0.5); }
 
 [data-bs-theme="dark"] body              { background: #0d1117; }
 [data-bs-theme="dark"] .app-card        { background: #161b22; border-color: #30363d; }
@@ -1599,7 +1616,8 @@ hr {
   #board[data-board-theme="retro"] .stone.black::before,
   #board[data-board-theme="retro"] .stone.white::before { transform: scale(0.609); transform-origin: 0 0; }
   .stone-num   { font-size: 11px; }
-  .move-eval   { font-size: 8px; bottom: 2px; right: 2px; }
+  .move-eval      { font-size: 8px; bottom: 2px; right: 2px; }
+  .nakawari-badge { width: 4px; height: 4px; bottom: 3px; left: 3px; }
 
   /* スコアパネル */
   #stone-count {
@@ -1659,8 +1677,9 @@ hr {
     grid-template-rows:    var(--label-size) repeat(8, var(--cell-size)) var(--label-size);
   }
 
-  .stone     { width: 24px; height: 24px; }
-  .hint      { width: 8px; height: 8px; }
+  .stone          { width: 24px; height: 24px; }
+  .hint           { width: 8px; height: 8px; }
+  .nakawari-badge { width: 4px; height: 4px; bottom: 2px; left: 2px; }
   /* レトロ: ピクセルアート(46px)を石サイズ(24px)に合わせて縮小 */
   #board[data-board-theme="retro"] .stone.black::before,
   #board[data-board-theme="retro"] .stone.white::before { transform: scale(0.522); transform-origin: 0 0; }

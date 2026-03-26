@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   GRAPH_MODE:      'othello-graph-mode',
   EVAL_LEVEL:      'othello-eval-level',
   SHOW_MOVE_EVALS: 'othello-show-move-evals',
+  SHOW_NAKAWARI:   'othello-show-nakawari',
   panel:           id => `othello-panel-${id}`,
   SHOW_OPENINGS:   'othello-show-openings',
   BOARD_THEME:     'othello-board-theme',
@@ -20,6 +21,7 @@ const EVAL_ADVANTAGE_THRESHOLD = 15;  // 「勝勢」と判定するスコア閾
 const MAX_SHOWN_MISTAKES       = 7;   // 悪手リストの最大表示件数
 const MIN_LOSS_FOR_MISTAKE     = 6;   // 悪手と判定する最善手との差の下限
 const BLUNDER_THRESHOLD        = 12;  // ブランダー（×）と判定する差の閾値
+const MAX_MISTAKE_CACHE_ENTRIES = 50; // mistakeCacheMap の最大保持数（古い棋譜から順に削除）
 
 // ===== BOARD THEMES =====
 // 有効なテーマ名の一覧（色定義は css/style.css の #board[data-board-theme] セレクタで管理）

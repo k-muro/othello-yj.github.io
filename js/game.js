@@ -130,6 +130,24 @@ function applyBoardMove(b, x, y, player) {
   return nb;
 }
 
+// player が (x,y) に置いたとき中割りになるかを返す（純粋）
+// 中割り = ひっくり返す全石の周囲8マスにある空きマス数の合計が 1 以下
+// 着手位置 (x,y) は着手で埋まるため空きマスとして数えない
+function isNakawari(b, x, y, player) {
+  const flips = getFlipsOnBoard(b, x, y, player);
+  if (flips.length === 0) return false;
+  let emptyCount = 0;
+  for (const [fx, fy] of flips) {
+    for (const [dx, dy] of DIRS) {
+      const nx = fx + dx, ny = fy + dy;
+      if (!inBounds(nx, ny)) continue;    // 盤外はスキップ
+      if (nx === x && ny === y) continue; // 着手位置は埋まっているのでスキップ
+      if (b[ny][nx] === 0) emptyCount++;
+    }
+  }
+  return emptyCount === 0;
+}
+
 // ===== GLOBAL-BOARD WRAPPERS =====
 // グローバル board を使う薄いラッパー。UI 層はこちらを呼ぶ。
 
