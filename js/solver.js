@@ -306,6 +306,21 @@ function computeAllEvals() {
   if (!egaroucidReady) return;
   const kifuKey = moveHistory.map(m => `${m.x},${m.y}`).join('|');
   if (kifuKey === evalKifu && evalCache.length > 0) return; // 同一棋譜はスキップ
+
+  // 現在の棋譜が既存キャッシュの先頭と一致する場合はキャッシュを流用する。
+  // 例: 棋譜を読み込み後に途中まで戻り、同じ手を打った直後は moveHistory が
+  // 元の棋譜のプレフィックスになるため evalCache の再計算は不要。
+  const isPrefix = evalCache.length > 0 && (
+    kifuKey === ''
+      ? evalKifu.length > 0                    // 開始局面に戻った場合
+      : evalKifu.startsWith(kifuKey + '|')      // 途中局面の場合
+  );
+  if (isPrefix) {
+    evalKifu = kifuKey;
+    updateScoreGraph();
+    return;
+  }
+
   evalKifu = kifuKey;
   evalCache = [];
 
