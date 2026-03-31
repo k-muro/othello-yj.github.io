@@ -70,7 +70,7 @@ function _showKifuFeedback(type, message) {
 
 // 棋譜入力フィールドの内容を盤面に反映する
 function applyKifu() {
-  const kifu  = document.getElementById("kifu-input").value.trim().toLowerCase();
+  const kifu  = document.getElementById("kifu-input").value.trim().toLowerCase().replace(/ /g, '');
   const error = validateKifu(kifu);
 
   if (error) {
