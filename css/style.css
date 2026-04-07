@@ -124,6 +124,152 @@
   box-shadow: 0 2px 5px rgba(0,0,0,0.38), inset 0 1px 1px rgba(255,255,255,0.8);
 }
 
+/* ===== THEME: PARCHMENT ===== */
+/* 羊皮紙：ノイズテクスチャ＋輪郭ゆらぎ＋折り目で古文書の質感を表現 */
+#board[data-board-theme="parchment"] {
+  --board-bg: #6b3a1e;
+  --cell-bg: #f5ead0;
+  --cell-hover-bg: #e5ceaa;
+  --last-move-shadow: #7f3300;
+  gap: 0;
+  position: relative;
+  filter: url(#parchment-wavy);
+  box-shadow:
+    2px 4px 24px rgba(0, 0, 0, 0.55),
+    0 0 80px #8f5922 inset;
+}
+
+/* 64マス分のみを覆う羊皮紙ノイズテクスチャ */
+#board[data-board-theme="parchment"]::before {
+  content: '';
+  position: absolute;
+  inset: calc(4px + var(--label-size));
+  /* 中央が白っぽく・外周が焼けた茶色になるよう background-color + background-image で合成 */
+  background-color: var(--cell-bg);
+  /* 格子線（repeating-gradient）→ 焦げ縁 radial → ノイズ の順に重ねてフィルターで一括ゆらぐ */
+  /* opacity: 0.70 を加味して grid line は 0.72 に設定（実効値≈0.50） */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent calc(var(--cell-size) - 1px),
+      rgba(80, 40, 10, 0.72) calc(var(--cell-size) - 1px),
+      rgba(80, 40, 10, 0.72) var(--cell-size)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent calc(var(--cell-size) - 1px),
+      rgba(80, 40, 10, 0.72) calc(var(--cell-size) - 1px),
+      rgba(80, 40, 10, 0.72) var(--cell-size)
+    ),
+    radial-gradient(ellipse at center,
+      rgba(255, 252, 245, 0.80)  0%,
+      rgba(245, 234, 208, 0.30) 55%,
+      rgba(140,  70,  15, 0.20) 82%,
+      rgba(100,  48,  12, 0.38) 100%
+    ),
+    url("data:image/png;base64,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");
+  opacity: 0.70;
+  z-index: 0;
+  /* filter は親 (#board) に適用済み */
+}
+
+/* 折り目・シワのコーニックグラデーション（::before の上に薄く重ねる） */
+#board[data-board-theme="parchment"]::after {
+  content: '';
+  position: absolute;
+  inset: calc(4px + var(--label-size));
+  background: conic-gradient(
+    rgba(255,255,255,0.15), rgba(255,255,255,0) 2% 24%, rgba(255,255,255,0.10) 25%,
+    rgba(100,60,20,0.05) 0, transparent 27% 48%,
+    rgba(100,60,20,0.07) 50%, rgba(255,255,255,0.10) 0, rgba(255,255,255,0) 52% 73%,
+    rgba(100,60,20,0.05) 75%, rgba(255,255,255,0.12) 0, rgba(255,255,255,0) 78% 97%,
+    rgba(100,60,20,0.07)
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* セル: 透明にしてテクスチャを透過（格子線は ::before に移管してゆらぎ対象に） */
+#board[data-board-theme="parchment"] .cell {
+  background: transparent;
+  position: relative;
+  z-index: 1;
+}
+#board[data-board-theme="parchment"] .cell:hover { background: rgba(120, 70, 20, 0.10); }
+
+/* ラベル: セリフ体・紙と同色（枠に溶け込ませる） */
+#board[data-board-theme="parchment"] .board-label {
+  position: relative;
+  z-index: 1;
+  font-family: Georgia, "Times New Roman", serif;
+  color: rgba(245, 234, 208, 0.80);
+  letter-spacing: 0.05em;
+}
+
+/* last-move: 赤茶色の枠（インク押し印風） */
+#board[data-board-theme="parchment"] .cell.last-move {
+  box-shadow: inset 0 0 0 3px var(--last-move-shadow);
+}
+#board[data-board-theme="parchment"] .cell.last-move:hover {
+  box-shadow: inset 0 0 0 3px var(--last-move-shadow);
+  background: rgba(120, 70, 20, 0.10);
+}
+
+/* 星点: 格子線と同色・完全不透明 */
+#board[data-board-theme="parchment"] .cell[data-pos="1,1"]::after,
+#board[data-board-theme="parchment"] .cell[data-pos="1,5"]::after,
+#board[data-board-theme="parchment"] .cell[data-pos="5,1"]::after,
+#board[data-board-theme="parchment"] .cell[data-pos="5,5"]::after {
+  background: rgb(80, 40, 10);
+}
+
+/* ヒント */
+#board[data-board-theme="parchment"] .hint-black { background: rgba(30, 15, 5, 0.55); }
+#board[data-board-theme="parchment"] .hint-white { background: rgba(30, 15, 5, 0.20); }
+#board[data-board-theme="parchment"] .hint-ref-black { background: rgba(127, 51, 0, 0.75); }
+#board[data-board-theme="parchment"] .hint-ref-white { background: rgba(180, 90, 30, 0.65); }
+
+/* 最善手ドット: インク色 */
+#board[data-board-theme="parchment"] .best-move-dot {
+  background: #7f3300;
+  box-shadow: 0 0 3px rgba(127, 51, 0, 0.65);
+}
+
+/* 黒石: 石板テーマと同じ黒曜石グラデーション */
+#board[data-board-theme="parchment"] .stone.black {
+  background: radial-gradient(circle at 36% 30%, #1c1a24, #060508);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.65), 0 0 2px rgba(50, 40, 70, 0.4);
+}
+
+/* 白石: 石板テーマと同じ陶器グラデーション */
+#board[data-board-theme="parchment"] .stone.white {
+  background: radial-gradient(circle at 36% 30%, #f4f2f6, #d0ced6);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+/* 着手順番号: 石板テーマの石に合わせたコントラスト */
+#board[data-board-theme="parchment"] .stone-num-by-black {
+  color: #fff;
+  text-shadow: 0 0 3px #060508, 0 0 3px #060508;
+}
+#board[data-board-theme="parchment"] .stone-num-by-white {
+  color: #000;
+  text-shadow: 0 0 3px #f4f2f6, 0 0 3px #f4f2f6;
+}
+
+/* 評価値: 墨色 */
+#board[data-board-theme="parchment"] .move-eval {
+  color: rgba(60, 30, 5, 0.90);
+  text-shadow: 0 0 2px rgba(255, 245, 220, 0.80);
+}
+
+/* 中割りドット */
+#board[data-board-theme="parchment"] .nakawari-badge {
+  background: rgba(127, 51, 0, 0.82);
+}
+
 /* ===== BASE ===== */
 body {
   font-family: 'M PLUS 1', sans-serif;

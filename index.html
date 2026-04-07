@@ -44,9 +44,16 @@
 <svg height="0" aria-hidden="true" style="position:absolute;overflow:hidden">
   <defs>
     <!-- x/y/width/height=0/0/1/1 でフィルター出力を要素境界内にクリップし gap への滲み出しを防ぐ -->
+    <!-- 羊皮紙テーマの輪郭ゆらぎ
+         baseFrequency を低く（波長≈167px）することで石がほぼ平行移動するだけになり
+         内部変形が抑えられる。#board 自体に適用して外枠ごと紙として揺らす。 -->
+    <filter id="parchment-wavy" x="-4%" y="-4%" width="108%" height="108%">
+      <feTurbulence type="turbulence" baseFrequency="0.006" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
     <filter id="stone-tex" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
       <feTurbulence type="fractalNoise" baseFrequency=".0371 .0713" numOctaves="4" result="noise"/>
-      <feDiffuseLighting in="noise" lighting-color="white" surfaceScale="2" result="light">
+      <feDiffuseLighting in="noise" lighting-color="white" surfaceScale="1" result="light">
         <feDistantLight azimuth="90" elevation="50"/>
       </feDiffuseLighting>
       <feBlend in="SourceGraphic" in2="light" mode="multiply"/>
@@ -488,6 +495,10 @@ window._aiLoadTimer = setTimeout(function() {
           <button class="board-theme-card" data-theme="stone"   data-bs-dismiss="modal" onclick="setBoardTheme('stone')">
             <div class="board-theme-swatch" style="background:#c4bba4; box-shadow:0 0 0 3px #1a1410;"></div>
             <span>石板</span>
+          </button>
+          <button class="board-theme-card" data-theme="parchment" data-bs-dismiss="modal" onclick="setBoardTheme('parchment')">
+            <div class="board-theme-swatch" style="background:#f5ead0; box-shadow:0 0 0 3px #6b3a1e;"></div>
+            <span>羊皮紙</span>
           </button>
         </div>
       </div>
