@@ -251,6 +251,72 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
 
+/* 石をマスごとにわずかにずらして手置き感を演出（±2.5px 以内の固定オフセット） */
+#board[data-board-theme="parchment"] .cell[data-pos="0,0"] .stone { transform: translate( 1.2px, -1.8px); }
+#board[data-board-theme="parchment"] .cell[data-pos="1,0"] .stone { transform: translate(-0.7px,  2.1px); }
+#board[data-board-theme="parchment"] .cell[data-pos="2,0"] .stone { transform: translate( 2.0px,  0.5px); }
+#board[data-board-theme="parchment"] .cell[data-pos="3,0"] .stone { transform: translate(-1.5px, -0.9px); }
+#board[data-board-theme="parchment"] .cell[data-pos="4,0"] .stone { transform: translate( 0.8px,  2.3px); }
+#board[data-board-theme="parchment"] .cell[data-pos="5,0"] .stone { transform: translate(-2.1px,  0.4px); }
+#board[data-board-theme="parchment"] .cell[data-pos="6,0"] .stone { transform: translate( 1.6px, -1.3px); }
+#board[data-board-theme="parchment"] .cell[data-pos="7,0"] .stone { transform: translate(-0.4px,  1.9px); }
+#board[data-board-theme="parchment"] .cell[data-pos="0,1"] .stone { transform: translate( 2.2px,  0.8px); }
+#board[data-board-theme="parchment"] .cell[data-pos="1,1"] .stone { transform: translate(-1.0px, -2.0px); }
+#board[data-board-theme="parchment"] .cell[data-pos="2,1"] .stone { transform: translate( 0.6px,  1.7px); }
+#board[data-board-theme="parchment"] .cell[data-pos="3,1"] .stone { transform: translate(-2.3px,  0.3px); }
+#board[data-board-theme="parchment"] .cell[data-pos="4,1"] .stone { transform: translate( 1.4px, -0.6px); }
+#board[data-board-theme="parchment"] .cell[data-pos="5,1"] .stone { transform: translate(-0.8px,  2.4px); }
+#board[data-board-theme="parchment"] .cell[data-pos="6,1"] .stone { transform: translate( 2.5px, -1.1px); }
+#board[data-board-theme="parchment"] .cell[data-pos="7,1"] .stone { transform: translate(-1.7px,  0.7px); }
+#board[data-board-theme="parchment"] .cell[data-pos="0,2"] .stone { transform: translate( 0.3px, -2.2px); }
+#board[data-board-theme="parchment"] .cell[data-pos="1,2"] .stone { transform: translate(-2.0px,  1.5px); }
+#board[data-board-theme="parchment"] .cell[data-pos="2,2"] .stone { transform: translate( 1.8px,  0.2px); }
+#board[data-board-theme="parchment"] .cell[data-pos="3,2"] .stone { transform: translate(-0.5px, -1.6px); }
+#board[data-board-theme="parchment"] .cell[data-pos="4,2"] .stone { transform: translate( 2.4px,  1.0px); }
+#board[data-board-theme="parchment"] .cell[data-pos="5,2"] .stone { transform: translate(-1.2px, -0.3px); }
+#board[data-board-theme="parchment"] .cell[data-pos="6,2"] .stone { transform: translate( 0.9px,  2.0px); }
+#board[data-board-theme="parchment"] .cell[data-pos="7,2"] .stone { transform: translate(-2.4px, -0.8px); }
+#board[data-board-theme="parchment"] .cell[data-pos="0,3"] .stone { transform: translate( 1.5px,  1.3px); }
+#board[data-board-theme="parchment"] .cell[data-pos="1,3"] .stone { transform: translate(-0.3px, -2.4px); }
+#board[data-board-theme="parchment"] .cell[data-pos="2,3"] .stone { transform: translate( 2.1px, -0.7px); }
+#board[data-board-theme="parchment"] .cell[data-pos="3,3"] .stone { transform: translate(-1.8px,  1.0px); }
+#board[data-board-theme="parchment"] .cell[data-pos="4,3"] .stone { transform: translate( 0.4px, -2.1px); }
+#board[data-board-theme="parchment"] .cell[data-pos="5,3"] .stone { transform: translate(-2.5px,  0.6px); }
+#board[data-board-theme="parchment"] .cell[data-pos="6,3"] .stone { transform: translate( 1.1px,  1.8px); }
+#board[data-board-theme="parchment"] .cell[data-pos="7,3"] .stone { transform: translate(-0.6px, -1.4px); }
+#board[data-board-theme="parchment"] .cell[data-pos="0,4"] .stone { transform: translate( 2.3px, -0.4px); }
+#board[data-board-theme="parchment"] .cell[data-pos="1,4"] .stone { transform: translate(-1.4px,  2.0px); }
+#board[data-board-theme="parchment"] .cell[data-pos="2,4"] .stone { transform: translate( 0.7px, -1.9px); }
+#board[data-board-theme="parchment"] .cell[data-pos="3,4"] .stone { transform: translate(-2.2px, -0.5px); }
+#board[data-board-theme="parchment"] .cell[data-pos="4,4"] .stone { transform: translate( 1.9px,  0.9px); }
+#board[data-board-theme="parchment"] .cell[data-pos="5,4"] .stone { transform: translate(-0.9px, -2.3px); }
+#board[data-board-theme="parchment"] .cell[data-pos="6,4"] .stone { transform: translate( 2.0px,  1.4px); }
+#board[data-board-theme="parchment"] .cell[data-pos="7,4"] .stone { transform: translate(-1.3px,  0.2px); }
+#board[data-board-theme="parchment"] .cell[data-pos="0,5"] .stone { transform: translate( 0.5px,  2.5px); }
+#board[data-board-theme="parchment"] .cell[data-pos="1,5"] .stone { transform: translate(-2.3px, -1.0px); }
+#board[data-board-theme="parchment"] .cell[data-pos="2,5"] .stone { transform: translate( 1.3px, -0.2px); }
+#board[data-board-theme="parchment"] .cell[data-pos="3,5"] .stone { transform: translate(-0.2px,  1.8px); }
+#board[data-board-theme="parchment"] .cell[data-pos="4,5"] .stone { transform: translate( 2.5px, -1.5px); }
+#board[data-board-theme="parchment"] .cell[data-pos="5,5"] .stone { transform: translate(-1.6px,  0.8px); }
+#board[data-board-theme="parchment"] .cell[data-pos="6,5"] .stone { transform: translate( 0.2px, -2.0px); }
+#board[data-board-theme="parchment"] .cell[data-pos="7,5"] .stone { transform: translate(-2.1px,  1.2px); }
+#board[data-board-theme="parchment"] .cell[data-pos="0,6"] .stone { transform: translate( 1.7px, -0.6px); }
+#board[data-board-theme="parchment"] .cell[data-pos="1,6"] .stone { transform: translate(-0.8px,  2.2px); }
+#board[data-board-theme="parchment"] .cell[data-pos="2,6"] .stone { transform: translate( 2.2px,  0.1px); }
+#board[data-board-theme="parchment"] .cell[data-pos="3,6"] .stone { transform: translate(-1.1px, -1.7px); }
+#board[data-board-theme="parchment"] .cell[data-pos="4,6"] .stone { transform: translate( 0.6px,  2.1px); }
+#board[data-board-theme="parchment"] .cell[data-pos="5,6"] .stone { transform: translate(-2.4px, -0.2px); }
+#board[data-board-theme="parchment"] .cell[data-pos="6,6"] .stone { transform: translate( 1.4px,  1.6px); }
+#board[data-board-theme="parchment"] .cell[data-pos="7,6"] .stone { transform: translate(-0.5px, -2.5px); }
+#board[data-board-theme="parchment"] .cell[data-pos="0,7"] .stone { transform: translate( 2.4px,  0.7px); }
+#board[data-board-theme="parchment"] .cell[data-pos="1,7"] .stone { transform: translate(-1.9px, -0.4px); }
+#board[data-board-theme="parchment"] .cell[data-pos="2,7"] .stone { transform: translate( 0.1px,  1.5px); }
+#board[data-board-theme="parchment"] .cell[data-pos="3,7"] .stone { transform: translate(-2.0px,  0.9px); }
+#board[data-board-theme="parchment"] .cell[data-pos="4,7"] .stone { transform: translate( 1.0px, -2.2px); }
+#board[data-board-theme="parchment"] .cell[data-pos="5,7"] .stone { transform: translate(-0.4px,  1.1px); }
+#board[data-board-theme="parchment"] .cell[data-pos="6,7"] .stone { transform: translate( 2.3px, -0.9px); }
+#board[data-board-theme="parchment"] .cell[data-pos="7,7"] .stone { transform: translate(-1.5px,  2.3px); }
+
 /* 着手順番号: 石板テーマの石に合わせたコントラスト */
 #board[data-board-theme="parchment"] .stone-num-by-black {
   color: #fff;
