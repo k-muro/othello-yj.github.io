@@ -232,10 +232,11 @@
 #board[data-board-theme="parchment"] .hint-ref-black { background: rgba(127, 51, 0, 0.75); filter: url(#parchment-wavy); }
 #board[data-board-theme="parchment"] .hint-ref-white { background: rgba(180, 90, 30, 0.65); filter: url(#parchment-wavy); }
 
-/* 最善手ドット: インク色 */
+/* 最善手ドット: 水色（デフォルトと同色）+ ゆらぎ */
 #board[data-board-theme="parchment"] .best-move-dot {
-  background: #7f3300;
-  box-shadow: 0 0 3px rgba(127, 51, 0, 0.65);
+  background: #00ddff;
+  box-shadow: 0 0 2px rgba(2, 103, 255, 0.8);
+  filter: url(#parchment-wavy);
 }
 
 /* 黒石: 石板テーマと同じ黒曜石グラデーション */
@@ -1831,4 +1832,17 @@ hr {
   #board[data-board-theme="retro"] .stone.black::before,
   #board[data-board-theme="retro"] .stone.white::before { transform: scale(0.522); transform-origin: 0 0; }
   .stone-num { font-size: 9px; }
+}
+
+/* 羊皮紙テーマ: スマホ（560px以下）では歪み量を半分に */
+@media (max-width: 560px) {
+  #board[data-board-theme="parchment"]          { filter: url(#parchment-wavy-sm); }
+  #board[data-board-theme="parchment"]::before  { filter: url(#parchment-wavy-sm); }
+  #board[data-board-theme="parchment"]::after   { filter: url(#parchment-wavy-sm); }
+  #board[data-board-theme="parchment"] .board-label { filter: url(#parchment-wavy-sm); }
+  #board[data-board-theme="parchment"] .hint-black,
+  #board[data-board-theme="parchment"] .hint-white,
+  #board[data-board-theme="parchment"] .hint-ref-black,
+  #board[data-board-theme="parchment"] .hint-ref-white { filter: url(#parchment-wavy-sm); }
+  #board[data-board-theme="parchment"] .best-move-dot  { filter: url(#parchment-wavy-sm); }
 }
