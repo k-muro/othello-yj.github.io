@@ -51,6 +51,11 @@
       <feTurbulence type="turbulence" baseFrequency="0.006" numOctaves="2" seed="7" result="noise"/>
       <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G"/>
     </filter>
+    <!-- last-move 枠専用: scale を2倍にして枠線だけ強めに歪める -->
+    <filter id="parchment-wavy-strong" x="-8%" y="-8%" width="116%" height="116%">
+      <feTurbulence type="turbulence" baseFrequency="0.006" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
     <filter id="stone-tex" color-interpolation-filters="sRGB" x="0" y="0" width="1" height="1">
       <feTurbulence type="fractalNoise" baseFrequency=".0371 .0713" numOctaves="4" result="noise"/>
       <feDiffuseLighting in="noise" lighting-color="white" surfaceScale="1" result="light">
